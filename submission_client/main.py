@@ -4,9 +4,9 @@ import json
 
 DISPATCH_SERVER_URL = "http://localhost:8000"
 
-def submit_job(source_url: str, target_codec: str, job_size: float):
+def submit_job(source_url: str, target_codec: str, job_size: float, max_retries: int = 3):
     url = f"{DISPATCH_SERVER_URL}/jobs/"
-    payload = {"source_url": source_url, "target_codec": target_codec, "job_size": job_size}
+    payload = {"source_url": source_url, "target_codec": target_codec, "job_size": job_size, "max_retries": max_retries}
     try:
         response = requests.post(url, json=payload)
         response.raise_for_status()
@@ -57,6 +57,7 @@ def main():
     parser.add_argument("--source_url", type=str, help="Source URL of the video file (with --submit)")
     parser.add_argument("--target_codec", type=str, help="Target codec (e.g., H.264, H.265) (with --submit)")
     parser.add_argument("--job_size", type=float, help="Estimated size/complexity of the job (with --submit)")
+    parser.add_argument("--max_retries", type=int, default=3, help="Maximum number of retries for the job (with --submit, default: 3)")
     parser.add_argument("--status", type=str, help="Get status of a job by job ID")
     parser.add_argument("--all_jobs", action="store_true", help="Get status of all jobs")
     parser.add_argument("--all_engines", action="store_true", help="Get status of all transcoding engines")
@@ -68,7 +69,7 @@ def main():
     if args.submit:
         if not args.source_url or not args.target_codec or not args.job_size:
             parser.error("--submit requires --source_url, --target_codec, and --job_size")
-        submit_job(args.source_url, args.target_codec, args.job_size)
+        submit_job(args.source_url, args.target_codec, args.job_size, args.max_retries)
     elif args.status:
         get_job_status(args.status)
     elif args.all_jobs:

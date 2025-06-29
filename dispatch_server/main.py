@@ -24,6 +24,7 @@ class TranscodingJob(BaseModel):
     assigned_engine: Optional[str] = None
     output_url: Optional[str] = None
     retries: int = 0
+    max_retries: int = 3 # New field: maximum number of retries for a job
 
 class TranscodingEngine(BaseModel):
     engine_id: str
@@ -36,6 +37,7 @@ class SubmitJobRequest(BaseModel):
     source_url: str
     target_codec: str
     job_size: float
+    max_retries: int = 3
 
 class EngineHeartbeat(BaseModel):
     engine_id: str
@@ -76,7 +78,8 @@ async def submit_job(request: SubmitJobRequest):
         job_id=job_id,
         source_url=request.source_url,
         target_codec=request.target_codec,
-        job_size=request.job_size
+        job_size=request.job_size,
+        max_retries=request.max_retries
     )
     jobs_db[job_id] = job.dict()
     save_state()
@@ -128,11 +131,18 @@ async def fail_job(job_id: str, error_message: str):
     job = jobs_db.get(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    job["status"] = "failed"
-    job["error_message"] = error_message
+
     job["retries"] += 1
+    if job["retries"] <= job["max_retries"]:
+        job["status"] = "pending"  # Re-queue the job for another attempt
+        job["error_message"] = error_message # Store the last error message
+        print(f"Job {job_id} failed, re-queuing. Retries: {job["retries"]}/{job["max_retries"]}")
+    else:
+        job["status"] = "failed_permanently"
+        job["error_message"] = f"Job failed permanently after {job["retries"]} attempts: {error_message}"
+        print(f"Job {job_id} failed permanently.")
     save_state()
-    return {"message": f"Job {job_id} marked as failed"}
+    return {"message": f"Job {job_id} status updated to {job["status"]}"}
 
 @app.post("/assign_job/")
 async def assign_job():
