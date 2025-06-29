@@ -4,9 +4,9 @@ import json
 
 DISPATCH_SERVER_URL = "http://localhost:8000"
 
-def submit_job(source_url: str, target_codec: str):
+def submit_job(source_url: str, target_codec: str, job_size: float):
     url = f"{DISPATCH_SERVER_URL}/jobs/"
-    payload = {"source_url": source_url, "target_codec": target_codec}
+    payload = {"source_url": source_url, "target_codec": target_codec, "job_size": job_size}
     try:
         response = requests.post(url, json=payload)
         response.raise_for_status()
@@ -36,6 +36,7 @@ def main():
     parser.add_argument("--submit", action="store_true", help="Submit a new transcoding job")
     parser.add_argument("--source_url", type=str, help="Source URL of the video file (with --submit)")
     parser.add_argument("--target_codec", type=str, help="Target codec (e.g., H.264, H.265) (with --submit)")
+    parser.add_argument("--job_size", type=float, help="Estimated size/complexity of the job (with --submit)")
     parser.add_argument("--status", type=str, help="Get status of a job by job ID")
     parser.add_argument("--download", type=str, help="Download transcoded file by job ID")
     parser.add_argument("--output_path", type=str, help="Path to save the downloaded file (with --download)")
@@ -43,9 +44,9 @@ def main():
     args = parser.parse_args()
 
     if args.submit:
-        if not args.source_url or not args.target_codec:
-            parser.error("--submit requires --source_url and --target_codec")
-        submit_job(args.source_url, args.target_codec)
+        if not args.source_url or not args.target_codec or not args.job_size:
+            parser.error("--submit requires --source_url, --target_codec, and --job_size")
+        submit_job(args.source_url, args.target_codec, args.job_size)
     elif args.status:
         get_job_status(args.status)
     elif args.download:

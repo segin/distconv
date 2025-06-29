@@ -19,6 +19,7 @@ class TranscodingJob(BaseModel):
     job_id: str
     source_url: str
     target_codec: str
+    job_size: float # New field: e.g., estimated duration, file size, or complexity score
     status: str = "pending"
     assigned_engine: Optional[str] = None
     output_url: Optional[str] = None
@@ -34,6 +35,7 @@ class TranscodingEngine(BaseModel):
 class SubmitJobRequest(BaseModel):
     source_url: str
     target_codec: str
+    job_size: float
 
 class EngineHeartbeat(BaseModel):
     engine_id: str
@@ -73,7 +75,8 @@ async def submit_job(request: SubmitJobRequest):
     job = TranscodingJob(
         job_id=job_id,
         source_url=request.source_url,
-        target_codec=request.target_codec
+        target_codec=request.target_codec,
+        job_size=request.job_size
     )
     jobs_db[job_id] = job.dict()
     save_state()
@@ -127,13 +130,62 @@ async def fail_job(job_id: str, error_message: str):
     save_state()
     return {"message": f"Job {job_id} marked as failed"}
 
-# Placeholder for job assignment logic (to be implemented later)
 @app.post("/assign_job/")
 async def assign_job():
-    # This function will contain the logic to pick a pending job
-    # and assign it to an available engine based on benchmarking data.
-    # For now, it's just a placeholder.
-    return {"message": "Job assignment logic to be implemented."}
+    # Find a pending job
+    pending_job = None
+    for job_id, job_data in jobs_db.items():
+        if job_data["status"] == "pending":
+            pending_job = job_data
+            break
+
+    if not pending_job:
+        return {"message": "No pending jobs to assign."}
+
+    # Find an idle engine with benchmarking data
+    available_engines = []
+    for engine_id, engine_data in engines_db.items():
+        if engine_data["status"] == "idle" and engine_data.get("benchmark_time") is not None:
+            available_engines.append(engine_data)
+
+    if not available_engines:
+        return {"message": "No idle engines with benchmarking data available."}
+
+    # Sort engines by benchmark_time (faster engines first)
+    # For simplicity, we'll assign smaller jobs to slower systems and bigger jobs to faster systems.
+    # This is a basic implementation and can be improved with more sophisticated scheduling algorithms.
+    available_engines.sort(key=lambda x: x["benchmark_time"])
+
+    # Determine job size category (e.g., small, medium, large)
+    # For now, a simple threshold. This would be more dynamic in a real system.
+    job_size = pending_job.get("job_size", 0) # Default to 0 if not provided
+    
+    selected_engine = None
+    if job_size < 50: # Example threshold for "small" jobs
+        # Assign small jobs to slower engines (larger benchmark_time)
+        selected_engine = available_engines[-1] # Last one is slowest
+    else:
+        # Assign larger jobs to faster engines (smaller benchmark_time)
+        selected_engine = available_engines[0] # First one is fastest
+
+    if not selected_engine:
+        return {"message": "Could not find a suitable engine for the job."}
+
+    # Assign the job
+    pending_job["status"] = "assigned"
+    pending_job["assigned_engine"] = selected_engine["engine_id"]
+    jobs_db[pending_job["job_id"]] = pending_job
+
+    selected_engine["status"] = "busy"
+    engines_db[selected_engine["engine_id"]] = selected_engine
+    
+    save_state()
+
+    return {
+        "message": "Job assigned successfully",
+        "job_id": pending_job["job_id"],
+        "assigned_engine": selected_engine["engine_id"]
+    }
 
 # Placeholder for storage pool configuration (to be implemented later)
 @app.get("/storage_pools/")
