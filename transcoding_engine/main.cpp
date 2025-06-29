@@ -10,10 +10,43 @@
 // In a real application, a proper C++ HTTP client library would be used.
 
 // Function to send heartbeat to dispatch server
-void sendHeartbeat(const std::string& dispatchServerUrl, const std::string& engineId, double storageCapacityGb, bool streamingSupport) {
+// Function to get ffmpeg capabilities
+std::string getFFmpegCapabilities(const std::string& capability_type) {
+    std::string command = "ffmpeg -hide_banner -" + capability_type + " | grep -E \"^ (DE|EN)C\" | awk '{print $2}' | tr '\n' ',' | sed 's/,$/ /'";
+    FILE* pipe = popen(command.c_str(), "r");
+    if (!pipe) return "";
+    char buffer[128];
+    std::string result = "";
+    while (!feof(pipe)) {
+        if (fgets(buffer, 128, pipe) != NULL) {
+            result += buffer;
+        }
+    }
+    pclose(pipe);
+    return result;
+}
+
+// Function to get ffmpeg hardware acceleration methods
+std::string getFFmpegHWAccels() {
+    std::string command = "ffmpeg -hide_banner -hwaccels | grep -E \"^ (DE|EN)C\" | awk '{print $1}' | tr '\n' ',' | sed 's/,$/ /'";
+    FILE* pipe = popen(command.c_str(), "r");
+    if (!pipe) return "";
+    char buffer[128];
+    std::string result = "";
+    while (!feof(pipe)) {
+        if (fgets(buffer, 128, pipe) != NULL) {
+            result += buffer;
+        }
+    }
+    pclose(pipe);
+    return result;
+}
+
+// Function to send heartbeat to dispatch server
+void sendHeartbeat(const std::string& dispatchServerUrl, const std::string& engineId, double storageCapacityGb, bool streamingSupport, const std::string& encoders, const std::string& decoders, const std::string& hwaccels) {
     std::string command = "curl -X POST " + dispatchServerUrl + "/engines/heartbeat "
                           "-H \"Content-Type: application/json\" "
-                          "-d '{\"engine_id\": \"" + engineId + "\", \"status\": \"idle\", \"storage_capacity_gb\": " + std::to_string(storageCapacityGb) + ", \"streaming_support\": " + (streamingSupport ? "true" : "false") + "}'";
+                          "-d '{\"engine_id\": \"" + engineId + "\", \"status\": \"idle\", \"storage_capacity_gb\": " + std::to_string(storageCapacityGb) + ", \"streaming_support\": " + (streamingSupport ? "true" : "false") + ", \"encoders\": \"" + encoders + "\", \"decoders\": \"" + decoders + "\", \"hwaccels\": \"" + hwaccels + "\"}'";
     std::cout << "Sending heartbeat: " << command << std::endl;
     // system(command.c_str()); // Execute the command
 }
@@ -151,10 +184,15 @@ int main() {
     double storageCapacityGb = 500.0; // Example storage capacity
     bool streamingSupport = true; // This engine supports streaming
 
+    // Get ffmpeg capabilities
+    std::string encoders = getFFmpegCapabilities("encoders");
+    std::string decoders = getFFmpegCapabilities("decoders");
+    std::string hwaccels = getFFmpegHWAccels();
+
     // Start heartbeat thread
     std::thread heartbeatThread([&]() {
         while (true) {
-            sendHeartbeat(dispatchServerUrl, engineId, storageCapacityGb, streamingSupport);
+            sendHeartbeat(dispatchServerUrl, engineId, storageCapacityGb, streamingSupport, encoders, decoders, hwaccels);
             std::this_thread::sleep_for(std::chrono::seconds(5)); // Send heartbeat every 5 seconds
         }
     });

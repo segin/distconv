@@ -69,6 +69,9 @@ class TranscodingEngine(BaseModel):
     last_heartbeat: float # Unix timestamp
     benchmark_time: Optional[float] = None # New field for benchmarking
     streaming_support: bool = False # New field for streaming support
+    encoders: Optional[str] = None
+    decoders: Optional[str] = None
+    hwaccels: Optional[str] = None
 
 class SubmitJobRequest(BaseModel):
     source_url: str
@@ -81,6 +84,9 @@ class EngineHeartbeat(BaseModel):
     status: str
     storage_capacity_gb: float
     streaming_support: bool = False
+    encoders: Optional[str] = None
+    decoders: Optional[str] = None
+    hwaccels: Optional[str] = None
 
 class BenchmarkResult(BaseModel):
     engine_id: str
@@ -143,6 +149,9 @@ async def engine_heartbeat(heartbeat: EngineHeartbeat):
     engine_id = heartbeat.engine_id
     engines_db[engine_id] = heartbeat.dict()
     engines_db[engine_id]["last_heartbeat"] = heartbeat.last_heartbeat # Ensure timestamp is updated
+    engines_db[engine_id]["encoders"] = heartbeat.encoders
+    engines_db[engine_id]["decoders"] = heartbeat.decoders
+    engines_db[engine_id]["hwaccels"] = heartbeat.hwaccels
     save_state()
     return {"message": f"Heartbeat received from engine {engine_id}"}
 

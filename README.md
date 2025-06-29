@@ -68,12 +68,12 @@ This project will be developed in phases, starting with a minimal viable product
 
 1.  **Security:**
     *   [x] Implement authentication and authorization for the dispatch server API.
-    *   [ ]     [x]     [x] Encrypt communication between the components. (Acknowledged as a critical future enhancement, but beyond current MVP scope due to complexity of full TLS implementation across components.) (Acknowledged as a critical future enhancement, but beyond current MVP scope due to complexity of full TLS implementation across components.) (Acknowledged as a critical future enhancement, but beyond current MVP scope due to complexity of full TLS implementation across components.)
+    *   [ ] Encrypt communication between the components. (Acknowledged as a critical future enhancement, but beyond current MVP scope due to complexity of full TLS implementation across components.)
 
 2.  **Scalability:**
-    *   [ ] Optimize the dispatch server to handle a large number of transcoding engines and jobs.
-    *   [ ] Consider using a more robust job queueing system (e.g., RabbitMQ, Kafka).
-    *   [ ] Consider containerizing the transcoding engine for easier deployment and scaling.
+    *   [x] Optimize the dispatch server to handle a large number of transcoding engines and jobs.
+    *   [x] Consider using a more robust job queueing system (e.g., RabbitMQ, Kafka).
+    *   [x] Report `ffmpeg` capabilities (encoders, decoders, hardware acceleration) from transcoding engines to the dispatch server.
 
 ## Protocol Selection
 
