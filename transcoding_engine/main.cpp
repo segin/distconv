@@ -4,6 +4,7 @@
 #include <chrono>
 #include <cstdlib> // For system()
 #include <random> // For random engine ID
+#include "cjson/cJSON.h" // Include cJSON header
 
 // For HTTP requests (using system curl for simplicity)
 // In a real application, a proper C++ HTTP client library would be used.
@@ -112,17 +113,21 @@ std::string getJob(const std::string& dispatchServerUrl, const std::string& engi
                           "-H \"Content-Type: application/json\" "
                           "-d '{\"engine_id\": \"" + engineId + "\"}'";
     
-    // In a real scenario, this would involve parsing the JSON response to get job details.
-    // For now, we'll just simulate getting a job.
-    // system(command.c_str()); // Execute the command
-    
-    // Simulate a job being returned
-    static int job_counter = 0;
-    if (job_counter < 2) { // Simulate getting 2 jobs then no more for a while
-        job_counter++;
-        return "{\"job_id\": \"test_job_" + std::to_string(job_counter) + "\", \"source_url\": \"http://example.com/input.mp4\", \"target_codec\": \"h264\"}";
+    // Execute the curl command and capture its output
+    FILE* pipe = popen(command.c_str(), "r");
+    if (!pipe) {
+        return "";
     }
-    return ""; // No job available
+    char buffer[128];
+    std::string result = "";
+    while (!feof(pipe)) {
+        if (fgets(buffer, 128, pipe) != NULL) {
+            result += buffer;
+        }
+    }
+    pclose(pipe);
+
+    return result;
 }
 
 int main() {
@@ -157,16 +162,28 @@ int main() {
     while (true) {
         std::string job_json = getJob(dispatchServerUrl, engineId);
         if (!job_json.empty()) {
-            // Parse job_json to extract job_id, source_url, target_codec
-            // For simplicity, we'll hardcode for now based on the simulated response
-            std::string job_id = "test_job_1"; // This needs to be parsed from job_json
-            std::string source_url = "http://example.com/input.mp4"; // This needs to be parsed from job_json
-            std::string target_codec = "h264"; // This needs to be parsed from job_json
+            cJSON *root = cJSON_Parse(job_json.c_str());
+            if (root) {
+                cJSON *job_id_json = cJSON_GetObjectItemCaseSensitive(root, "job_id");
+                cJSON *source_url_json = cJSON_GetObjectItemCaseSensitive(root, "source_url");
+                cJSON *target_codec_json = cJSON_GetObjectItemCaseSensitive(root, "target_codec");
 
-            // In a real implementation, you'd use a JSON parsing library (e.g., nlohmann/json)
-            // to extract these values from job_json.
+                if (cJSON_IsString(job_id_json) && (job_id_json->valuestring != NULL) &&
+                    cJSON_IsString(source_url_json) && (source_url_json->valuestring != NULL) &&
+                    cJSON_IsString(target_codec_json) && (target_codec_json->valuestring != NULL)) {
 
-            performTranscoding(dispatchServerUrl, job_id, source_url, target_codec);
+                    std::string job_id = job_id_json->valuestring;
+                    std::string source_url = source_url_json->valuestring;
+                    std::string target_codec = target_codec_json->valuestring;
+
+                    performTranscoding(dispatchServerUrl, job_id, source_url, target_codec);
+                } else {
+                    std::cout << "Failed to parse job details from JSON: " << job_json << std::endl;
+                }
+                cJSON_Delete(root);
+            } else {
+                std::cout << "Failed to parse JSON response from getJob: " << job_json << std::endl;
+            }
         }
         std::this_thread::sleep_for(std::chrono::seconds(1)); // Poll for jobs every second
     }
