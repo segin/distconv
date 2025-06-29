@@ -82,7 +82,7 @@ This project will be developed in phases, starting with a minimal viable product
 
 2.  **Transcoding Engine (CPU Temperature):**
     *   [x] Implement CPU temperature reporting (Linux, FreeBSD, Windows).
-    *   [ ] Plan for GPU temperature reporting in the future.
+    *   [x] Plan for GPU temperature reporting in the future.
 
 3.  **Transcoding Engine (Local Job Queue):**
     *   [x] Implement local job queue reporting from transcoding engine to dispatch server.
