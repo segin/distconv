@@ -17,15 +17,71 @@ void sendHeartbeat(const std::string& dispatchServerUrl, const std::string& engi
     // system(command.c_str()); // Execute the command
 }
 
-// Placeholder for transcoding logic
-void performTranscoding(const std::string& job_id, const std::string& source_url, const std::string& target_codec) {
+// Function to download a file
+bool downloadFile(const std::string& url, const std::string& output_path) {
+    std::string command = "curl -o " + output_path + " " + url;
+    std::cout << "Downloading: " << command << std::endl;
+    int result = system(command.c_str());
+    return result == 0;
+}
+
+// Function to upload a file (placeholder)
+bool uploadFile(const std::string& url, const std::string& file_path) {
+    std::cout << "Uploading " << file_path << " to " << url << " (placeholder)" << std::endl;
+    // In a real scenario, this would involve a proper HTTP PUT/POST or a dedicated upload mechanism.
+    // For now, just simulate success.
+    return true;
+}
+
+// Function to report job status to dispatch server
+void reportJobStatus(const std::string& dispatchServerUrl, const std::string& job_id, const std::string& status, const std::string& output_url = "", const std::string& error_message = "") {
+    std::string command;
+    if (status == "completed") {
+        command = "curl -X POST " + dispatchServerUrl + "/jobs/" + job_id + "/complete "
+                  "-H \"Content-Type: application/json\" "
+                  "-d '{\"output_url\": \"" + output_url + "\"}'";
+    } else if (status == "failed") {
+        command = "curl -X POST " + dispatchServerUrl + "/jobs/" + job_id + "/fail "
+                  "-H \"Content-Type: application/json\" "
+                  "-d '{\"error_message\": \"" + error_message + "\"}'";
+    }
+    std::cout << "Reporting job status: " << command << std::endl;
+    system(command.c_str());
+}
+
+// Actual transcoding logic
+void performTranscoding(const std::string& dispatchServerUrl, const std::string& job_id, const std::string& source_url, const std::string& target_codec) {
     std::cout << "Starting transcoding for job " << job_id << ": " << source_url << " to " << target_codec << std::endl;
-    // In a real scenario, this would involve:
-    // 1. Downloading the source video from source_url
-    // 2. Executing ffmpeg: system("ffmpeg -i " + source_file + " -c:v " + target_codec + " output.mp4");
-    // 3. Uploading the transcoded file to the dispatch server or a storage pool
-    // 4. Reporting job completion/failure to the dispatch server
-    std::this_thread::sleep_for(std::chrono::seconds(10)); // Simulate transcoding time
+
+    std::string input_file = "input_" + job_id + ".mp4";
+    std::string output_file = "output_" + job_id + ".mp4";
+
+    // 1. Download the source video
+    if (!downloadFile(source_url, input_file)) {
+        reportJobStatus(dispatchServerUrl, job_id, "failed", "", "Failed to download source video.");
+        return;
+    }
+
+    // 2. Execute ffmpeg
+    std::string ffmpeg_command = "ffmpeg -i " + input_file + " -c:v " + target_codec + " " + output_file;
+    std::cout << "Executing: " << ffmpeg_command << std::endl;
+    int ffmpeg_result = system(ffmpeg_command.c_str());
+
+    if (ffmpeg_result != 0) {
+        reportJobStatus(dispatchServerUrl, job_id, "failed", "", "FFmpeg transcoding failed.");
+        return;
+    }
+
+    // 3. Upload the transcoded file (placeholder for now)
+    std::string output_url = "http://example.com/transcoded/" + output_file; // Placeholder URL
+    if (!uploadFile(output_url, output_file)) {
+        reportJobStatus(dispatchServerUrl, job_id, "failed", "", "Failed to upload transcoded video.");
+        return;
+    }
+
+    // 4. Report job completion
+    reportJobStatus(dispatchServerUrl, job_id, "completed", output_url);
+
     std::cout << "Finished transcoding for job " << job_id << std::endl;
 }
 
