@@ -59,7 +59,7 @@ This project will be developed in phases, starting with a minimal viable product
 
 3.  **Improved Scheduling:**
     *   The dispatch server will use more sophisticated logic to assign jobs, taking into account engine performance and load.
-    *   Implement benchmarking of transcoding endpoints to determine job completion speeds, allowing for optimized job assignment (smaller jobs to slower systems, larger jobs to faster systems).
+    *   Implement benchmarking of transcoding endpoints. The dispatch server will trigger benchmarking tasks on engines, which will execute them and report completion speeds back to the server. This data will then be used for optimized job assignment (smaller jobs to slower systems, larger jobs to faster systems).
 
 **Phase 3: Security and Scalability**
 
