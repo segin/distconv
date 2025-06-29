@@ -101,6 +101,21 @@ double getCpuTemperature() {
 }
 
 // Function to download a file
+bool downloadFile(const std::string& url, const std::string& output_path);
+
+// Function to upload a file (placeholder)
+bool uploadFile(const std::string& url, const std::string& file_path);
+
+// Function to report job status to dispatch server
+void reportJobStatus(const std::string& dispatchServerUrl, const std::string& job_id, const std::string& status, const std::string& output_url = "", const std::string& error_message = "");
+
+// Placeholder for streaming transcoding logic
+void performStreamingTranscoding(const std::string& dispatchServerUrl, const std::string& job_id, const std::string& source_url, const std::string& target_codec);
+
+// Actual transcoding logic
+void performTranscoding(const std::string& dispatchServerUrl, const std::string& job_id, const std::string& source_url, const std::string& target_codec);
+
+// Function to download a file
 bool downloadFile(const std::string& url, const std::string& output_path) {
     std::string command = "curl -o " + output_path + " " + url;
     std::cout << "Downloading: " << command << std::endl;
@@ -143,8 +158,6 @@ void reportJobStatus(const std::string& dispatchServerUrl, const std::string& jo
     std::cout << "Reporting job status: " << command << std::endl;
     system(command.c_str());
 }
-
-// Actual transcoding logic
 void performTranscoding(const std::string& dispatchServerUrl, const std::string& job_id, const std::string& source_url, const std::string& target_codec) {
     std::cout << "Starting transcoding for job " << job_id << ": " << source_url << " to " << target_codec << std::endl;
 
@@ -228,7 +241,7 @@ int main() {
     std::cout << "Transcoding Engine Starting..." << std::endl;
 
     // Configuration
-    std::string dispatchServerUrl = "http://localhost:8000"; // Assuming dispatch server runs on localhost:8000
+    std::string dispatchServerUrl = "http://localhost:8080"; // Assuming C++ dispatch server runs on localhost:8080
     std::string engineId = "engine-" + std::to_string(std::random_device{}() % 10000); // Unique ID for this engine
     double storageCapacityGb = 500.0; // Example storage capacity
     bool streamingSupport = true; // This engine supports streaming

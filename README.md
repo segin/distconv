@@ -87,6 +87,9 @@ This project will be developed in phases, starting with a minimal viable product
 3.  **Transcoding Engine (Local Job Queue):**
     *   [x] Implement local job queue reporting from transcoding engine to dispatch server.
 
+4.  **Central Server (C++):**
+    *   [x] Port the central server to C++.
+
 ## Protocol Selection
 
 We need a reliable and efficient protocol for communication between the components. Here's a comparison of the options:
@@ -150,13 +153,31 @@ Each component will have its own set of unit and integration tests.
     *   **Unit Tests:** Test individual functions (e.g., parsing job parameters, executing `ffmpeg`).
     *   **Integration Tests:** Test the full workflow of receiving a job, transcoding a video, and reporting completion. This will involve mocking the dispatch server.
 
-*   **Transcoding Dispatch Server:**
-    *   **Unit Tests:** Test individual API endpoints and business logic (e.g., job queueing, engine selection).
-    *   **Integration Tests:** Test the interaction with the transcoding engine and submission client. This will involve running a real (or mocked) transcoding engine.
+*   **Transcoding Dispatch Server** (Python - **DEPRECATED**):
+    *   [x] Manages a list of transcoding engines and their status.
+    *   [x] Maintains a queue of transcoding jobs.
+    *   [x] Assigns jobs to available engines.
+    *   [x] Tracks the status of each job.
+    *   [x] Handles storage of source and transcoded videos.
+    *   [x] Provides a REST API (Phase 1) or gRPC service (Phase 2) for clients and engines.
 
-*   **Submission Client:**
-    *   **Unit Tests:** Test command-line argument parsing and API client logic.
-    *   **Integration Tests:** Test the full workflow of submitting a job and downloading the result against a running dispatch server.
+*   **Transcoding Dispatch Server** (C++ - **NEW PRIMARY**):
+    *   [x] Manages a list of transcoding engines and their status.
+    *   [x] Maintains a queue of transcoding jobs.
+    *   [x] Assigns jobs to available engines.
+    *   [x] Tracks the status of each job.
+    *   [x] Handles storage of source and transcoded videos.
+    *   [x] Provides a REST API (Phase 1) or gRPC service (Phase 2) for clients and engines.
+
+*   **Submission Client** (Python - **DEPRECATED**):
+    *   [x] Command-line interface for submitting jobs.
+    *   [x] Can be used to query job status.
+    *   [x] Downloads the final transcoded video.
+
+*   **Submission Client** (C++ - **NEW PRIMARY**):
+    *   [x] Command-line interface for submitting jobs.
+    *   [x] Can be used to query job status.
+    *   [x] Downloads the final transcoded video.
 
 ## Protocol Documentation
 

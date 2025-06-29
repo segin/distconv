@@ -7,7 +7,7 @@
 #include "nlohmann/json.hpp"
 
 // Dispatch Server URL and API Key
-const std::string DISPATCH_SERVER_URL = "http://localhost:8000";
+const std::string DISPATCH_SERVER_URL = "http://localhost:8080";
 const std::string API_KEY = "your-super-secret-api-key"; // Replace with your actual API key
 
 // Local storage for job IDs
