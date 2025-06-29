@@ -5,11 +5,15 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Add cpr as a subdirectory
-add_subdirectory(../../third_party/cpr EXCLUDE_FROM_ALL)
+add_subdirectory(../../third_party/cpr)
 
 # Add nlohmann/json as a subdirectory
-add_subdirectory(../../third_party/json EXCLUDE_FROM_ALL)
+add_subdirectory(../../third_party/json)
+
+find_package(wxWidgets REQUIRED COMPONENTS core base)
 
 add_executable(submission_client_desktop main.cpp)
 
-target_link_libraries(submission_client_desktop cpr nlohmann_json)
+target_link_libraries(submission_client_desktop cpr nlohmann_json ${wxWidgets_LIBRARIES})
+
+target_include_directories(submission_client_desktop PRIVATE ${wxWidgets_INCLUDE_DIRS})

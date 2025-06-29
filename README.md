@@ -45,7 +45,6 @@ This project will be developed in phases, starting with a minimal viable product
 3.  **Submission Client (C++ - NEW PRIMARY):**
     *   [x] Implement a C++ console client to submit jobs, retrieve status, list all jobs, list all engines, and retrieve locally submitted job results.
     *   [x] Enhance the C++ console client for improved user experience (interactive menu, clearer output, input validation).
-    *   *Note: This is a console-based client. A full graphical user interface (GUI) would be a separate, more extensive task.* 
 
 **Phase 2: Advanced Features**
 
@@ -65,7 +64,7 @@ This project will be developed in phases, starting with a minimal viable product
 **Phase 3: Security and Scalability**
 
 1.  **Security:**
-    *   [x] Implement authentication and authorization for the dispatch server API.
+    *   [ ] Implement authentication and authorization for the dispatch server API.
     *   [ ] Encrypt communication between the components. (Acknowledged as a critical future enhancement, but beyond current MVP scope due to complexity of full TLS implementation across components.)
 
 2.  **Scalability:**
@@ -75,12 +74,24 @@ This project will be developed in phases, starting with a minimal viable product
 
 ## New Features (Post-MVP)
 
-1.  **Transcoding Engine (CPU Temperature):**
+1.  **Submission Client (C++ Desktop):**
+    *   [x] Implement a C++ GUI client using wxWidgets to submit jobs, retrieve status, list all jobs, list all engines, and retrieve locally submitted job results.
+    *   *Note: This is a console-based client. A full graphical user interface (GUI) would be a separate, more extensive task.*
+
+2.  **Transcoding Engine (CPU Temperature):**
     *   [x] Implement CPU temperature reporting (Linux, FreeBSD, Windows).
     *   [x] Plan for GPU temperature reporting in the future.
 
-2.  **Transcoding Engine (Local Job Queue):**
+3.  **Transcoding Engine (Local Job Queue):**
     *   [x] Implement local job queue reporting from transcoding engine to dispatch server.
+
+4.  **TLS/SSL Implementation:**
+    *   [ ] Implement TLS/SSL for secure communication between all components.
+
+5.  **Unit Testing:**
+    *   [ ] Implement unit tests for the C++ submission client.
+    *   [ ] Implement unit tests for the C++ central server.
+    *   [ ] Implement unit tests for the C++ transcoding engine.
 
 ## Protocol Selection
 
