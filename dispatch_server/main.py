@@ -89,6 +89,10 @@ async def get_job_status(job_id: str):
         raise HTTPException(status_code=404, detail="Job not found")
     return job
 
+@app.get("/jobs/")
+async def list_all_jobs():
+    return list(jobs_db.values())
+
 @app.get("/engines/")
 async def list_engines():
     return list(engines_db.values())
