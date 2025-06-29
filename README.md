@@ -115,7 +115,19 @@ This project will be developed in phases, starting with a minimal viable product
 *   [ ] **Local Caching:** Implement a local caching mechanism for frequently accessed source or transcoded files to reduce network overhead.
 
 ### Central Server:
-*   [ ] **Database Integration:** Replace the current file-based persistent storage with a robust database solution (e.g., PostgreSQL, MySQL) for improved scalability, reliability, and query capabilities.
+*   [ ] **Multiple Database Support:** Abstract the data storage layer to allow different backends (e.g., SQLite, PostgreSQL, MySQL) for improved scalability, reliability, and query capabilities.
+*   [ ] **Admin Panel/Functionality:**
+    *   [ ] Implement a web-based admin control panel.
+    *   [ ] Implement a C++ wxWidgets native admin control panel with the following features:
+        *   [ ] View and manage all jobs.
+        *   [ ] View and manage all transcoding endpoints.
+        *   [ ] View detailed information for selected jobs and endpoints.
+        *   [ ] Perform administrative actions (e.g., pause/resume jobs, deauthenticate endpoints).
+        *   [ ] Implement right-click context menus for relevant items.
+        *   [ ] Implement top-level menu actions.
+        *   [ ] Implement a configuration dialog.
+        *   [ ] Implement an "About" dialog.
+        *   [ ] Implement a "Help" dialog/section.
 *   [ ] **Advanced Scheduling Algorithms:** Develop more sophisticated job scheduling that considers network latency, historical engine performance, and job deadlines.
 *   [ ] **User Management and Roles:** Implement a system for user authentication and authorization, allowing different levels of access and control.
 *   [ ] **Job Prioritization:** Allow users to assign priorities to their transcoding jobs, influencing their position in the processing queue.
