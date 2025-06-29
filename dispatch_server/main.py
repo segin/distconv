@@ -1,119 +1,127 @@
-import asyncio
-from fastapi import FastAPI, UploadFile, File, Form
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
 import uuid
+import os
+import json
 
 app = FastAPI()
 
-class Engine(BaseModel):
-    id: str
-    status: str  # idle, transcoding
-    storage_capacity: int # in MB
-    last_heartbeat: float
+# In-memory storage for jobs and engines (for now)
+# In a real application, this would be a database
+jobs_db: Dict[str, Dict] = {}
+engines_db: Dict[str, Dict] = {}
 
-class Job(BaseModel):
-    id: str
-    status: str  # pending, assigned, completed, failed
-    source_file_path: str
-    output_file_path: Optional[str] = None
-    engine_id: Optional[str] = None
+# Persistent storage for jobs and engines
+PERSISTENT_STORAGE_FILE = "dispatch_server_state.json"
 
-# In-memory data stores
-engines: Dict[str, Engine] = {}
-jobs: Dict[str, Job] = {}
-job_queue: asyncio.Queue = asyncio.Queue()
+class TranscodingJob(BaseModel):
+    job_id: str
+    source_url: str
+    target_codec: str
+    status: str = "pending"
+    assigned_engine: Optional[str] = None
+    output_url: Optional[str] = None
+    retries: int = 0
 
-@app.post("/engine/register")
-async def register_engine(engine_id: str = Form(...), storage_capacity: int = Form(...)):
-    if engine_id not in engines:
-        engines[engine_id] = Engine(id=engine_id, status="idle", storage_capacity=storage_capacity, last_heartbeat=asyncio.get_event_loop().time())
-        return {"message": "Engine registered successfully"}
-    return {"message": "Engine already registered"}
+class TranscodingEngine(BaseModel):
+    engine_id: str
+    status: str = "idle"
+    storage_capacity_gb: float
+    last_heartbeat: float # Unix timestamp
 
-@app.post("/engine/heartbeat")
-async def engine_heartbeat(engine_id: str = Form(...), status: str = Form(...)):
-    if engine_id in engines:
-        engines[engine_id].status = status
-        engines[engine_id].last_heartbeat = asyncio.get_event_loop().time()
-        return {"message": "Heartbeat received"}
-    return {"error": "Engine not found"}, 404
+class SubmitJobRequest(BaseModel):
+    source_url: str
+    target_codec: str
 
-@app.post("/job/submit")
-async def submit_job(file: UploadFile = File(...)):
-    job_id = str(uuid.uuid4())
-    source_file_path = f"uploads/{job_id}_{file.filename}"
-    with open(source_file_path, "wb") as buffer:
-        buffer.write(await file.read())
+class EngineHeartbeat(BaseModel):
+    engine_id: str
+    status: str
+    storage_capacity_gb: float
 
-    job = Job(id=job_id, status="pending", source_file_path=source_file_path)
-    jobs[job_id] = job
-    await job_queue.put(job)
-    return {"job_id": job_id}
+def load_state():
+    if os.path.exists(PERSISTENT_STORAGE_FILE):
+        with open(PERSISTENT_STORAGE_FILE, "r") as f:
+            state = json.load(f)
+            global jobs_db
+            global engines_db
+            jobs_db = state.get("jobs", {})
+            engines_db = state.get("engines", {})
+            print(f"Loaded state: jobs={len(jobs_db)}, engines={len(engines_db)}")
 
-@app.get("/job/{job_id}/status")
-async def get_job_status(job_id: str):
-    if job_id in jobs:
-        return jobs[job_id]
-    return {"error": "Job not found"}, 404
-
-@app.get("/engines", response_model=List[Engine])
-async def list_engines():
-    return list(engines.values())
-
-async def job_scheduler():
-    while True:
-        job = await job_queue.get()
-        
-        available_engine = None
-        while not available_engine:
-            for engine in engines.values():
-                if engine.status == "idle":
-                    available_engine = engine
-                    break
-            await asyncio.sleep(1) # wait for an engine to become available
-
-        job.status = "assigned"
-        job.engine_id = available_engine.id
-        available_engine.status = "transcoding"
-        
-        # Assign job to engine
-        # In a real implementation, we would have a more robust way of communicating with the engine
-        # For now, we assume the engine has an endpoint to receive jobs
-        print(f"Assigning job {job.id} to engine {available_engine.id}")
-        # This is a placeholder for the actual job assignment
-        # In a real implementation, we would make a request to the engine's API
-        # For example:
-        # requests.post(f"http://{available_engine.address}/job/run", json=job.dict())
-
-@app.get("/job/next")
-async def get_next_job():
-    try:
-        job = job_queue.get_nowait()
-        return job
-    except asyncio.QueueEmpty:
-        return {}
-
-@app.post("/job/complete")
-async def job_complete(job_id: str = Form(...), output_file_path: str = Form(...)):
-    if job_id in jobs:
-        jobs[job_id].status = "completed"
-        jobs[job_id].output_file_path = output_file_path
-        engine_id = jobs[job_id].engine_id
-        if engine_id in engines:
-            engines[engine_id].status = "idle"
-        return {"message": "Job marked as complete"}
-    return {"error": "Job not found"}, 404
-
+def save_state():
+    with open(PERSISTENT_STORAGE_FILE, "w") as f:
+        json.dump({"jobs": jobs_db, "engines": engines_db}, f, indent=4)
+        print("Saved state.")
 
 @app.on_event("startup")
 async def startup_event():
-    # Create uploads directory
-    import os
-    if not os.path.exists("uploads"):
-        os.makedirs("uploads")
-    asyncio.create_task(job_scheduler())
+    load_state()
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+@app.on_event("shutdown")
+async def shutdown_event():
+    save_state()
+
+@app.post("/jobs/")
+async def submit_job(request: SubmitJobRequest):
+    job_id = str(uuid.uuid4())
+    job = TranscodingJob(
+        job_id=job_id,
+        source_url=request.source_url,
+        target_codec=request.target_codec
+    )
+    jobs_db[job_id] = job.dict()
+    save_state()
+    return {"message": "Job submitted successfully", "job_id": job_id}
+
+@app.get("/jobs/{job_id}")
+async def get_job_status(job_id: str):
+    job = jobs_db.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return job
+
+@app.get("/engines/")
+async def list_engines():
+    return list(engines_db.values())
+
+@app.post("/engines/heartbeat")
+async def engine_heartbeat(heartbeat: EngineHeartbeat):
+    engine_id = heartbeat.engine_id
+    engines_db[engine_id] = heartbeat.dict()
+    save_state()
+    return {"message": f"Heartbeat received from engine {engine_id}"}
+
+@app.post("/jobs/{job_id}/complete")
+async def complete_job(job_id: str, output_url: str):
+    job = jobs_db.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    job["status"] = "completed"
+    job["output_url"] = output_url
+    save_state()
+    return {"message": f"Job {job_id} marked as completed"}
+
+@app.post("/jobs/{job_id}/fail")
+async def fail_job(job_id: str, error_message: str):
+    job = jobs_db.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    job["status"] = "failed"
+    job["error_message"] = error_message
+    job["retries"] += 1
+    save_state()
+    return {"message": f"Job {job_id} marked as failed"}
+
+# Placeholder for job assignment logic (to be implemented later)
+@app.post("/assign_job/")
+async def assign_job():
+    # This function will contain the logic to pick a pending job
+    # and assign it to an available engine based on benchmarking data.
+    # For now, it's just a placeholder.
+    return {"message": "Job assignment logic to be implemented."}
+
+# Placeholder for storage pool configuration (to be implemented later)
+@app.get("/storage_pools/")
+async def list_storage_pools():
+    return {"message": "Storage pool configuration to be implemented."}
