@@ -5,6 +5,10 @@ from typing import Dict, List, Optional
 import uuid
 import os
 import json
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 API_KEY = "your-super-secret-api-key"  # In a real app, load this securely (e.g., from environment variables)
 api_key_header = APIKeyHeader(name="X-API-Key")
@@ -67,12 +71,12 @@ def load_state():
             global engines_db
             jobs_db = state.get("jobs", {})
             engines_db = state.get("engines", {})
-            print(f"Loaded state: jobs={len(jobs_db)}, engines={len(engines_db)}")
+            logger.info(f"Loaded state: jobs={len(jobs_db)}, engines={len(engines_db)}")
 
 def save_state():
     with open(PERSISTENT_STORAGE_FILE, "w") as f:
         json.dump({"jobs": jobs_db, "engines": engines_db}, f, indent=4)
-        print("Saved state.")
+        logger.info("Saved state.")
 
 @app.on_event("startup")
 async def startup_event():
@@ -148,11 +152,11 @@ async def fail_job(job_id: str, error_message: str):
     if job["retries"] <= job["max_retries"]:
         job["status"] = "pending"  # Re-queue the job for another attempt
         job["error_message"] = error_message # Store the last error message
-        print(f"Job {job_id} failed, re-queuing. Retries: {job["retries"]}/{job["max_retries"]}")
+        logger.info(f"Job {job_id} failed, re-queuing. Retries: {job["retries"]}/{job["max_retries"]}")
     else:
         job["status"] = "failed_permanently"
         job["error_message"] = f"Job failed permanently after {job["retries"]} attempts: {error_message}"
-        print(f"Job {job_id} failed permanently.")
+        logger.info(f"Job {job_id} failed permanently.")
     save_state()
     return {"message": f"Job {job_id} status updated to {job["status"]}"}
 
