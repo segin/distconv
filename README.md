@@ -23,28 +23,31 @@ This project will be developed in phases, starting with a minimal viable product
 **Phase 1: Core Functionality (MVP)**
 
 1.  **Transcoding Engine (C++):**
-    *   Develop a simple daemon that can accept a transcoding job.
-    *   The job will contain the source video location (URL) and transcoding parameters.
-    *   The engine will download the source video, transcode it using `ffmpeg` (initially focusing on H.264 and H.265 codecs), and make the output available for download.
-    *   The engine will report its status (idle, transcoding, error) to the dispatch server.
+    *   [x] Develop a simple daemon that can accept a transcoding job.
+    *   [x] The job will contain the source video location (URL) and transcoding parameters.
+    *   [x] The engine will download the source video, transcode it using `ffmpeg` (initially focusing on H.264 and H.265 codecs), and make the output available for download.
+    *   [x] The engine will report its status (idle, transcoding, error) to the dispatch server.
+    *   [x] Integrate cJSON for parsing job details.
 
 2.  **Transcoding Dispatch Server (Python/Go):**
-    *   Develop a server with a REST API.
-    *   The API will have endpoints for:
+    *   [x] Develop a server with a REST API.
+    *   [x] The API will have endpoints for:
         *   Submitting a transcoding job.
         *   Querying the status of a job.
         *   Listing available transcoding engines.
         *   A "heartbeat" endpoint for engines to report their status.
-    *   The server will maintain a queue of transcoding jobs.
-    *   The server will assign jobs to available engines.
-    *   Implement configurable storage pools for transcoded content.
-    *   Implement persistent storage for tracking transcoding job states and submitted media.
+    *   [x] The server will maintain a queue of transcoding jobs.
+    *   [x] The server will assign jobs to available engines.
+    *   [x] Implement configurable storage pools for transcoded content.
+    *   [x] Implement persistent storage for tracking transcoding job states and submitted media.
 
 3.  **Submission Client (Python):**
-    *   Develop a simple command-line tool to:
+    *   [x] Develop a simple command-line tool to:
         *   Submit a video file for transcoding.
         *   Check the status of a job.
         *   Download the transcoded file.
+    *   [x] Retrieve the detailed status of ongoing transcoding jobs from the central server.
+    *   [x] Retrieve the status of the collective pool of transcoding endpoints (compute nodes) from the central server.
 
 **Phase 2: Advanced Features**
 
