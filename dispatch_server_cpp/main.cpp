@@ -290,8 +290,8 @@ int main() {
         res.set_content("Storage pool configuration to be implemented.", "text/plain");
     });
 
-    std::cout << "Dispatch Server listening on port 8000" << std::endl;
-    svr.listen("0.0.0.0", 8000);
+    std::cout << "Dispatch Server listening on port 8080" << std::endl;
+    svr.listen("0.0.0.0", 8080);
 
     // Save state on shutdown (this part might not be reached cleanly on SIGINT)
     save_state();

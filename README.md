@@ -29,7 +29,7 @@ This project will be developed in phases, starting with a minimal viable product
     *   [x] The engine will report its status (idle, transcoding, error) to the dispatch server.
     *   [x] Integrate cJSON for parsing job details.
 
-2.  **Transcoding Dispatch Server (Python/Go):**
+2.  **Transcoding Dispatch Server (C++ - NEW PRIMARY):**
     *   [x] Develop a server with a REST API.
     *   [x] The API will have endpoints for:
         *   Submitting a transcoding job.
@@ -40,14 +40,12 @@ This project will be developed in phases, starting with a minimal viable product
     *   [x] The server will assign jobs to available engines.
     *   [x] Implement configurable storage pools for transcoded content.
     *   [x] Implement persistent storage for tracking transcoding job states and submitted media.
+    *   [x] Port the central server to C++.
 
-3.  **Submission Client (Python):**
-    *   [x] Develop a simple command-line tool to:
-        *   Submit a video file for transcoding.
-        *   Check the status of a job.
-        *   Download the transcoded file.
-    *   [x] Retrieve the detailed status of ongoing transcoding jobs from the central server.
-    *   [x] Retrieve the status of the collective pool of transcoding endpoints (compute nodes) from the central server.
+3.  **Submission Client (C++ - NEW PRIMARY):**
+    *   [x] Implement a C++ console client to submit jobs, retrieve status, list all jobs, list all engines, and retrieve locally submitted job results.
+    *   [x] Enhance the C++ console client for improved user experience (interactive menu, clearer output, input validation).
+    *   *Note: This is a console-based client. A full graphical user interface (GUI) would be a separate, more extensive task.* 
 
 **Phase 2: Advanced Features**
 
@@ -77,18 +75,12 @@ This project will be developed in phases, starting with a minimal viable product
 
 ## New Features (Post-MVP)
 
-1.  **Submission Client (C++ Desktop):**
-    *   [x] Implement a C++ console client to submit jobs, retrieve status, list all jobs, list all engines, and retrieve locally submitted job results.
-
-2.  **Transcoding Engine (CPU Temperature):**
+1.  **Transcoding Engine (CPU Temperature):**
     *   [x] Implement CPU temperature reporting (Linux, FreeBSD, Windows).
     *   [x] Plan for GPU temperature reporting in the future.
 
-3.  **Transcoding Engine (Local Job Queue):**
+2.  **Transcoding Engine (Local Job Queue):**
     *   [x] Implement local job queue reporting from transcoding engine to dispatch server.
-
-4.  **Central Server (C++):**
-    *   [x] Port the central server to C++.
 
 ## Protocol Selection
 
@@ -128,7 +120,7 @@ We need a reliable and efficient protocol for communication between the componen
 
 **2. Transcoding Dispatch Server**
 
-*   **Language:** Python with FastAPI or Go with the standard library.
+*   **Language:** C++
 *   **Functionality:**
     *   Manages a list of transcoding engines and their status.
     *   Maintains a queue of transcoding jobs.
@@ -139,7 +131,7 @@ We need a reliable and efficient protocol for communication between the componen
 
 **3. Submission Client**
 
-*   **Language:** Python
+*   **Language:** C++
 *   **Functionality:**
     *   Command-line interface for submitting jobs.
     *   Can be used to query job status.
@@ -153,31 +145,13 @@ Each component will have its own set of unit and integration tests.
     *   **Unit Tests:** Test individual functions (e.g., parsing job parameters, executing `ffmpeg`).
     *   **Integration Tests:** Test the full workflow of receiving a job, transcoding a video, and reporting completion. This will involve mocking the dispatch server.
 
-*   **Transcoding Dispatch Server** (Python - **DEPRECATED**):
-    *   [x] Manages a list of transcoding engines and their status.
-    *   [x] Maintains a queue of transcoding jobs.
-    *   [x] Assigns jobs to available engines.
-    *   [x] Tracks the status of each job.
-    *   [x] Handles storage of source and transcoded videos.
-    *   [x] Provides a REST API (Phase 1) or gRPC service (Phase 2) for clients and engines.
+*   **Transcoding Dispatch Server:**
+    *   **Unit Tests:** Test individual API endpoints and business logic (e.g., job queueing, engine selection).
+    *   **Integration Tests:** Test the interaction with the transcoding engine and submission client. This will involve running a real (or mocked) transcoding engine.
 
-*   **Transcoding Dispatch Server** (C++ - **NEW PRIMARY**):
-    *   [x] Manages a list of transcoding engines and their status.
-    *   [x] Maintains a queue of transcoding jobs.
-    *   [x] Assigns jobs to available engines.
-    *   [x] Tracks the status of each job.
-    *   [x] Handles storage of source and transcoded videos.
-    *   [x] Provides a REST API (Phase 1) or gRPC service (Phase 2) for clients and engines.
-
-*   **Submission Client** (Python - **DEPRECATED**):
-    *   [x] Command-line interface for submitting jobs.
-    *   [x] Can be used to query job status.
-    *   [x] Downloads the final transcoded video.
-
-*   **Submission Client** (C++ - **NEW PRIMARY**):
-    *   [x] Command-line interface for submitting jobs.
-    *   [x] Can be used to query job status.
-    *   [x] Downloads the final transcoded video.
+*   **Submission Client:**
+    *   **Unit Tests:** Test command-line argument parsing and API client logic.
+    *   **Integration Tests:** Test the full workflow of submitting a job and downloading the result against a running dispatch server.
 
 ## Protocol Documentation
 

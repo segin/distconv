@@ -95,54 +95,83 @@ void listAllEngines() {
     }
 }
 
-int main(int argc, char* argv[]) {
-    if (argc < 2) {
-        std::cout << "Usage: " << argv[0] << " <command> [args...]" << std::endl;
-        std::cout << "Commands:" << std::endl;
-        std::cout << "  submit <source_url> <target_codec> <job_size> [max_retries]" << std::endl;
-        std::cout << "  status <job_id>" << std::endl;
-        std::cout << "  list_jobs" << std::endl;
-        std::cout << "  list_engines" << std::endl;
-        std::cout << "  retrieve_local_jobs" << std::endl;
-        return 1;
-    }
+int main() {
+    std::string command;
+    std::string input;
 
-    std::string command = argv[1];
+    while (true) {
+        std::cout << "\nSelect an option:" << std::endl;
+        std::cout << "1. Submit a new transcoding job\n";
+        std::cout << "2. Get status of a job\n";
+        std::cout << "3. List all jobs\n";
+        std::cout << "4. List all engines\n";
+        std::cout << "5. Retrieve locally submitted jobs\n";
+        std::cout << "6. Exit\n";
+        std::cout << "> ";
+        std::getline(std::cin, input);
 
-    if (command == "submit") {
-        if (argc < 5) {
-            std::cerr << "Usage: " << argv[0] << " submit <source_url> <target_codec> <job_size> [max_retries]" << std::endl;
-            return 1;
-        }
-        std::string source_url = argv[2];
-        std::string target_codec = argv[3];
-        double job_size = std::stod(argv[4]);
-        int max_retries = (argc > 5) ? std::stoi(argv[5]) : 3;
-        submitJob(source_url, target_codec, job_size, max_retries);
-    } else if (command == "status") {
-        if (argc < 3) {
-            std::cerr << "Usage: " << argv[0] << " status <job_id>" << std::endl;
-            return 1;
-        }
-        getJobStatus(argv[2]);
-    } else if (command == "list_jobs") {
-        listAllJobs();
-    } else if (command == "list_engines") {
-        listAllEngines();
-    } else if (command == "retrieve_local_jobs") {
-        std::vector<std::string> job_ids = loadJobIds();
-        if (job_ids.empty()) {
-            std::cout << "No locally submitted job IDs found." << std::endl;
-        } else {
-            std::cout << "Locally submitted job IDs:" << std::endl;
-            for (const std::string& id : job_ids) {
-                std::cout << "- " << id << std::endl;
-                getJobStatus(id); // Also fetch status for each locally stored job
+        try {
+            int choice = std::stoi(input);
+            switch (choice) {
+                case 1: {
+                    std::string source_url, target_codec;
+                    double job_size;
+                    int max_retries;
+
+                    std::cout << "Enter source URL: ";
+                    std::getline(std::cin, source_url);
+                    std::cout << "Enter target codec (e.g., h264, h265): ";
+                    std::getline(std::cin, target_codec);
+                    std::cout << "Enter job size (e.g., 100.5): ";
+                    std::getline(std::cin, input);
+                    job_size = std::stod(input);
+                    std::cout << "Enter max retries (default 3): ";
+                    std::getline(std::cin, input);
+                    max_retries = input.empty() ? 3 : std::stoi(input);
+
+                    submitJob(source_url, target_codec, job_size, max_retries);
+                    break;
+                }
+                case 2: {
+                    std::string job_id;
+                    std::cout << "Enter job ID: ";
+                    std::getline(std::cin, job_id);
+                    getJobStatus(job_id);
+                    break;
+                }
+                case 3:
+                    listAllJobs();
+                    break;
+                case 4:
+                    listAllEngines();
+                    break;
+                case 5: {
+                    std::vector<std::string> job_ids = loadJobIds();
+                    if (job_ids.empty()) {
+                        std::cout << "No locally submitted job IDs found." << std::endl;
+                    } else {
+                        std::cout << "Locally submitted job IDs:" << std::endl;
+                        for (const std::string& id : job_ids) {
+                            std::cout << "- " << id << std::endl;
+                            getJobStatus(id); // Also fetch status for each locally stored job
+                        }
+                    }
+                    break;
+                }
+                case 6:
+                    std::cout << "Exiting..." << std::endl;
+                    return 0;
+                default:
+                    std::cout << "Invalid choice. Please try again." << std::endl;
+                    break;
             }
+        } catch (const std::invalid_argument& e) {
+            std::cerr << "Invalid input. Please enter a number for your choice or a valid numeric value for job size/retries." << std::endl;
+        } catch (const std::out_of_range& e) {
+            std::cerr << "Input out of range." << std::endl;
+        } catch (const std::exception& e) {
+            std::cerr << "An unexpected error occurred: " << e.what() << std::endl;
         }
-    } else {
-        std::cerr << "Unknown command: " << command << std::endl;
-        return 1;
     }
 
     return 0;
