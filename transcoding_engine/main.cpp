@@ -29,6 +29,27 @@ void performTranscoding(const std::string& job_id, const std::string& source_url
     std::cout << "Finished transcoding for job " << job_id << std::endl;
 }
 
+// Function to perform a benchmark and return the duration
+double performBenchmark() {
+    std::cout << "Starting benchmark..." << std::endl;
+    auto start_time = std::chrono::high_resolution_clock::now();
+    // Simulate a benchmarking task (e.g., transcode a small, known file)
+    std::this_thread::sleep_for(std::chrono::seconds(5)); 
+    auto end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> duration = end_time - start_time;
+    std::cout << "Benchmark finished in " << duration.count() << " seconds." << std::endl;
+    return duration.count();
+}
+
+// Function to send benchmark results to dispatch server
+void sendBenchmarkResult(const std::string& dispatchServerUrl, const std::string& engineId, double benchmark_time) {
+    std::string command = "curl -X POST " + dispatchServerUrl + "/engines/benchmark_result "
+                          "-H "Content-Type: application/json" "
+                          "-d '{"engine_id": "" + engineId + "", "benchmark_time": " + std::to_string(benchmark_time) + "}'";
+    std::cout << "Sending benchmark result: " << command << std::endl;
+    // system(command.c_str()); // Execute the command
+}
+
 int main() {
     std::cout << "Transcoding Engine Starting..." << std::endl;
 
@@ -45,6 +66,16 @@ int main() {
         }
     });
     heartbeatThread.detach(); // Detach to run in background
+
+    // Start benchmarking thread
+    std::thread benchmarkThread([&]() {
+        while (true) {
+            double benchmark_time = performBenchmark();
+            sendBenchmarkResult(dispatchServerUrl, engineId, benchmark_time);
+            std::this_thread::sleep_for(std::chrono::minutes(5)); // Run benchmark every 5 minutes
+        }
+    });
+    benchmarkThread.detach(); // Detach to run in background
 
     // Main loop for listening for jobs (placeholder)
     std::cout << "Engine " << engineId << " is idle, waiting for jobs..." << std::endl;
