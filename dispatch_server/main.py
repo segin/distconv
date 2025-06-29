@@ -32,6 +32,7 @@ class TranscodingEngine(BaseModel):
     storage_capacity_gb: float
     last_heartbeat: float # Unix timestamp
     benchmark_time: Optional[float] = None # New field for benchmarking
+    streaming_support: bool = False # New field for streaming support
 
 class SubmitJobRequest(BaseModel):
     source_url: str
@@ -43,6 +44,7 @@ class EngineHeartbeat(BaseModel):
     engine_id: str
     status: str
     storage_capacity_gb: float
+    streaming_support: bool = False
 
 class BenchmarkResult(BaseModel):
     engine_id: str
@@ -104,6 +106,7 @@ async def list_engines():
 async def engine_heartbeat(heartbeat: EngineHeartbeat):
     engine_id = heartbeat.engine_id
     engines_db[engine_id] = heartbeat.dict()
+    engines_db[engine_id]["last_heartbeat"] = heartbeat.last_heartbeat # Ensure timestamp is updated
     save_state()
     return {"message": f"Heartbeat received from engine {engine_id}"}
 
@@ -170,17 +173,25 @@ async def assign_job():
     # This is a basic implementation and can be improved with more sophisticated scheduling algorithms.
     available_engines.sort(key=lambda x: x["benchmark_time"])
 
-    # Determine job size category (e.g., small, medium, large)
-    # For now, a simple threshold. This would be more dynamic in a real system.
-    job_size = pending_job.get("job_size", 0) # Default to 0 if not provided
-    
-    selected_engine = None
-    if job_size < 50: # Example threshold for "small" jobs
-        # Assign small jobs to slower engines (larger benchmark_time)
-        selected_engine = available_engines[-1] # Last one is slowest
+    # Prioritize engines with streaming support for larger jobs
+    # This is a simplified logic. In a real system, this would be more nuanced.
+    large_job_threshold = 100 # Example threshold for a "large" job
+    if pending_job.get("job_size", 0) >= large_job_threshold:
+        streaming_capable_engines = [e for e in available_engines if e.get("streaming_support")]
+        if streaming_capable_engines:
+            # Sort streaming capable engines by benchmark_time
+            streaming_capable_engines.sort(key=lambda x: x["benchmark_time"])
+            selected_engine = streaming_capable_engines[0] # Fastest streaming engine
+        else:
+            # Fallback to fastest available engine if no streaming capable engine is found
+            selected_engine = available_engines[0]
     else:
-        # Assign larger jobs to faster engines (smaller benchmark_time)
-        selected_engine = available_engines[0] # First one is fastest
+        # For smaller jobs, use the existing logic (assign smaller jobs to slower systems, larger to faster)
+        job_size = pending_job.get("job_size", 0) # Default to 0 if not provided
+        if job_size < 50: # Example threshold for "small" jobs
+            selected_engine = available_engines[-1] # Last one is slowest
+        else:
+            selected_engine = available_engines[0] # First one is fastest
 
     if not selected_engine:
         return {"message": "Could not find a suitable engine for the job."}
