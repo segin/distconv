@@ -1,78 +1,60 @@
 #include <iostream>
 #include <string>
-#include <chrono>
 #include <thread>
-#include <cpr/cpr.h>
-#include <nlohmann/json.hpp>
+#include <chrono>
+#include <cstdlib> // For system()
+#include <random> // For random engine ID
 
-using json = nlohmann::json;
+// For HTTP requests (using system curl for simplicity)
+// In a real application, a proper C++ HTTP client library would be used.
 
-const std::string DISPATCH_SERVER_URL = "http://127.0.0.1:8000";
-const std::string ENGINE_ID = "engine-1";
-const int STORAGE_CAPACITY = 1024; // in MB
-
-void register_engine() {
-    cpr::Response r = cpr::Post(cpr::Url{DISPATCH_SERVER_URL + "/engine/register"},
-                                cpr::Payload{{"engine_id", ENGINE_ID},
-                                             {"storage_capacity", std::to_string(STORAGE_CAPACITY)}});
-    std::cout << "Registering engine: " << r.text << std::endl;
+// Function to send heartbeat to dispatch server
+void sendHeartbeat(const std::string& dispatchServerUrl, const std::string& engineId, double storageCapacityGb) {
+    std::string command = "curl -X POST " + dispatchServerUrl + "/engines/heartbeat "
+                          "-H "Content-Type: application/json" "
+                          "-d '{"engine_id": "" + engineId + "", "status": "idle", "storage_capacity_gb": " + std::to_string(storageCapacityGb) + "}'";
+    std::cout << "Sending heartbeat: " << command << std::endl;
+    // system(command.c_str()); // Execute the command
 }
 
-void send_heartbeat(const std::string& status) {
-    cpr::Response r = cpr::Post(cpr::Url{DISPATCH_SERVER_URL + "/engine/heartbeat"},
-                                cpr::Payload{{"engine_id", ENGINE_ID},
-                                             {"status", status}});
-    std::cout << "Sending heartbeat: " << r.text << std::endl;
-}
-
-void process_job(const json& job) {
-    std::string job_id = job["id"];
-    std::string source_file_path = job["source_file_path"];
-    std::string output_file_path = "transcoded_" + job_id + ".mp4";
-
-    std::cout << "Processing job " << job_id << std::endl;
-    std::cout << "Source file: " << source_file_path << std::endl;
-
-    // Simulate download
-    std::cout << "Downloading file..." << std::endl;
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-
-    // Simulate transcoding
-    std::cout << "Transcoding file..." << std::endl;
-    std::string ffmpeg_command = "ffmpeg -i " + source_file_path + " " + output_file_path;
-    std::cout << "Running command: " << ffmpeg_command << std::endl;
-    // In a real implementation, we would run the command here
-    // For now, we just simulate the time it takes
-    std::this_thread::sleep_for(std::chrono::seconds(10));
-
-    std::cout << "Transcoding complete." << std::endl;
-
-    // Notify server
-    cpr::Response r = cpr::Post(cpr::Url{DISPATCH_SERVER_URL + "/job/complete"},
-                                cpr::Payload{{"job_id", job_id},
-                                             {"output_file_path", output_file_path}});
-    std::cout << "Notifying server: " << r.text << std::endl;
-}
-
-void poll_for_jobs() {
-    while (true) {
-        send_heartbeat("idle");
-        cpr::Response r = cpr::Get(cpr::Url{DISPATCH_SERVER_URL + "/job/next"});
-        if (r.status_code == 200 && !r.text.empty()) {
-            try {
-                json job = json::parse(r.text);
-                send_heartbeat("transcoding");
-                process_job(job);
-            } catch (const json::parse_error& e) {
-                std::cerr << "Error parsing JSON response: " << e.what() << std::endl;
-            }
-        }
-        std::this_thread::sleep_for(std::chrono::seconds(5));
-    }
+// Placeholder for transcoding logic
+void performTranscoding(const std::string& job_id, const std::string& source_url, const std::string& target_codec) {
+    std::cout << "Starting transcoding for job " << job_id << ": " << source_url << " to " << target_codec << std::endl;
+    // In a real scenario, this would involve:
+    // 1. Downloading the source video from source_url
+    // 2. Executing ffmpeg: system("ffmpeg -i " + source_file + " -c:v " + target_codec + " output.mp4");
+    // 3. Uploading the transcoded file to the dispatch server or a storage pool
+    // 4. Reporting job completion/failure to the dispatch server
+    std::this_thread::sleep_for(std::chrono::seconds(10)); // Simulate transcoding time
+    std::cout << "Finished transcoding for job " << job_id << std::endl;
 }
 
 int main() {
-    register_engine();
-    poll_for_jobs();
+    std::cout << "Transcoding Engine Starting..." << std::endl;
+
+    // Configuration
+    std::string dispatchServerUrl = "http://localhost:8000"; // Assuming dispatch server runs on localhost:8000
+    std::string engineId = "engine-" + std::to_string(std::random_device{}() % 10000); // Unique ID for this engine
+    double storageCapacityGb = 500.0; // Example storage capacity
+
+    // Start heartbeat thread
+    std::thread heartbeatThread([&]() {
+        while (true) {
+            sendHeartbeat(dispatchServerUrl, engineId, storageCapacityGb);
+            std::this_thread::sleep_for(std::chrono::seconds(5)); // Send heartbeat every 5 seconds
+        }
+    });
+    heartbeatThread.detach(); // Detach to run in background
+
+    // Main loop for listening for jobs (placeholder)
+    std::cout << "Engine " << engineId << " is idle, waiting for jobs..." << std::endl;
+    while (true) {
+        // In a real implementation, this would involve:
+        // 1. Polling the dispatch server for new jobs
+        // 2. Receiving a job via an API call
+        // 3. Calling performTranscoding()
+        std::this_thread::sleep_for(std::chrono::seconds(1)); // Simulate polling interval
+    }
+
     return 0;
 }

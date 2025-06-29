@@ -1,11 +1,10 @@
 cmake_minimum_required(VERSION 3.10)
-project(transcoding_engine)
+project(TranscodingEngine CXX)
 
 set(CMAKE_CXX_STANDARD 17)
-
-add_subdirectory(../../third_party/cpr)
-add_subdirectory(../../third_party/json)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 add_executable(transcoding_engine main.cpp)
 
-target_link_libraries(transcoding_engine PRIVATE cpr::cpr nlohmann_json::nlohmann_json)
+# Link with necessary libraries (e.g., curl if using a proper library)
+# target_link_libraries(transcoding_engine curl)
