@@ -64,7 +64,7 @@ This project will be developed in phases, starting with a minimal viable product
 **Phase 3: Security and Scalability**
 
 1.  **Security:**
-    *   [ ] Implement authentication and authorization for the dispatch server API.
+    *   [x] Implement authentication and authorization for the dispatch server API.
     *   [ ] Encrypt communication between the components. (Acknowledged as a critical future enhancement, but beyond current MVP scope due to complexity of full TLS implementation across components.)
 
 2.  **Scalability:**
@@ -74,9 +74,16 @@ This project will be developed in phases, starting with a minimal viable product
 
 ## New Features (Post-MVP)
 
-1.  **Submission Client (C++ Desktop):**
-    *   [x] Implement a C++ GUI client using wxWidgets to submit jobs, retrieve status, list all jobs, list all engines, and retrieve locally submitted job results.
-    *   *Note: This is a console-based client. A full graphical user interface (GUI) would be a separate, more extensive task.*
+1.  **Submission Client (C++ Desktop GUI):**
+    *   [ ] Implement a C++ GUI client using wxWidgets to submit jobs, retrieve status, list all jobs, list all engines, and retrieve locally submitted job results.
+        *   [ ] Design and implement the main window with three tabs: "My Jobs", "All Jobs", and "Endpoints".
+        *   [ ] For "My Jobs" and "All Jobs" tabs: Implement a split view with an info box for the selected job and a list of jobs.
+        *   [ ] For "Endpoints" tab: Implement a split view with a list of endpoints on the left and, for the selected endpoint, a list of jobs on the selected endpoint.
+        *   [ ] Implement right-click context menus for relevant items (e.g., jobs, endpoints).
+        *   [ ] Implement top-level menu actions (e.g., File, Edit, View, Help).
+        *   [ ] Implement a configuration dialog for Dispatch Server URL, API Key, and CA Certificate Path.
+        *   [ ] Implement an "About" dialog.
+        *   [ ] Implement a "Help" dialog/section.
 
 2.  **Transcoding Engine (CPU Temperature):**
     *   [x] Implement CPU temperature reporting (Linux, FreeBSD, Windows).
@@ -87,11 +94,45 @@ This project will be developed in phases, starting with a minimal viable product
 
 4.  **TLS/SSL Implementation:**
     *   [ ] Implement TLS/SSL for secure communication between all components.
+        *   [ ] Generate self-signed certificates (server.key, server.crt).
+        *   [ ] Implement TLS in C++ Central Server (`httplib::SSLServer`).
+        *   [ ] Implement TLS in C++ Transcoding Engine (using `libcurl` with `--cacert`).
+        *   [ ] Implement TLS in C++ Submission Client (using `cpr` with `cpr::VerifySsl`).
 
 5.  **Unit Testing:**
-    *   [ ] Implement unit tests for the C++ submission client.
-    *   [ ] Implement unit tests for the C++ central server.
-    *   [ ] Implement unit tests for the C++ transcoding engine.
+    *   [ ] Implement a comprehensive unit testing framework (e.g., Google Test).
+    *   [ ] Write unit tests for the C++ submission client.
+    *   [ ] Write unit tests for the C++ central server.
+    *   [ ] Write unit tests for the C++ transcoding engine.
+    *   [ ] Integrate Valgrind into the testing process for memory leak detection.
+
+## Future Enhancements:
+
+### Transcoding Engine:
+*   [ ] **Granular Progress Reporting:** Implement more detailed progress updates from the engine to the central server (e.g., percentage complete, estimated time remaining).
+*   [ ] **Comprehensive Resource Monitoring:** Beyond CPU temperature, report on RAM usage, disk I/O, and GPU utilization (if applicable).
+*   [ ] **Dynamic `ffmpeg` Parameter Adjustment:** Allow the central server to dynamically adjust `ffmpeg` parameters for a job based on real-time engine load or specific job requirements.
+*   [ ] **Local Caching:** Implement a local caching mechanism for frequently accessed source or transcoded files to reduce network overhead.
+
+### Central Server:
+*   [ ] **Database Integration:** Replace the current file-based persistent storage with a robust database solution (e.g., PostgreSQL, MySQL) for improved scalability, reliability, and query capabilities.
+*   [ ] **Advanced Scheduling Algorithms:** Develop more sophisticated job scheduling that considers network latency, historical engine performance, and job deadlines.
+*   [ ] **User Management and Roles:** Implement a system for user authentication and authorization, allowing different levels of access and control.
+*   [ ] **Job Prioritization:** Allow users to assign priorities to their transcoding jobs, influencing their position in the processing queue.
+*   [ ] **Notification System:** Integrate a notification system to alert users about job completion, failure, or significant engine status changes (e.g., email, webhooks).
+
+### Submission Client (GUI):
+*   [ ] **Drag-and-Drop File Submission:** Enable users to easily submit files by dragging and dropping them onto the application interface.
+*   [ ] **Visual Progress Indicators:** Display real-time progress bars and visual cues for ongoing transcoding jobs.
+*   [ ] **Real-time Data Updates:** Ensure job and engine lists update automatically without manual refreshing.
+*   [ ] **Filtering and Sorting:** Provide options to filter and sort job and engine lists based on various criteria.
+*   [ ] **Detailed Information Panels:** Enhance the information display for selected jobs and endpoints, showing all relevant metrics and metadata.
+*   [ ] **Batch Job Submission:** Allow users to submit multiple transcoding jobs simultaneously.
+*   [ ] **Pre-defined Transcoding Profiles:** Enable users to select from a set of pre-configured transcoding settings.
+
+### General System Improvements:
+*   [ ] **Centralized Logging and Monitoring:** Implement a unified logging and monitoring solution (e.g., integration with ELK stack, Prometheus/Grafana) for better system observability.
+*   [ ] **Configuration Management:** Develop a centralized system for managing and distributing configuration settings across all components.
 
 ## Protocol Selection
 
