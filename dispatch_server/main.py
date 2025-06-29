@@ -1,9 +1,18 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
 from typing import Dict, List, Optional
 import uuid
 import os
 import json
+
+API_KEY = "your-super-secret-api-key"  # In a real app, load this securely (e.g., from environment variables)
+api_key_header = APIKeyHeader(name="X-API-Key")
+
+async def get_api_key(api_key: str = Depends(api_key_header)):
+    if api_key == API_KEY:
+        return api_key
+    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API Key")
 
 app = FastAPI()
 
@@ -73,7 +82,7 @@ async def startup_event():
 async def shutdown_event():
     save_state()
 
-@app.post("/jobs/")
+@app.post("/jobs/", dependencies=[Depends(get_api_key)])
 async def submit_job(request: SubmitJobRequest):
     job_id = str(uuid.uuid4())
     job = TranscodingJob(
@@ -87,22 +96,22 @@ async def submit_job(request: SubmitJobRequest):
     save_state()
     return {"message": "Job submitted successfully", "job_id": job_id}
 
-@app.get("/jobs/{job_id}")
+@app.get("/jobs/{job_id}", dependencies=[Depends(get_api_key)])
 async def get_job_status(job_id: str):
     job = jobs_db.get(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     return job
 
-@app.get("/jobs/")
+@app.get("/jobs/", dependencies=[Depends(get_api_key)])
 async def list_all_jobs():
     return list(jobs_db.values())
 
-@app.get("/engines/")
+@app.get("/engines/", dependencies=[Depends(get_api_key)])
 async def list_engines():
     return list(engines_db.values())
 
-@app.post("/engines/heartbeat")
+@app.post("/engines/heartbeat", dependencies=[Depends(get_api_key)])
 async def engine_heartbeat(heartbeat: EngineHeartbeat):
     engine_id = heartbeat.engine_id
     engines_db[engine_id] = heartbeat.dict()
@@ -110,7 +119,7 @@ async def engine_heartbeat(heartbeat: EngineHeartbeat):
     save_state()
     return {"message": f"Heartbeat received from engine {engine_id}"}
 
-@app.post("/engines/benchmark_result")
+@app.post("/engines/benchmark_result", dependencies=[Depends(get_api_key)])
 async def engine_benchmark_result(result: BenchmarkResult):
     engine_id = result.engine_id
     if engine_id not in engines_db:
@@ -119,7 +128,7 @@ async def engine_benchmark_result(result: BenchmarkResult):
     save_state()
     return {"message": f"Benchmark result received from engine {engine_id}"}
 
-@app.post("/jobs/{job_id}/complete")
+@app.post("/jobs/{job_id}/complete", dependencies=[Depends(get_api_key)])
 async def complete_job(job_id: str, output_url: str):
     job = jobs_db.get(job_id)
     if not job:
@@ -129,7 +138,7 @@ async def complete_job(job_id: str, output_url: str):
     save_state()
     return {"message": f"Job {job_id} marked as completed"}
 
-@app.post("/jobs/{job_id}/fail")
+@app.post("/jobs/{job_id}/fail", dependencies=[Depends(get_api_key)])
 async def fail_job(job_id: str, error_message: str):
     job = jobs_db.get(job_id)
     if not job:
@@ -147,7 +156,7 @@ async def fail_job(job_id: str, error_message: str):
     save_state()
     return {"message": f"Job {job_id} status updated to {job["status"]}"}
 
-@app.post("/assign_job/")
+@app.post("/assign_job/", dependencies=[Depends(get_api_key)])
 async def assign_job():
     # Find a pending job
     pending_job = None
