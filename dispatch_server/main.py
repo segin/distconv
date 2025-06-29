@@ -29,6 +29,7 @@ class TranscodingEngine(BaseModel):
     status: str = "idle"
     storage_capacity_gb: float
     last_heartbeat: float # Unix timestamp
+    benchmark_time: Optional[float] = None # New field for benchmarking
 
 class SubmitJobRequest(BaseModel):
     source_url: str
@@ -38,6 +39,10 @@ class EngineHeartbeat(BaseModel):
     engine_id: str
     status: str
     storage_capacity_gb: float
+
+class BenchmarkResult(BaseModel):
+    engine_id: str
+    benchmark_time: float
 
 def load_state():
     if os.path.exists(PERSISTENT_STORAGE_FILE):
@@ -91,6 +96,15 @@ async def engine_heartbeat(heartbeat: EngineHeartbeat):
     engines_db[engine_id] = heartbeat.dict()
     save_state()
     return {"message": f"Heartbeat received from engine {engine_id}"}
+
+@app.post("/engines/benchmark_result")
+async def engine_benchmark_result(result: BenchmarkResult):
+    engine_id = result.engine_id
+    if engine_id not in engines_db:
+        raise HTTPException(status_code=404, detail="Engine not found")
+    engines_db[engine_id]["benchmark_time"] = result.benchmark_time
+    save_state()
+    return {"message": f"Benchmark result received from engine {engine_id}"}
 
 @app.post("/jobs/{job_id}/complete")
 async def complete_job(job_id: str, output_url: str):
