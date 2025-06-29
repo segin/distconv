@@ -52,8 +52,8 @@ This project will be developed in phases, starting with a minimal viable product
 **Phase 2: Advanced Features**
 
 1.  **Streaming:**
-    *   Implement streaming of source video to the transcoding engine and streaming of the output back to the dispatch server. This will be used when the engine has limited local storage.
-    *   The dispatch server will decide whether to use streaming or file transfer based on the engine's reported storage capacity.
+    *   [x] Implement streaming of source video to the transcoding engine and streaming of the output back to the dispatch server. This will be used when the engine has limited local storage.
+    *   [x] The dispatch server will decide whether to use streaming or file transfer based on the engine's reported storage capacity.
 
 2.  **Job Resubmission:**
     *   [x] The dispatch server will monitor job progress.
@@ -61,8 +61,8 @@ This project will be developed in phases, starting with a minimal viable product
     *   [x] A maximum number of retries will be configured to prevent infinite loops.
 
 3.  **Improved Scheduling:**
-    *   The dispatch server will use more sophisticated logic to assign jobs, taking into account engine performance and load.
-    *   Implement benchmarking of transcoding endpoints. The dispatch server will trigger benchmarking tasks on engines, which will execute them and report completion speeds back to the server. This data will then be used for optimized job assignment (smaller jobs to slower systems, larger jobs to faster systems).
+    *   [x] The dispatch server will use more sophisticated logic to assign jobs, taking into account engine performance and load.
+    *   [x] Implement benchmarking of transcoding endpoints. The dispatch server will trigger benchmarking tasks on engines, which will execute them and report completion speeds back to the server. This data will then be used for optimized job assignment (smaller jobs to slower systems, larger jobs to faster systems).
 
 **Phase 3: Security and Scalability**
 
