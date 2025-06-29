@@ -50,6 +50,25 @@ void sendBenchmarkResult(const std::string& dispatchServerUrl, const std::string
     // system(command.c_str()); // Execute the command
 }
 
+// Function to get a job from the dispatch server
+std::string getJob(const std::string& dispatchServerUrl, const std::string& engineId) {
+    std::string command = "curl -X POST " + dispatchServerUrl + "/assign_job/ "
+                          "-H \"Content-Type: application/json\" "
+                          "-d '{\"engine_id\": \"" + engineId + "\"}'";
+    
+    // In a real scenario, this would involve parsing the JSON response to get job details.
+    // For now, we'll just simulate getting a job.
+    // system(command.c_str()); // Execute the command
+    
+    // Simulate a job being returned
+    static int job_counter = 0;
+    if (job_counter < 2) { // Simulate getting 2 jobs then no more for a while
+        job_counter++;
+        return "{\"job_id\": \"test_job_" + std::to_string(job_counter) + "\", \"source_url\": \"http://example.com/input.mp4\", \"target_codec\": \"h264\"}";
+    }
+    return ""; // No job available
+}
+
 int main() {
     std::cout << "Transcoding Engine Starting..." << std::endl;
 
@@ -77,14 +96,23 @@ int main() {
     });
     benchmarkThread.detach(); // Detach to run in background
 
-    // Main loop for listening for jobs (placeholder)
+    // Main loop for listening for jobs
     std::cout << "Engine " << engineId << " is idle, waiting for jobs..." << std::endl;
     while (true) {
-        // In a real implementation, this would involve:
-        // 1. Polling the dispatch server for new jobs
-        // 2. Receiving a job via an API call
-        // 3. Calling performTranscoding()
-        std::this_thread::sleep_for(std::chrono::seconds(1)); // Simulate polling interval
+        std::string job_json = getJob(dispatchServerUrl, engineId);
+        if (!job_json.empty()) {
+            // Parse job_json to extract job_id, source_url, target_codec
+            // For simplicity, we'll hardcode for now based on the simulated response
+            std::string job_id = "test_job_1"; // This needs to be parsed from job_json
+            std::string source_url = "http://example.com/input.mp4"; // This needs to be parsed from job_json
+            std::string target_codec = "h264"; // This needs to be parsed from job_json
+
+            // In a real implementation, you'd use a JSON parsing library (e.g., nlohmann/json)
+            // to extract these values from job_json.
+
+            performTranscoding(dispatchServerUrl, job_id, source_url, target_codec);
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(1)); // Poll for jobs every second
     }
 
     return 0;
