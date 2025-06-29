@@ -1,47 +1,57 @@
 import requests
 import argparse
+import json
 
-def submit_job(file_path: str):
-    url = "http://127.0.0.1:8000/job/submit"
-    with open(file_path, "rb") as f:
-        files = {"file": (file_path, f, "video/mp4")}
-        response = requests.post(url, files=files)
-    
-    if response.status_code == 200:
-        print("Job submitted successfully!")
-        print("Job ID:", response.json()["job_id"])
-    else:
-        print("Error submitting job:")
-        print(response.text)
+DISPATCH_SERVER_URL = "http://localhost:8000"
+
+def submit_job(source_url: str, target_codec: str):
+    url = f"{DISPATCH_SERVER_URL}/jobs/"
+    payload = {"source_url": source_url, "target_codec": target_codec}
+    try:
+        response = requests.post(url, json=payload)
+        response.raise_for_status()
+        print("Job submitted successfully:")
+        print(json.dumps(response.json(), indent=4))
+    except requests.exceptions.RequestException as e:
+        print(f"Error submitting job: {e}")
 
 def get_job_status(job_id: str):
-    url = f"http://127.0.0.1:8000/job/{job_id}/status"
-    response = requests.get(url)
-    if response.status_code == 200:
-        print("Job status:")
-        print(response.json())
-    else:
-        print("Error getting job status:")
-        print(response.text)
+    url = f"{DISPATCH_SERVER_URL}/jobs/{job_id}"
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        print(f"Status for job {job_id}:")
+        print(json.dumps(response.json(), indent=4))
+    except requests.exceptions.RequestException as e:
+        print(f"Error getting job status: {e}")
+
+def download_file(job_id: str, output_path: str):
+    # This is a placeholder. In a real scenario, the dispatch server would provide
+    # a direct URL to the transcoded file, or the client would request it from a storage service.
+    print(f"Downloading for job {job_id} to {output_path} is not yet implemented.")
+    print("The dispatch server needs to provide an output_url for the transcoded file.")
 
 def main():
-    parser = argparse.ArgumentParser(description="Submission client for the transcoding service.")
-    subparsers = parser.add_subparsers(dest="command")
-
-    # Sub-parser for submitting a job
-    parser_submit = subparsers.add_parser("submit", help="Submit a video for transcoding.")
-    parser_submit.add_argument("file", help="The path to the video file.")
-
-    # Sub-parser for checking job status
-    parser_status = subparsers.add_parser("status", help="Check the status of a transcoding job.")
-    parser_status.add_argument("job_id", help="The ID of the job.")
+    parser = argparse.ArgumentParser(description="Submission Client for Distributed Transcoding System")
+    parser.add_argument("--submit", action="store_true", help="Submit a new transcoding job")
+    parser.add_argument("--source_url", type=str, help="Source URL of the video file (with --submit)")
+    parser.add_argument("--target_codec", type=str, help="Target codec (e.g., H.264, H.265) (with --submit)")
+    parser.add_argument("--status", type=str, help="Get status of a job by job ID")
+    parser.add_argument("--download", type=str, help="Download transcoded file by job ID")
+    parser.add_argument("--output_path", type=str, help="Path to save the downloaded file (with --download)")
 
     args = parser.parse_args()
 
-    if args.command == "submit":
-        submit_job(args.file)
-    elif args.command == "status":
-        get_job_status(args.job_id)
+    if args.submit:
+        if not args.source_url or not args.target_codec:
+            parser.error("--submit requires --source_url and --target_codec")
+        submit_job(args.source_url, args.target_codec)
+    elif args.status:
+        get_job_status(args.status)
+    elif args.download:
+        if not args.output_path:
+            parser.error("--download requires --output_path")
+        download_file(args.download, args.output_path)
     else:
         parser.print_help()
 
