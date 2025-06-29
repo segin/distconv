@@ -45,11 +45,11 @@ std::string getFFmpegHWAccels() {
 
 // Function to send heartbeat to dispatch server
 // Function to send heartbeat to dispatch server
-void sendHeartbeat(const std::string& dispatchServerUrl, const std::string& engineId, double storageCapacityGb, bool streamingSupport, const std::string& encoders, const std::string& decoders, const std::string& hwaccels, double cpuTemperature) {
+void sendHeartbeat(const std::string& dispatchServerUrl, const std::string& engineId, double storageCapacityGb, bool streamingSupport, const std::string& encoders, const std::string& decoders, const std::string& hwaccels, double cpuTemperature, const std::string& localJobQueue) {
     std::string command = "curl -X POST " + dispatchServerUrl + "/engines/heartbeat "
                           "-H \"Content-Type: application/json\" "
-                          "-d '{\"engine_id\": \"" + engineId + "\", \"status\": \"idle\", \"storage_capacity_gb\": " + std::to_string(storageCapacityGb) + ", \"streaming_support\": " + (streamingSupport ? "true" : "false") + ", \"encoders\": \"" + encoders + "\", \"decoders\": \"" + decoders + "\", \"hwaccels\": \"" + hwaccels + "\", \"cpu_temperature\": " + std::to_string(cpuTemperature) + "}'";
-    std::cout << "Sending heartbeat: " << command << std::endl;
+                          "-d '{\"engine_id\": \"" + engineId + "\", \"status\": \"idle\", \"storage_capacity_gb\": " + std::to_string(storageCapacityGb) + ", \"streaming_support\": " + (streamingSupport ? "true" : "false") + ", \"encoders\": \"" + encoders + "\", \"decoders\": \"" + decoders + "\", \"hwaccels\": \"" + hwaccels + "\", \"cpu_temperature\": " + std::to_string(cpuTemperature) + ", \"local_job_queue\": " + localJobQueue + "}'";
+    std::cout << "Sending heartbeat: " + command << std::endl;
     // system(command.c_str()); // Execute the command
 }
 
@@ -103,14 +103,14 @@ double getCpuTemperature() {
 // Function to download a file
 bool downloadFile(const std::string& url, const std::string& output_path) {
     std::string command = "curl -o " + output_path + " " + url;
-    std::cout << "Downloading: " + command + std::endl;
+    std::cout << "Downloading: " << command << std::endl;
     int result = system(command.c_str());
     return result == 0;
 }
 
 // Function to upload a file (placeholder)
 bool uploadFile(const std::string& url, const std::string& file_path) {
-    std::cout << "Uploading " + file_path + " to " + url + " (placeholder)" + std::endl;
+    std::cout << "Uploading " << file_path << " to " << url << " (placeholder)" << std::endl;
     // In a real scenario, this would involve a proper HTTP PUT/POST or a dedicated upload mechanism.
     // For now, just simulate success.
     return true;
@@ -118,13 +118,13 @@ bool uploadFile(const std::string& url, const std::string& file_path) {
 
 // Placeholder for streaming transcoding logic
 void performStreamingTranscoding(const std::string& dispatchServerUrl, const std::string& job_id, const std::string& source_url, const std::string& target_codec) {
-    std::cout << "Starting streaming transcoding for job " + job_id + ": " + source_url + " to " + target_codec + std::endl;
+    std::cout << "Starting streaming transcoding for job " << job_id << ": " << source_url << " to " << target_codec << std::endl;
     // In a real scenario, this would involve:
     // 1. Setting up a streaming input from source_url (e.g., using ffmpeg's network capabilities)
     // 2. Executing ffmpeg to transcode and stream output back to dispatch server or storage
     // 3. Reporting progress/completion/failure via dispatch server API
     std::this_thread::sleep_for(std::chrono::seconds(15)); // Simulate streaming transcoding time
-    std::cout << "Finished streaming transcoding for job " + job_id + std::endl;
+    std::cout << "Finished streaming transcoding for job " << job_id << std::endl;
     reportJobStatus(dispatchServerUrl, job_id, "completed", "http://example.com/streamed_output/" + job_id + ".mp4");
 }
 
@@ -140,13 +140,13 @@ void reportJobStatus(const std::string& dispatchServerUrl, const std::string& jo
                   "-H \"Content-Type: application/json\" "
                   "-d '{\"error_message\": \"" + error_message + "\"}'";
     }
-    std::cout << "Reporting job status: " + command + std::endl;
+    std::cout << "Reporting job status: " << command << std::endl;
     system(command.c_str());
 }
 
 // Actual transcoding logic
 void performTranscoding(const std::string& dispatchServerUrl, const std::string& job_id, const std::string& source_url, const std::string& target_codec) {
-    std::cout << "Starting transcoding for job " + job_id + ": " + source_url + " to " + target_codec + std::endl;
+    std::cout << "Starting transcoding for job " << job_id << ": " << source_url << " to " << target_codec << std::endl;
 
     std::string input_file = "input_" + job_id + ".mp4";
     std::string output_file = "output_" + job_id + ".mp4";
@@ -159,7 +159,7 @@ void performTranscoding(const std::string& dispatchServerUrl, const std::string&
 
     // 2. Execute ffmpeg
     std::string ffmpeg_command = "ffmpeg -i " + input_file + " -c:v " + target_codec + " " + output_file;
-    std::cout << "Executing: " + ffmpeg_command + std::endl;
+    std::cout << "Executing: " << ffmpeg_command << std::endl;
     int ffmpeg_result = system(ffmpeg_command.c_str());
 
     if (ffmpeg_result != 0) {
@@ -177,7 +177,7 @@ void performTranscoding(const std::string& dispatchServerUrl, const std::string&
     // 4. Report job completion
     reportJobStatus(dispatchServerUrl, job_id, "completed", output_url);
 
-    std::cout << "Finished transcoding for job " + job_id + std::endl;
+    std::cout << "Finished transcoding for job " << job_id << std::endl;
 }
 
 // Function to perform a benchmark and return the duration
@@ -233,6 +233,9 @@ int main() {
     double storageCapacityGb = 500.0; // Example storage capacity
     bool streamingSupport = true; // This engine supports streaming
 
+    // Local job queue (simulated)
+    std::vector<std::string> localJobQueue;
+
     // Get ffmpeg capabilities
     std::string encoders = getFFmpegCapabilities("encoders");
     std::string decoders = getFFmpegCapabilities("decoders");
@@ -242,7 +245,17 @@ int main() {
     std::thread heartbeatThread([&]() {
         while (true) {
             double cpuTemperature = getCpuTemperature();
-            sendHeartbeat(dispatchServerUrl, engineId, storageCapacityGb, streamingSupport, encoders, decoders, hwaccels, cpuTemperature);
+            // Convert localJobQueue to JSON string
+            cJSON *queue_array = cJSON_CreateArray();
+            for (const std::string& job_id : localJobQueue) {
+                cJSON_AddItemToArray(queue_array, cJSON_CreateString(job_id.c_str()));
+            }
+            char *queue_str = cJSON_PrintUnformatted(queue_array);
+            std::string localJobQueueJson = queue_str;
+            cJSON_Delete(queue_array);
+            free(queue_str);
+
+            sendHeartbeat(dispatchServerUrl, engineId, storageCapacityGb, streamingSupport, encoders, decoders, hwaccels, cpuTemperature, localJobQueueJson);
             std::this_thread::sleep_for(std::chrono::seconds(5)); // Send heartbeat every 5 seconds
         }
     });
@@ -277,7 +290,14 @@ int main() {
                     std::string source_url = source_url_json->valuestring;
                     std::string target_codec = target_codec_json->valuestring;
 
+                    // Add job to local queue
+                    localJobQueue.push_back(job_id);
+
                     performTranscoding(dispatchServerUrl, job_id, source_url, target_codec);
+
+                    // Remove job from local queue after completion (or failure)
+                    localJobQueue.erase(std::remove(localJobQueue.begin(), localJobQueue.end(), job_id), localJobQueue.end());
+
                 } else {
                     std::cout << "Failed to parse job details from JSON: " << job_json << std::endl;
                 }
