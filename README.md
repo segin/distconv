@@ -75,6 +75,18 @@ This project will be developed in phases, starting with a minimal viable product
     *   [x] Consider using a more robust job queueing system (e.g., RabbitMQ, Kafka).
     *   [x] Report `ffmpeg` capabilities (encoders, decoders, hardware acceleration) from transcoding engines to the dispatch server.
 
+## New Features (Post-MVP)
+
+1.  **Submission Client (C++ Desktop):**
+    *   [ ] Implement a C++ console client to submit jobs, retrieve status, list all jobs, list all engines, and retrieve locally submitted job results.
+
+2.  **Transcoding Engine (CPU Temperature):**
+    *   [ ] Implement CPU temperature reporting (Linux, FreeBSD, Windows).
+    *   [ ] Plan for GPU temperature reporting in the future.
+
+3.  **Transcoding Engine (Local Job Queue):**
+    *   [ ] Implement local job queue reporting from transcoding engine to dispatch server.
+
 ## Protocol Selection
 
 We need a reliable and efficient protocol for communication between the components. Here's a comparison of the options:

@@ -72,6 +72,7 @@ class TranscodingEngine(BaseModel):
     encoders: Optional[str] = None
     decoders: Optional[str] = None
     hwaccels: Optional[str] = None
+    cpu_temperature: Optional[float] = None
 
 class SubmitJobRequest(BaseModel):
     source_url: str
@@ -87,6 +88,7 @@ class EngineHeartbeat(BaseModel):
     encoders: Optional[str] = None
     decoders: Optional[str] = None
     hwaccels: Optional[str] = None
+    cpu_temperature: Optional[float] = None
 
 class BenchmarkResult(BaseModel):
     engine_id: str
@@ -152,6 +154,7 @@ async def engine_heartbeat(heartbeat: EngineHeartbeat):
     engines_db[engine_id]["encoders"] = heartbeat.encoders
     engines_db[engine_id]["decoders"] = heartbeat.decoders
     engines_db[engine_id]["hwaccels"] = heartbeat.hwaccels
+    engines_db[engine_id]["cpu_temperature"] = heartbeat.cpu_temperature
     save_state()
     return {"message": f"Heartbeat received from engine {engine_id}"}
 

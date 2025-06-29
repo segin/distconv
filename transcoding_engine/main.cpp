@@ -4,6 +4,7 @@
 #include <chrono>
 #include <cstdlib> // For system()
 #include <random> // For random engine ID
+#include <fstream> // For file operations (e.g., reading thermal sensor data)
 #include "cjson/cJSON.h" // Include cJSON header
 
 // For HTTP requests (using system curl for simplicity)
@@ -43,12 +44,60 @@ std::string getFFmpegHWAccels() {
 }
 
 // Function to send heartbeat to dispatch server
-void sendHeartbeat(const std::string& dispatchServerUrl, const std::string& engineId, double storageCapacityGb, bool streamingSupport, const std::string& encoders, const std::string& decoders, const std::string& hwaccels) {
+// Function to send heartbeat to dispatch server
+void sendHeartbeat(const std::string& dispatchServerUrl, const std::string& engineId, double storageCapacityGb, bool streamingSupport, const std::string& encoders, const std::string& decoders, const std::string& hwaccels, double cpuTemperature) {
     std::string command = "curl -X POST " + dispatchServerUrl + "/engines/heartbeat "
                           "-H \"Content-Type: application/json\" "
-                          "-d '{\"engine_id\": \"" + engineId + "\", \"status\": \"idle\", \"storage_capacity_gb\": " + std::to_string(storageCapacityGb) + ", \"streaming_support\": " + (streamingSupport ? "true" : "false") + ", \"encoders\": \"" + encoders + "\", \"decoders\": \"" + decoders + "\", \"hwaccels\": \"" + hwaccels + "\"}'";
+                          "-d '{\"engine_id\": \"" + engineId + "\", \"status\": \"idle\", \"storage_capacity_gb\": " + std::to_string(storageCapacityGb) + ", \"streaming_support\": " + (streamingSupport ? "true" : "false") + ", \"encoders\": \"" + encoders + "\", \"decoders\": \"" + decoders + "\", \"hwaccels\": \"" + hwaccels + "\", \"cpu_temperature\": " + std::to_string(cpuTemperature) + "}'";
     std::cout << "Sending heartbeat: " << command << std::endl;
     // system(command.c_str()); // Execute the command
+}
+
+// Function to get CPU temperature
+double getCpuTemperature() {
+#ifdef __linux__
+    // Linux: Read from /sys/class/thermal/thermal_zone*/temp
+    // This is a simplified approach, a more robust solution would iterate through thermal_zone*.
+    std::ifstream thermal_file("/sys/class/thermal/thermal_zone0/temp");
+    if (thermal_file.is_open()) {
+        std::string line;
+        if (std::getline(thermal_file, line)) {
+            try {
+                return std::stod(line) / 1000.0; // Convert millidegrees Celsius to Celsius
+            } catch (const std::exception& e) {
+                std::cerr << "Error parsing CPU temperature: " << e.what() << std::endl;
+            }
+        }
+    }
+    return -1.0; // Indicate error
+#elif __FreeBSD__
+    // FreeBSD: Use sysctl
+    FILE* pipe = popen("sysctl -n dev.cpu.0.temperature", "r");
+    if (pipe) {
+        char buffer[128];
+        std::string result = "";
+        while (!feof(pipe)) {
+            if (fgets(buffer, 128, pipe) != NULL) {
+                result += buffer;
+            }
+        }
+        pclose(pipe);
+        try {
+            // sysctl returns temperature in Kelvin, convert to Celsius
+            return std::stod(result) - 273.15;
+        } catch (const std::exception& e) {
+            std::cerr << "Error parsing CPU temperature (FreeBSD): " << e.what() << std::endl;
+        }
+    }
+    return -1.0; // Indicate error
+#elif _WIN32
+    // Windows: More complex, typically involves WMI. Placeholder for now.
+    std::cout << "CPU temperature retrieval not implemented for Windows yet." << std::endl;
+    return -1.0;
+#else
+    // Other OS: Not implemented
+    return -1.0;
+#endif
 }
 
 // Function to download a file
@@ -192,7 +241,8 @@ int main() {
     // Start heartbeat thread
     std::thread heartbeatThread([&]() {
         while (true) {
-            sendHeartbeat(dispatchServerUrl, engineId, storageCapacityGb, streamingSupport, encoders, decoders, hwaccels);
+            double cpuTemperature = getCpuTemperature();
+            sendHeartbeat(dispatchServerUrl, engineId, storageCapacityGb, streamingSupport, encoders, decoders, hwaccels, cpuTemperature);
             std::this_thread::sleep_for(std::chrono::seconds(5)); // Send heartbeat every 5 seconds
         }
     });
