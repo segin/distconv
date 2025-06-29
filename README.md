@@ -25,7 +25,7 @@ This project will be developed in phases, starting with a minimal viable product
 1.  **Transcoding Engine (C++):**
     *   Develop a simple daemon that can accept a transcoding job.
     *   The job will contain the source video location (URL) and transcoding parameters.
-    *   The engine will download the source video, transcode it using `ffmpeg`, and make the output available for download.
+    *   The engine will download the source video, transcode it using `ffmpeg` (initially focusing on H.264 and H.265 codecs), and make the output available for download.
     *   The engine will report its status (idle, transcoding, error) to the dispatch server.
 
 2.  **Transcoding Dispatch Server (Python/Go):**
@@ -37,6 +37,8 @@ This project will be developed in phases, starting with a minimal viable product
         *   A "heartbeat" endpoint for engines to report their status.
     *   The server will maintain a queue of transcoding jobs.
     *   The server will assign jobs to available engines.
+    *   Implement configurable storage pools for transcoded content.
+    *   Implement persistent storage for tracking transcoding job states and submitted media.
 
 3.  **Submission Client (Python):**
     *   Develop a simple command-line tool to:
@@ -57,6 +59,7 @@ This project will be developed in phases, starting with a minimal viable product
 
 3.  **Improved Scheduling:**
     *   The dispatch server will use more sophisticated logic to assign jobs, taking into account engine performance and load.
+    *   Implement benchmarking of transcoding endpoints to determine job completion speeds, allowing for optimized job assignment (smaller jobs to slower systems, larger jobs to faster systems).
 
 **Phase 3: Security and Scalability**
 
