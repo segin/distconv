@@ -11,8 +11,8 @@
 // Function to send heartbeat to dispatch server
 void sendHeartbeat(const std::string& dispatchServerUrl, const std::string& engineId, double storageCapacityGb) {
     std::string command = "curl -X POST " + dispatchServerUrl + "/engines/heartbeat "
-                          "-H "Content-Type: application/json" "
-                          "-d '{"engine_id": "" + engineId + "", "status": "idle", "storage_capacity_gb": " + std::to_string(storageCapacityGb) + "}'";
+                          "-H \"Content-Type: application/json\" "
+                          "-d '{\"engine_id\": \"" + engineId + "\", \"status\": \"idle\", \"storage_capacity_gb\": " + std::to_string(storageCapacityGb) + "}'";
     std::cout << "Sending heartbeat: " << command << std::endl;
     // system(command.c_str()); // Execute the command
 }
@@ -44,8 +44,8 @@ double performBenchmark() {
 // Function to send benchmark results to dispatch server
 void sendBenchmarkResult(const std::string& dispatchServerUrl, const std::string& engineId, double benchmark_time) {
     std::string command = "curl -X POST " + dispatchServerUrl + "/engines/benchmark_result "
-                          "-H "Content-Type: application/json" "
-                          "-d '{"engine_id": "" + engineId + "", "benchmark_time": " + std::to_string(benchmark_time) + "}'";
+                          "-H \"Content-Type: application/json\" "
+                          "-d '{\"engine_id\": \"" + engineId + "\", \"benchmark_time\": " + std::to_string(benchmark_time) + "}'";
     std::cout << "Sending benchmark result: " << command << std::endl;
     // system(command.c_str()); // Execute the command
 }
