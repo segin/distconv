@@ -1,0 +1,13 @@
+[Unit]
+Description=Distributed Transcoding Dispatch Server
+After=network.target
+
+[Service]
+User=distconv
+Group=distconv
+WorkingDirectory=/home/segin/distconv/dispatch_server_cpp/build
+ExecStart=/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_cpp
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
