@@ -56,9 +56,9 @@ This project will be developed in phases, starting with a minimal viable product
     *   The dispatch server will decide whether to use streaming or file transfer based on the engine's reported storage capacity.
 
 2.  **Job Resubmission:**
-    *   The dispatch server will monitor job progress.
-    *   If a job fails, the server will automatically resubmit it to another available engine.
-    *   A maximum number of retries will be configured to prevent infinite loops.
+    *   [x] The dispatch server will monitor job progress.
+    *   [x] If a job fails, the server will automatically resubmit it to another available engine.
+    *   [x] A maximum number of retries will be configured to prevent infinite loops.
 
 3.  **Improved Scheduling:**
     *   The dispatch server will use more sophisticated logic to assign jobs, taking into account engine performance and load.
