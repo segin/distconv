@@ -67,7 +67,7 @@ This project will be developed in phases, starting with a minimal viable product
 **Phase 3: Security and Scalability**
 
 1.  **Security:**
-    *   Implement authentication and authorization for the dispatch server API.
+    *   [x] Implement authentication and authorization for the dispatch server API.
     *   Encrypt communication between the components.
 
 2.  **Scalability:**
