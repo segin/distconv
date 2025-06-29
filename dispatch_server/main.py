@@ -6,9 +6,32 @@ import uuid
 import os
 import json
 import logging
+import pika
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+# RabbitMQ Configuration
+RABBITMQ_HOST = 'localhost'
+RABBITMQ_QUEUE = 'transcoding_jobs'
+
+def publish_job_to_queue(job_id: str):
+    try:
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST))
+        channel = connection.channel()
+        channel.queue_declare(queue=RABBITMQ_QUEUE, durable=True)
+        channel.basic_publish(
+            exchange='',
+            routing_key=RABBITMQ_QUEUE,
+            body=job_id,
+            properties=pika.BasicProperties(
+                delivery_mode=pika.DeliveryMode.Persistent
+            )
+        )
+        logger.info(f"Published job {job_id} to RabbitMQ queue.")
+        connection.close()
+    except Exception as e:
+        logger.error(f"Error publishing job to RabbitMQ: {e}")
 
 API_KEY = "your-super-secret-api-key"  # In a real app, load this securely (e.g., from environment variables)
 api_key_header = APIKeyHeader(name="X-API-Key")
@@ -209,20 +232,16 @@ async def assign_job():
     if not selected_engine:
         return {"message": "Could not find a suitable engine for the job."}
 
-    # Assign the job
-    pending_job["status"] = "assigned"
-    pending_job["assigned_engine"] = selected_engine["engine_id"]
+    # Assign the job (now publishing to RabbitMQ)
+    pending_job["status"] = "queued"
     jobs_db[pending_job["job_id"]] = pending_job
-
-    selected_engine["status"] = "busy"
-    engines_db[selected_engine["engine_id"]] = selected_engine
-    
     save_state()
+    publish_job_to_queue(pending_job["job_id"])
 
     return {
-        "message": "Job assigned successfully",
+        "message": "Job queued successfully",
         "job_id": pending_job["job_id"],
-        "assigned_engine": selected_engine["engine_id"]
+        "assigned_engine": "(via RabbitMQ)"
     }
 
 # Placeholder for storage pool configuration (to be implemented later)
