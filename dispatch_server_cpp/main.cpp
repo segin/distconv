@@ -5,7 +5,6 @@
 #include <algorithm>
 #include "httplib.h"
 #include "nlohmann/json.hpp"
-#include "dispatch_server_core.h"
 
 // Global API Key
 std::string API_KEY = "";
@@ -49,7 +48,7 @@ void save_state() {
     }
 }
 
-int run_dispatch_server(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
     std::string cert_path = "server.crt";
     std::string key_path = "server.key";
 
@@ -237,7 +236,7 @@ int run_dispatch_server(int argc, char* argv[]) {
             nlohmann::json request_json = nlohmann::json::parse(req.body);
             if (jobs_db.contains(job_id)) {
                 jobs_db[job_id]["retries"] = jobs_db[job_id].value("retries", 0) + 1;
-                if (jobs_db[job_id].value("retries", 0) <= jobs_db[job_id].value("max_retries", 3)) {
+                if (jobs_db[job_id]["retries"] <= jobs_db[job_id].value("max_retries", 3)) {
                     jobs_db[job_id]["status"] = "pending"; // Re-queue
                     jobs_db[job_id]["error_message"] = request_json["error_message"];
                     res.set_content("Job " + job_id + " re-queued", "text/plain");
