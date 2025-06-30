@@ -3,7 +3,6 @@ project(DispatchServerCpp CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-
 add_executable(dispatch_server_cpp main.cpp)
 
 # Include directories for httplib and nlohmann/json (using absolute paths for debugging)
