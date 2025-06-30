@@ -9,79 +9,9 @@
 #include "cjson/cJSON.h" // Include cJSON header
 #include <curl/curl.h> // Include libcurl header
 #include <sqlite3.h> // Include SQLite3 header
+#include "transcoding_engine_core.h"
 
 sqlite3 *db; // Global SQLite database handle
-
-// SQLite callback function for SELECT queries
-static int callback(void *data, int argc, char **argv, char **azColName) {
-    std::vector<std::string>* job_ids = static_cast<std::vector<std::string>*>(data);
-    for (int i = 0; i < argc; i++) {
-        if (std::string(azColName[i]) == "job_id") {
-            job_ids->push_back(argv[i] ? argv[i] : "NULL");
-        }
-    }
-    return 0;
-}
-
-// Function to initialize SQLite database
-void init_sqlite() {
-    int rc = sqlite3_open("transcoding_jobs.db", &db);
-    if (rc) {
-        std::cerr << "Can't open database: " << sqlite3_errmsg(db) << std::endl;
-        return;
-    }
-
-    const char *sql = "CREATE TABLE IF NOT EXISTS jobs(job_id TEXT PRIMARY KEY NOT NULL);";
-    char *zErrMsg = 0;
-    rc = sqlite3_exec(db, sql, 0, 0, &zErrMsg);
-    if (rc != SQLITE_OK) {
-        std::cerr << "SQL error: " << zErrMsg << std::endl;
-        sqlite3_free(zErrMsg);
-    } else {
-        std::cout << "SQLite database initialized successfully." << std::endl;
-    }
-}
-
-// Function to add a job to SQLite
-void add_job_to_db(const std::string& job_id) {
-    char *sql = sqlite3_mprintf("INSERT OR IGNORE INTO jobs (job_id) VALUES ('%q');", job_id.c_str());
-    char *zErrMsg = 0;
-    int rc = sqlite3_exec(db, sql, 0, 0, &zErrMsg);
-    if (rc != SQLITE_OK) {
-        std::cerr << "SQL error (add_job_to_db): " << zErrMsg << std::endl;
-        sqlite3_free(zErrMsg);
-    } else {
-        std::cout << "Job " << job_id << " added to local DB." << std::endl;
-    }
-    sqlite3_free(sql);
-}
-
-// Function to remove a job from SQLite
-void remove_job_from_db(const std::string& job_id) {
-    char *sql = sqlite3_mprintf("DELETE FROM jobs WHERE job_id = '%q';", job_id.c_str());
-    char *zErrMsg = 0;
-    int rc = sqlite3_exec(db, sql, 0, 0, &zErrMsg);
-    if (rc != SQLITE_OK) {
-        std::cerr << "SQL error (remove_job_from_db): " << zErrMsg << std::endl;
-        sqlite3_free(zErrMsg);
-    } else {
-        std::cout << "Job " << job_id << " removed from local DB." << std::endl;
-    }
-    sqlite3_free(sql);
-}
-
-// Function to get all jobs from SQLite
-std::vector<std::string> get_jobs_from_db() {
-    std::vector<std::string> job_ids;
-    const char *sql = "SELECT job_id FROM jobs;";
-    char *zErrMsg = 0;
-    int rc = sqlite3_exec(db, sql, callback, &job_ids, &zErrMsg);
-    if (rc != SQLITE_OK) {
-        std::cerr << "SQL error (get_jobs_from_db): " << zErrMsg << std::endl;
-        sqlite3_free(zErrMsg);
-    }
-    return job_ids;
-}
 
 // SQLite callback function for SELECT queries
 static int callback(void *data, int argc, char **argv, char **azColName) {
@@ -444,7 +374,7 @@ std::string getJob(const std::string& dispatchServerUrl, const std::string& engi
     return response;
 }
 
-int main(int argc, char* argv[]) {
+int run_transcoding_engine(int argc, char* argv[]) {
     std::cout << "Transcoding Engine Starting..." << std::endl;
 
     // Configuration
@@ -544,7 +474,8 @@ int main(int argc, char* argv[]) {
                     std::cout << "Failed to parse job details from JSON: " << job_json << std::endl;
                 }
                 cJSON_Delete(root);
-            } else {
+            }
+            else {
                 std::cout << "Failed to parse JSON response from getJob: " << job_json << std::endl;
             }
         }
