@@ -13,8 +13,16 @@ add_subdirectory(../../third_party/json)
 find_package(wxWidgets REQUIRED COMPONENTS core base)
 find_package(CURL REQUIRED)
 
-add_executable(submission_client_desktop main.cpp)
+add_library(submission_client_core STATIC submission_client_core.cpp)
 
-target_link_libraries(submission_client_desktop cpr nlohmann_json ${wxWidgets_LIBRARIES} CURL::CURL)
+target_link_libraries(submission_client_core cpr nlohmann_json ${wxWidgets_LIBRARIES} CURL::CURL)
 
-target_include_directories(submission_client_desktop PRIVATE ${wxWidgets_INCLUDE_DIRS})
+target_include_directories(submission_client_core PRIVATE ${wxWidgets_INCLUDE_DIRS})
+
+add_executable(submission_client_desktop_app app_main.cpp)
+target_link_libraries(submission_client_desktop_app submission_client_core)
+
+find_package(GTest REQUIRED)
+add_executable(submission_client_desktop_tests tests/main.cpp)
+target_link_libraries(submission_client_desktop_tests gtest gtest_main submission_client_core)
+target_include_directories(submission_client_desktop_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

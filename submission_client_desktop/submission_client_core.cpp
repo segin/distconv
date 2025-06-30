@@ -340,4 +340,7 @@ void MyFrame::OnExit(wxCommandEvent& event)
 }
 
 // Implement the wxWidgets application entry point
-IMPLEMENT_APP(MyApp)
+int run_submission_client(int argc, char* argv[]) {
+    wxApp::SetInstance(new MyApp());
+    return wxEntry(argc, argv);
+}
