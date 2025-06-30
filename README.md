@@ -134,6 +134,9 @@ This project will be developed in phases, starting with a minimal viable product
 
 ## Future Enhancements:
 
+For a comprehensive list of future enhancements, bug fixes, and architectural suggestions, please refer to [SUGGESTIONS.md](SUGGESTIONS.md).
+
+
 ### Transcoding Engine:
 *   [ ] **Granular Progress Reporting:** Implement more detailed progress updates from the engine to the central server (e.g., percentage complete, estimated time remaining).
 *   [ ] **Comprehensive Resource Monitoring:** Beyond CPU temperature, report on RAM usage, disk I/O, and GPU utilization (if applicable).
