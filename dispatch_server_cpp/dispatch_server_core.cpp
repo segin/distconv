@@ -1,5 +1,3 @@
-#define CPPHTTPLIB_OPENSSL_SUPPORT
-#define CPPHTTPLIB_OPENSSL_SUPPORT
 #include <iostream>
 #include <string>
 #include <vector>
@@ -7,6 +5,7 @@
 #include <algorithm>
 #include "httplib.h"
 #include "nlohmann/json.hpp"
+#include "dispatch_server_core.h" // Include the new header
 
 // Global API Key
 std::string API_KEY = "";
@@ -50,9 +49,9 @@ void save_state() {
     }
 }
 
-int main(int argc, char* argv[]) {
-    std::string cert_path = "server.crt";
-    std::string key_path = "server.key";
+int run_dispatch_server(int argc, char* argv[]) {
+    std::string cert_path = "server.crt"; // These are no longer used for httplib::Server
+    std::string key_path = "server.key";   // but kept for argument parsing consistency.
 
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
@@ -65,7 +64,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    httplib::SSLServer svr(cert_path.c_str(), key_path.c_str());
+    httplib::Server svr; // Use non-SSL server
 
     // Load state on startup
     load_state();
