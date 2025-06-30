@@ -65,6 +65,8 @@ This project will be developed in phases, starting with a minimal viable product
 
 1.  **Security:**
     *   [x] Implement authentication and authorization for the dispatch server API.
+    *   [x] Implement API key authentication for the Dispatch Server.
+    *   [x] Implement API key authentication for the Dispatch Server.
     *   [ ] Encrypt communication between the components. (Acknowledged as a critical future enhancement, but beyond current MVP scope due to complexity of full TLS implementation across components.)
 
 2.  **Scalability:**
@@ -91,15 +93,39 @@ This project will be developed in phases, starting with a minimal viable product
 
 3.  **Transcoding Engine (Local Job Queue):**
     *   [x] Implement local job queue reporting from transcoding engine to dispatch server.
+    *   [x] Implement local job queue persistence using SQLite.
+    *   [x] Implement local job queue persistence using SQLite.
+    *   [x] Implement local job queue persistence using SQLite.
+    *   [x] Implement local job queue persistence using SQLite.
+    *   [x] Implement local job queue persistence using SQLite.
+    *   [x] Implement local job queue persistence using SQLite.
+    *   [x] Implement local job queue persistence using SQLite.
+    *   [x] Implement local job queue persistence using SQLite.
+    *   [x] Implement local job queue persistence using SQLite.
+    *   [x] Implement local job queue persistence using SQLite.
+    *   [x] Implement local job queue persistence using SQLite.
+    *   [x] Implement local job queue persistence using SQLite.
+    *   [x] Implement local job queue persistence using SQLite.
+    *   [x] Implement local job queue persistence using SQLite.
+    *   [x] Implement local job queue persistence using SQLite.
+    *   [x] Implement local job queue persistence using SQLite.
+    *   [x] Implement local job queue persistence using SQLite.
+    *   [x] Implement local job queue persistence using SQLite.
 
 4.  **TLS/SSL Implementation:**
     *   [ ] Implement TLS/SSL for secure communication between all components.
         *   [ ] Generate self-signed certificates (server.key, server.crt).
-        *   [ ] Implement TLS in C++ Central Server (`httplib::SSLServer`).
-        *   [ ] Implement TLS in C++ Transcoding Engine (using `libcurl` with `--cacert`).
-        *   [ ] Implement TLS in C++ Submission Client (using `cpr` with `cpr::VerifySsl`).
+        *   [x] Implement TLS in C++ Central Server (`httplib::SSLServer`).
+        *   [x] Implement TLS in C++ Transcoding Engine (using `libcurl` with `--cacert`).
+        *   [x] Implement TLS in C++ Submission Client (using `cpr` with `cpr::VerifySsl`).
 
-5.  **Unit Testing:**
+5.  **API Key Provisioning:**
+    *   [x] Implement API key provisioning for the Transcoding Engine.
+
+6.  **Hostname Reporting:**
+    *   [x] Implement hostname reporting from the Transcoding Engine to the Dispatch Server.
+
+7.  **Unit Testing:**
     *   [ ] Implement a comprehensive unit testing framework (e.g., Google Test).
     *   [ ] Write unit tests for the C++ submission client.
     *   [ ] Write unit tests for the C++ central server.
@@ -109,6 +135,169 @@ This project will be developed in phases, starting with a minimal viable product
 ## Future Enhancements:
 
 ### Transcoding Engine:
+*   [ ] **Granular Progress Reporting:** Implement more detailed progress updates from the engine to the central server (e.g., percentage complete, estimated time remaining).
+*   [ ] **Comprehensive Resource Monitoring:** Beyond CPU temperature, report on RAM usage, disk I/O, and GPU utilization (if applicable).
+*   [ ] **Dynamic `ffmpeg` Parameter Adjustment:** Allow the central server to dynamically adjust `ffmpeg` parameters for a job based on real-time engine load or specific job requirements.
+*   [ ] **Local Caching:** Implement a local caching mechanism for frequently accessed source or transcoded files to reduce network overhead.
+*   [ ] **Error Code Standardization:** Define and implement a standardized set of error codes for all components to improve debugging and error handling.
+*   [ ] **Graceful Shutdown:** Implement graceful shutdown procedures for the Transcoding Engine to ensure ongoing jobs are completed or properly re-queued.
+*   [ ] **Disk Space Management:** Implement logic to prevent the engine from accepting jobs if local disk space is critically low.
+*   [ ] **Network Resilience:** Improve handling of transient network disconnections during file transfers or status reporting.
+*   [ ] **`ffmpeg` Version Management:** Allow the central server to specify or recommend `ffmpeg` versions for engines.
+*   [ ] **Plugin Architecture:** Consider a plugin architecture for `ffmpeg` filters or custom pre/post-processing scripts.
+*   [ ] **Containerization Support:** Provide official Docker/Podman images for the Transcoding Engine.
+*   [ ] **Hardware Acceleration Detection:** Automatically detect and report available hardware acceleration (e.g., NVENC, VAAPI, Quick Sync) to the dispatch server.
+*   [ ] **Job Prioritization (Local):** Implement local prioritization of jobs if the engine receives multiple jobs simultaneously.
+*   [ ] **Security Hardening:** Review and harden the engine against potential security vulnerabilities (e.g., input validation, command injection prevention).
+*   [ ] **Bugfix: `ffmpeg` Process Hangs:** Implement robust mechanisms to detect and terminate hung `ffmpeg` processes.
+*   [ ] **Bugfix: Incomplete File Transfers:** Ensure atomic file transfers or robust resume capabilities for large media files.
+*   [ ] **Consider `libavcodec` Integration:** Investigate integrating `libavcodec` directly for finer-grained control and potential performance improvements in the long term.
+
+### Central Server:
+*   [ ] **Multiple Database Support:** Abstract the data storage layer to allow different backends (e.g., SQLite, PostgreSQL, MySQL) for improved scalability, reliability, and query capabilities.
+*   [ ] **Admin Panel/Functionality:**
+    *   [ ] Implement a web-based admin control panel.
+    *   [ ] Implement a C++ wxWidgets native admin control panel with the following features:
+        *   [ ] View and manage all jobs.
+        *   [ ] View and manage all transcoding endpoints.
+        *   [ ] View detailed information for selected jobs and endpoints.
+        *   [ ] Perform administrative actions (e.g., pause/resume jobs, deauthenticate endpoints).
+        *   [ ] Implement right-click context menus for relevant items.
+        *   [ ] Implement top-level menu actions.
+        *   [ ] Implement a configuration dialog.
+        *   [ ] Implement an "About" dialog.
+        *   [ ] Implement a "Help" dialog/section.
+*   [ ] **Advanced Scheduling Algorithms:** Develop more sophisticated job scheduling that considers network latency, historical engine performance, and job deadlines.
+*   [ ] **User Management and Roles:** Implement a system for user authentication and authorization, allowing different levels of access and control.
+*   [ ] **Job Prioritization:** Allow users to assign priorities to their transcoding jobs, influencing their position in the processing queue.
+*   [ ] **Notification System:** Integrate a notification system to alert users about job completion, failure, or significant engine status changes (e.g., email, webhooks).
+*   [ ] **API Versioning:** Implement API versioning to allow for backward compatibility and smoother upgrades.
+*   [ ] **Load Balancing:** Implement internal load balancing for job distribution across engines.
+*   [ ] **Audit Logging:** Implement comprehensive audit logging for all critical server actions and API calls.
+*   [ ] **Scalability Testing:** Conduct rigorous scalability testing to identify and address bottlenecks.
+*   [ ] **Dynamic Configuration Reload:** Allow certain server configurations to be reloaded without restarting the server.
+*   [ ] **Job Dependency Management:** Implement the ability to define job dependencies (e.g., Job B starts after Job A completes).
+*   [ ] **Storage Tiering:** Support different storage tiers (e.g., fast SSD for active jobs, slower HDD for archives).
+*   [ ] **Bugfix: Race Conditions:** Identify and fix potential race conditions in job assignment and status updates.
+*   [ ] **Bugfix: Database Deadlocks:** Address any potential database deadlocks under high load.
+*   [ ] **Bugfix: Orphaned Jobs:** Implement a cleanup mechanism for jobs that become orphaned due to engine failures.
+
+### Submission Client (GUI):
+*   [ ] **Drag-and-Drop File Submission:** Enable users to easily submit files by dragging and dropping them onto the application interface.
+*   [ ] **Visual Progress Indicators:** Display real-time progress bars and visual cues for ongoing transcoding jobs.
+*   [ ] **Real-time Data Updates:** Ensure job and engine lists update automatically without manual refreshing.
+*   [ ] **Filtering and Sorting:** Provide options to filter and sort job and engine lists based on various criteria.
+*   [ ] **Detailed Information Panels:** Enhance the information display for selected jobs and endpoints, showing all relevant metrics and metadata.
+*   [ ] **Batch Job Submission:** Allow users to submit multiple transcoding jobs simultaneously.
+*   [ ] **Pre-defined Transcoding Profiles:** Enable users to select from a set of pre-configured transcoding settings.
+*   [ ] **Input Validation:** Implement robust client-side input validation for job submission parameters.
+*   [ ] **Error Reporting:** Provide clear and actionable error messages to the user.
+*   [ ] **Theming/Customization:** Allow users to customize the GUI theme or appearance.
+*   [ ] **Internationalization (i18n):** Support multiple languages for the GUI.
+*   [ ] **Offline Mode:** Allow users to prepare jobs offline and submit them when connectivity is restored.
+*   [ ] **Job Template Saving:** Enable users to save frequently used job parameters as templates.
+*   [ ] **Bugfix: UI Responsiveness:** Ensure the UI remains responsive during long-running operations or network delays.
+*   [ ] **Bugfix: Data Desynchronization:** Address issues where client data might become out of sync with the server.
+
+### General System Improvements:
+*   [ ] **Centralized Logging and Monitoring:** Implement a unified logging and monitoring solution (e.g., integration with ELK stack, Prometheus/Grafana) for better system observability.
+*   [ ] **Configuration Management:** Develop a centralized system for managing and distributing configuration settings across all components.
+*   [ ] **Automated Deployment:** Implement automated deployment pipelines for all components.
+*   [ ] **Performance Benchmarking:** Establish a continuous performance benchmarking framework for the entire system.
+*   [ ] **Documentation Enhancement:** Continuously improve and expand all project documentation (API, user guides, architecture).
+*   [ ] **Cross-Platform Compatibility:** Ensure all components are fully compatible and tested across supported operating systems (Linux, Windows, macOS, FreeBSD).
+*   [ ] **Security Audits:** Conduct regular security audits and penetration testing.
+*   [ ] **Disaster Recovery Plan:** Develop and test a disaster recovery plan for the central server and data.
+*   [ ] **Version Control for Configurations:** Store and manage configuration files under version control.
+*   [ ] **Automated Testing Integration:** Integrate all unit and integration tests into a continuous integration (CI) pipeline.
+*   [ ] **Bugfix: Memory Leaks:** Conduct thorough memory profiling and fix any identified memory leaks across all C++ components.
+*   [ ] **Bugfix: Resource Exhaustion:** Address potential resource exhaustion issues (e.g., file handles, network connections) under heavy load.
+*   [ ] **Bugfix: Time Synchronization:** Ensure consistent time synchronization across all components to prevent job scheduling or status reporting issues.
+*   [ ] **Bugfix: Data Corruption:** Implement checksums or other validation mechanisms to prevent data corruption during transfers or storage.
+*   [ ] **Bugfix: Unhandled Exceptions:** Implement global exception handlers to prevent crashes and provide meaningful error logs.
+
+## Protocol Selection
+
+We need a reliable and efficient protocol for communication between the components. Here's a comparison of the options:
+
+*   **HTTP REST API:**
+    *   **Pros:** Simple, well-understood, easy to implement and debug. Good for the initial MVP.
+    *   **Cons:** Can be verbose (text-based), may not be the most performant for streaming or real-time status updates.
+
+*   **gRPC with Protocol Buffers:**
+    *   **Pros:** High-performance, binary protocol. Well-suited for streaming. Strongly typed contracts between services.
+    *   **Cons:** More complex to set up than a simple REST API.
+
+*   **IRC/XMPP/SIP:**
+    *   **Pros:** Designed for real-time communication.
+    *   **Cons:** Not a natural fit for this application. These are primarily for chat and VoIP, and would require significant adaptation.
+
+**Recommendation:**
+
+*   **Phase 1 (MVP):** Use a **HTTP REST API** for simplicity and ease of development.
+*   **Phase 2 and beyond:** Migrate to **gRPC with Protocol Buffers** for better performance and streaming capabilities.
+
+## Component Breakdown
+
+**1. Transcoding Engine**
+
+*   **Language:** C++
+*   **Dependencies:** `ffmpeg` (for transcoding), a C++ HTTP client/server library (e.g., Boost.Asio, cpp-httplib).
+*   **Functionality:**
+    *   Daemon that runs in the background.
+    *   Periodically sends a heartbeat to the dispatch server with its status and storage capacity.
+    *   Listens for transcoding jobs from the dispatch server.
+    *   Downloads the source video.
+    *   Executes `ffmpeg` with the specified parameters.
+    *   Reports job completion or failure to the dispatch server.
+    *   Provides the transcoded file for download.
+
+**2. Transcoding Dispatch Server**
+
+*   **Language:** C++
+*   **Functionality:**
+    *   Manages a list of transcoding engines and their status.
+    *   Maintains a queue of transcoding jobs.
+    *   Assigns jobs to available engines.
+    *   Tracks the status of each job.
+    *   Handles storage of source and transcoded videos.
+    *   Provides a REST API (Phase 1) or gRPC service (Phase 2) for clients and engines.
+
+**3. Submission Client**
+
+*   **Language:** C++
+*   **Functionality:**
+    *   Command-line interface for submitting jobs.
+    *   Can be used to query job status.
+    *   Downloads the final transcoded video.
+
+## Testing Strategy
+
+Each component will have its own set of unit and integration tests.
+
+*   **Transcoding Engine:**
+    *   **Unit Tests:** Test individual functions (e.g., parsing job parameters, executing `ffmpeg`).
+    *   **Integration Tests:** Test the full workflow of receiving a job, transcoding a video, and reporting completion. This will involve mocking the dispatch server.
+
+*   **Transcoding Dispatch Server:**
+    *   **Unit Tests:** Test individual API endpoints and business logic (e.g., job queueing, engine selection).
+    *   **Integration Tests:** Test the interaction with the transcoding engine and submission client. This will involve running a real (or mocked) transcoding engine.
+
+*   **Submission Client:**
+    *   **Unit Tests:** Test command-line argument parsing and API client logic.
+    *   **Integration Tests:** Test the full workflow of submitting a job and downloading the result against a running dispatch server.
+
+## Protocol Documentation
+
+The chosen protocol (initially REST, then gRPC) will be documented in detail. The documentation will include:
+
+*   A list of all API endpoints/gRPC methods.
+*   The format of all requests and responses.
+*   Example usage for each endpoint/method.
+*   The state machine for a transcoding job.
+
+This documentation will be crucial for developers working on any of the three components.
+ne:
 *   [ ] **Granular Progress Reporting:** Implement more detailed progress updates from the engine to the central server (e.g., percentage complete, estimated time remaining).
 *   [ ] **Comprehensive Resource Monitoring:** Beyond CPU temperature, report on RAM usage, disk I/O, and GPU utilization (if applicable).
 *   [ ] **Dynamic `ffmpeg` Parameter Adjustment:** Allow the central server to dynamically adjust `ffmpeg` parameters for a job based on real-time engine load or specific job requirements.
