@@ -36,6 +36,11 @@ Before building and running the system, ensure you have the following prerequisi
     sudo apt-get update
     sudo apt-get install -y curl
     ```
+*   **libcurl4-openssl-dev:** Development files for libcurl, required for HTTPS communication.
+    ```bash
+    sudo apt-get update
+    sudo apt-get install -y libcurl4-openssl-dev
+    ```
 
 ### Transcoding Engine Specific Prerequisites
 
@@ -48,6 +53,11 @@ Before building and running the system, ensure you have the following prerequisi
     ```bash
     sudo apt-get update
     sudo apt-get install -y libcjson-dev
+    ```
+*   **SQLite3 Development Files:** For local job queue persistence in the Transcoding Engine.
+    ```bash
+    sudo apt-get update
+    sudo apt-get install -y libsqlite3-dev
     ```
 
 ### C++ Submission Client Specific Prerequisites
@@ -127,7 +137,7 @@ Start the engine in a separate terminal:
 
 ```bash
 cd distconv/transcoding_engine/build
-./transcoding_engine
+./transcoding_engine --ca-cert ../../server.crt --dispatch-url https://localhost:8080 --api-key <your_engine_api_key>
 ```
 
 This will start sending heartbeats and `ffmpeg` capabilities to the Dispatch Server.
@@ -138,7 +148,7 @@ Run the client in another terminal:
 
 ```bash
 cd distconv/submission_client_desktop/build
-./submission_client_desktop
+./submission_client_desktop --ca-cert ../../server.crt --dispatch-url https://localhost:8080 --api-key your-super-secret-api-key
 ```
 
 Follow the interactive menu to submit jobs, check status, and list engines/jobs.

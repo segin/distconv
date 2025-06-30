@@ -6,6 +6,9 @@
 #include "httplib.h"
 #include "nlohmann/json.hpp"
 
+// Global API Key
+std::string API_KEY = "";
+
 // In-memory storage for jobs and engines (for now)
 // In a real application, this would be a database
 nlohmann::json jobs_db = nlohmann::json::object();
@@ -45,14 +48,33 @@ void save_state() {
     }
 }
 
-int main() {
-    httplib::Server svr;
+int main(int argc, char* argv[]) {
+    std::string cert_path = "server.crt";
+    std::string key_path = "server.key";
+
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        if (arg == "--cert" && i + 1 < argc) {
+            cert_path = argv[++i];
+        } else if (arg == "--key" && i + 1 < argc) {
+            key_path = argv[++i];
+        } else if (arg == "--api-key" && i + 1 < argc) {
+            API_KEY = argv[++i];
+        }
+    }
+
+    httplib::SSLServer svr(cert_path, key_path);
 
     // Load state on startup
     load_state();
 
     // Endpoint to submit a new transcoding job
     svr.Post("/jobs/", [&](const httplib::Request& req, httplib::Response& res) {
+        if (API_KEY != "" && req.get_header_value("X-API-Key") != API_KEY) {
+            res.status = 401;
+            res.set_content("Unauthorized", "text/plain");
+            return;
+        }
         try {
             nlohmann::json request_json = nlohmann::json::parse(req.body);
             std::string job_id = std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
@@ -83,6 +105,11 @@ int main() {
 
     // Endpoint to get job status
     svr.Get(R"(/jobs/(\w+))", [&](const httplib::Request& req, httplib::Response& res) {
+        if (API_KEY != "" && req.get_header_value("X-API-Key") != API_KEY) {
+            res.status = 401;
+            res.set_content("Unauthorized", "text/plain");
+            return;
+        }
         std::string job_id = req.matches[1];
         if (jobs_db.contains(job_id)) {
             res.set_content(jobs_db[job_id].dump(), "application/json");
@@ -94,6 +121,11 @@ int main() {
 
     // Endpoint to list all jobs
     svr.Get("/jobs/", [&](const httplib::Request& req, httplib::Response& res) {
+        if (API_KEY != "" && req.get_header_value("X-API-Key") != API_KEY) {
+            res.status = 401;
+            res.set_content("Unauthorized", "text/plain");
+            return;
+        }
         nlohmann::json all_jobs = nlohmann::json::array();
         for (auto const& [key, val] : jobs_db.items()) {
             all_jobs.push_back(val);
@@ -103,6 +135,11 @@ int main() {
 
     // Endpoint to list all engines
     svr.Get("/engines/", [&](const httplib::Request& req, httplib::Response& res) {
+        if (API_KEY != "" && req.get_header_value("X-API-Key") != API_KEY) {
+            res.status = 401;
+            res.set_content("Unauthorized", "text/plain");
+            return;
+        }
         nlohmann::json all_engines = nlohmann::json::array();
         for (auto const& [key, val] : engines_db.items()) {
             all_engines.push_back(val);
@@ -112,6 +149,11 @@ int main() {
 
     // Endpoint for engine heartbeat
     svr.Post("/engines/heartbeat", [&](const httplib::Request& req, httplib::Response& res) {
+        if (API_KEY != "" && req.get_header_value("X-API-Key") != API_KEY) {
+            res.status = 401;
+            res.set_content("Unauthorized", "text/plain");
+            return;
+        }
         try {
             nlohmann::json request_json = nlohmann::json::parse(req.body);
             std::string engine_id = request_json["engine_id"];
@@ -129,6 +171,11 @@ int main() {
 
     // Endpoint for benchmark results
     svr.Post("/engines/benchmark_result", [&](const httplib::Request& req, httplib::Response& res) {
+        if (API_KEY != "" && req.get_header_value("X-API-Key") != API_KEY) {
+            res.status = 401;
+            res.set_content("Unauthorized", "text/plain");
+            return;
+        }
         try {
             nlohmann::json request_json = nlohmann::json::parse(req.body);
             std::string engine_id = request_json["engine_id"];
@@ -151,6 +198,11 @@ int main() {
 
     // Endpoint to complete a job
     svr.Post(R"(/jobs/(\w+)/complete)", [&](const httplib::Request& req, httplib::Response& res) {
+        if (API_KEY != "" && req.get_header_value("X-API-Key") != API_KEY) {
+            res.status = 401;
+            res.set_content("Unauthorized", "text/plain");
+            return;
+        }
         std::string job_id = req.matches[1];
         try {
             nlohmann::json request_json = nlohmann::json::parse(req.body);
@@ -174,6 +226,11 @@ int main() {
 
     // Endpoint to fail a job
     svr.Post(R"(/jobs/(\w+)/fail)", [&](const httplib::Request& req, httplib::Response& res) {
+        if (API_KEY != "" && req.get_header_value("X-API-Key") != API_KEY) {
+            res.status = 401;
+            res.set_content("Unauthorized", "text/plain");
+            return;
+        }
         std::string job_id = req.matches[1];
         try {
             nlohmann::json request_json = nlohmann::json::parse(req.body);

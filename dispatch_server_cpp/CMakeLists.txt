@@ -11,4 +11,5 @@ include_directories(/home/segin/distconv/third_party/httplib)
 include_directories(/home/segin/distconv/third_party/json/single_include)
 
 # Link with necessary libraries (e.g., pthread for multi-threading in httplib)
-target_link_libraries(dispatch_server_cpp pthread)
+find_package(OpenSSL REQUIRED)
+target_link_libraries(dispatch_server_cpp pthread ${OpenSSL_LIBRARIES})

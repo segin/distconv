@@ -9,7 +9,7 @@ echo "Starting Distributed Video Transcoding System Quickstart..."
 echo "
 --- Installing Prerequisites ---"
 sudo apt-get update
-sudo apt-get install -y git cmake build-essential curl ffmpeg libcjson-dev libwxgtk3.2-dev libwxbase3.2-dev openssl
+sudo apt-get install -y git cmake build-essential curl ffmpeg libcjson-dev libwxgtk3.2-dev libwxbase3.2-dev openssl libcurl4-openssl-dev libsqlite3-dev libgtest-dev
 
 # --- 2. Generate SSL Certificates ---
 echo "
@@ -59,6 +59,6 @@ echo "
 --- Quickstart Complete ---"
 echo "You can now run the components:"
 echo "1. Start the C++ Dispatch Server: cd dispatch_server_cpp/build && ./dispatch_server_cpp"
-echo "2. Start the Transcoding Engine: cd transcoding_engine/build && ./transcoding_engine"
-echo "3. Run the C++ Submission Client: cd submission_client_desktop/build && ./submission_client_desktop"
+echo "2. Start the Transcoding Engine: cd transcoding_engine/build && ./transcoding_engine --ca-cert ../../server.crt --dispatch-url https://localhost:8080"
+echo "3. Run the C++ Submission Client: cd submission_client_desktop/build && ./submission_client_desktop --ca-cert ../../server.crt"
 

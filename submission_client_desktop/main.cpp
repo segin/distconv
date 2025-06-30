@@ -11,19 +11,105 @@
 #include "nlohmann/json.hpp"
 
 // Dispatch Server URL and API Key
-const std::string DISPATCH_SERVER_URL = "http://localhost:8080";
-const std::string API_KEY = "your-super-secret-api-key"; // Replace with your actual API key
+// Global configuration (will be set via UI/command line)
+std::string g_dispatchServerUrl = "https://localhost:8080";
+std::string g_apiKey = "your-super-secret-api-key";
+std::string g_caCertPath = "server.crt";
 
 // Local storage for job IDs
 const std::string JOB_IDS_FILE = "submitted_job_ids.txt";
 
-// Forward declarations for client functions
-void saveJobId(const std::string& job_id);
-std::vector<std::string> loadJobIds();
 void submitJob(const std::string& source_url, const std::string& target_codec, double job_size, int max_retries);
 void getJobStatus(const std::string& job_id);
 void listAllJobs();
 void listAllEngines();
+
+// Function to save a job ID to a local file
+void saveJobId(const std::string& job_id) {
+    std::ofstream ofs(JOB_IDS_FILE, std::ios_base::app);
+    if (ofs.is_open()) {
+        ofs << job_id << std::endl;
+        ofs.close();
+    } else {
+        std::cerr << "Error: Could not open " << JOB_IDS_FILE << " for writing." << std::endl;
+    }
+}
+
+// Function to load job IDs from a local file
+std::vector<std::string> loadJobIds() {
+    std::vector<std::string> job_ids;
+    std::ifstream ifs(JOB_IDS_FILE);
+    if (ifs.is_open()) {
+        std::string job_id;
+        while (std::getline(ifs, job_id)) {
+            job_ids.push_back(job_id);
+        }
+        ifs.close();
+    }
+    return job_ids;
+}
+
+void submitJob(const std::string& source_url, const std::string& target_codec, double job_size, int max_retries) {
+    nlohmann::json payload;
+    payload["source_url"] = source_url;
+    payload["target_codec"] = target_codec;
+    payload["job_size"] = job_size;
+    payload["max_retries"] = max_retries;
+
+    cpr::Response r = cpr::Post(cpr::Url{g_dispatchServerUrl + "/jobs/"},
+                                 cpr::Header{{"X-API-Key", g_apiKey}},
+                                 cpr::Header{{"Content-Type", "application/json"}},
+                                 cpr::Body{payload.dump()},
+                                 cpr::VerifySsl{g_caCertPath});
+
+    if (r.status_code == 200) {
+        nlohmann::json response_json = nlohmann::json::parse(r.text);
+        std::cout << "Job submitted successfully:" << std::endl;
+        std::cout << response_json.dump(4) << std::endl;
+        saveJobId(response_json["job_id"]);
+    } else {
+        std::cerr << "Error submitting job: " << r.status_code << " - " << r.text << std::endl;
+    }
+}
+
+void getJobStatus(const std::string& job_id) {
+    cpr::Response r = cpr::Get(cpr::Url{g_dispatchServerUrl + "/jobs/" + job_id},
+                               cpr::Header{{"X-API-Key", g_apiKey}},
+                               cpr::VerifySsl{g_caCertPath});
+
+    if (r.status_code == 200) {
+        std::cout << "Job Status for " << job_id << ":" << std::endl;
+        std::cout << nlohmann::json::parse(r.text).dump(4) << std::endl;
+    } else {
+        std::cerr << "Error getting job status: " << r.status_code << " - " << r.text << std::endl;
+    }
+}
+
+void listAllJobs() {
+    cpr::Response r = cpr::Get(cpr::Url{g_dispatchServerUrl + "/jobs/"},
+                               cpr::Header{{"X-API-Key", g_apiKey}},
+                               cpr::VerifySsl{g_caCertPath});
+
+    if (r.status_code == 200) {
+        std::cout << "All Jobs:" << std::endl;
+        std::cout << nlohmann::json::parse(r.text).dump(4) << std::endl;
+    } else {
+        std::cerr << "Error listing jobs: " << r.status_code << " - " << r.text << std::endl;
+    }
+}
+
+void listAllEngines() {
+    cpr::Response r = cpr::Get(cpr::Url{g_dispatchServerUrl + "/engines/"},
+                               cpr::Header{{"X-API-Key", g_apiKey}},
+                               cpr::VerifySsl{g_caCertPath});
+
+    if (r.status_code == 200) {
+        std::cout << "All Engines:" << std::endl;
+        std::cout << nlohmann::json::parse(r.text).dump(4) << std::endl;
+    } else {
+        std::cerr << "Error listing engines: " << r.status_code << " - " << r.text << std::endl;
+    }
+}
 
 // Define the main application class
 class MyApp : public wxApp
@@ -156,7 +242,7 @@ void MyFrame::OnSubmit(wxCommandEvent& event)
         std::streambuf *old_cout = std::cout.rdbuf(ss_out.rdbuf());
         std::streambuf *old_cerr = std::cerr.rdbuf(ss_err.rdbuf());
 
-        submitJob(source_url, target_codec, job_size, max_retries);
+        submitJob(g_dispatchServerUrl, g_apiKey, g_caCertPath, source_url, target_codec, job_size, max_retries);
 
         std::cout.rdbuf(old_cout);
         std::cerr.rdbuf(old_cerr);

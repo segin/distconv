@@ -11,9 +11,10 @@ add_subdirectory(../../third_party/cpr)
 add_subdirectory(../../third_party/json)
 
 find_package(wxWidgets REQUIRED COMPONENTS core base)
+find_package(CURL REQUIRED)
 
 add_executable(submission_client_desktop main.cpp)
 
-target_link_libraries(submission_client_desktop cpr nlohmann_json ${wxWidgets_LIBRARIES})
+target_link_libraries(submission_client_desktop cpr nlohmann_json ${wxWidgets_LIBRARIES} CURL::CURL)
 
 target_include_directories(submission_client_desktop PRIVATE ${wxWidgets_INCLUDE_DIRS})
