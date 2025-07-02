@@ -556,6 +556,16 @@ TEST_F(ApiTest, ListAllEnginesWithOneEngine) {
     ASSERT_EQ(response_json[0]["engine_id"], "engine-1");
 }
 
+TEST_F(ApiTest, ListAllEnginesNoApiKey) {
+    httplib::Headers headers = {
+        {"Authorization", "some_token"}
+    };
+    auto res = client->Get("/engines/", headers);
+
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 401);
+}
+
 TEST_F(ApiTest, EngineHeartbeatInvalidJson) {
     std::string invalid_json_payload = "{this is not json}";
 
