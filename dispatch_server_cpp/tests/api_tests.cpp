@@ -82,3 +82,13 @@ TEST_F(ApiTest, SubmitJobMissingTargetCodec) {
     ASSERT_EQ(res->status, 400);
     ASSERT_EQ(res->body, "Bad Request: 'target_codec' is missing or not a string.");
 }
+
+TEST_F(ApiTest, SubmitJobInvalidJson) {
+    std::string invalid_json_payload = "{this is not json}";
+
+    auto res = client->Post("/jobs/", invalid_json_payload, "application/json");
+
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 400);
+    ASSERT_TRUE(res->body.rfind("Invalid JSON:", 0) == 0);
+}
