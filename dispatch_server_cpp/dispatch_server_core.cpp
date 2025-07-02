@@ -77,10 +77,15 @@ httplib::Server* DispatchServer::getServer() {
 
 void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
     // Endpoint to submit a new transcoding job
-    svr.Post("/jobs/", [&](const httplib::Request& req, httplib::Response& res) {
+    svr.Post("/jobs/", [api_key](const httplib::Request& req, httplib::Response& res) {
         if (req.get_header_value("Authorization") == "") {
             res.status = 401;
             res.set_content("Unauthorized: Missing 'Authorization' header.", "text/plain");
+            return;
+        }
+        if (api_key != "" && req.get_header_value("X-API-Key") == "") {
+            res.status = 401;
+            res.set_content("Unauthorized: Missing 'X-API-Key' header.", "text/plain");
             return;
         }
         if (api_key != "" && req.get_header_value("X-API-Key") != api_key) {
@@ -139,7 +144,7 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
     });
 
     // Endpoint to get job status
-    svr.Get(R"(/jobs/(\w+))", [&](const httplib::Request& req, httplib::Response& res) {
+    svr.Get(R"(/jobs/(\w+))", [api_key](const httplib::Request& req, httplib::Response& res) {
         if (api_key != "" && req.get_header_value("X-API-Key") != api_key) {
             res.status = 401;
             res.set_content("Unauthorized", "text/plain");
@@ -155,7 +160,7 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
     });
 
     // Endpoint to list all jobs
-    svr.Get("/jobs/", [&](const httplib::Request& req, httplib::Response& res) {
+    svr.Get("/jobs/", [api_key](const httplib::Request& req, httplib::Response& res) {
         if (api_key != "" && req.get_header_value("X-API-Key") != api_key) {
             res.status = 401;
             res.set_content("Unauthorized", "text/plain");
@@ -169,7 +174,7 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
     });
 
     // Endpoint to list all engines
-    svr.Get("/engines/", [&](const httplib::Request& req, httplib::Response& res) {
+    svr.Get("/engines/", [api_key](const httplib::Request& req, httplib::Response& res) {
         if (api_key != "" && req.get_header_value("X-API-Key") != api_key) {
             res.status = 401;
             res.set_content("Unauthorized", "text/plain");
@@ -183,7 +188,7 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
     });
 
     // Endpoint for engine heartbeat
-    svr.Post("/engines/heartbeat", [&](const httplib::Request& req, httplib::Response& res) {
+    svr.Post("/engines/heartbeat", [api_key](const httplib::Request& req, httplib::Response& res) {
         if (api_key != "" && req.get_header_value("X-API-Key") != api_key) {
             res.status = 401;
             res.set_content("Unauthorized", "text/plain");
@@ -205,7 +210,7 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
     });
 
     // Endpoint for benchmark results
-    svr.Post("/engines/benchmark_result", [&](const httplib::Request& req, httplib::Response& res) {
+    svr.Post("/engines/benchmark_result", [api_key](const httplib::Request& req, httplib::Response& res) {
         if (api_key != "" && req.get_header_value("X-API-Key") != api_key) {
             res.status = 401;
             res.set_content("Unauthorized", "text/plain");
@@ -232,7 +237,7 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
     });
 
     // Endpoint to complete a job
-    svr.Post(R"(/jobs/(\w+)/complete)", [&](const httplib::Request& req, httplib::Response& res) {
+    svr.Post(R"(/jobs/(\w+)/complete)", [api_key](const httplib::Request& req, httplib::Response& res) {
         if (api_key != "" && req.get_header_value("X-API-Key") != api_key) {
             res.status = 401;
             res.set_content("Unauthorized", "text/plain");
@@ -260,7 +265,7 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
     });
 
     // Endpoint to fail a job
-    svr.Post(R"(/jobs/(\w+)/fail)", [&](const httplib::Request& req, httplib::Response& res) {
+    svr.Post(R"(/jobs/(\w+)/fail)", [api_key](const httplib::Request& req, httplib::Response& res) {
         if (api_key != "" && req.get_header_value("X-API-Key") != api_key) {
             res.status = 401;
             res.set_content("Unauthorized", "text/plain");
@@ -295,7 +300,12 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
     });
 
     // Endpoint to assign a job (for engines to poll)
-    svr.Post("/assign_job/", [&](const httplib::Request& req, httplib::Response& res) {
+    svr.Post("/assign_job/", [api_key](const httplib::Request& req, httplib::Response& res) {
+        if (api_key != "" && req.get_header_value("X-API-Key") != api_key) {
+            res.status = 401;
+            res.set_content("Unauthorized", "text/plain");
+            return;
+        }
         std::string engine_id = "";
         try {
             nlohmann::json request_json = nlohmann::json::parse(req.body);
@@ -378,7 +388,7 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
     });
 
     // Placeholder for storage pool configuration (to be implemented later)
-    svr.Get("/storage_pools/", [&](const httplib::Request& req, httplib::Response& res) {
+    svr.Get("/storage_pools/", [api_key](const httplib::Request& req, httplib::Response& res) {
         res.set_content("Storage pool configuration to be implemented.", "text/plain");
     });
 }

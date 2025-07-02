@@ -19,10 +19,11 @@ protected:
     DispatchServer *server;
     httplib::Client *client;
     int port = 8080; // Default port for tests
+    std::string api_key = "test_api_key";
 
     void SetUp() override {
         clear_db();
-        server = new DispatchServer();
+        server = new DispatchServer(api_key);
         // Start the server in a non-blocking way
         server->start(port, false);
         client = new httplib::Client("localhost", port);
@@ -43,7 +44,8 @@ TEST_F(ApiTest, SubmitValidJob) {
     job_payload["max_retries"] = 5;
 
     httplib::Headers headers = {
-        {"Authorization", "some_token"}
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
     };
     auto res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
 
@@ -69,7 +71,8 @@ TEST_F(ApiTest, SubmitJobMissingSourceUrl) {
     job_payload["max_retries"] = 5;
 
     httplib::Headers headers = {
-        {"Authorization", "some_token"}
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
     };
     auto res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
 
@@ -85,7 +88,8 @@ TEST_F(ApiTest, SubmitJobMissingTargetCodec) {
     job_payload["max_retries"] = 5;
 
     httplib::Headers headers = {
-        {"Authorization", "some_token"}
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
     };
     auto res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
 
@@ -98,7 +102,8 @@ TEST_F(ApiTest, SubmitJobInvalidJson) {
     std::string invalid_json_payload = "{this is not json}";
 
     httplib::Headers headers = {
-        {"Authorization", "some_token"}
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
     };
     auto res = client->Post("/jobs/", headers, invalid_json_payload, "application/json");
 
@@ -111,7 +116,8 @@ TEST_F(ApiTest, SubmitJobEmptyJson) {
     std::string empty_json_payload = "{}";
 
     httplib::Headers headers = {
-        {"Authorization", "some_token"}
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
     };
     auto res = client->Post("/jobs/", headers, empty_json_payload, "application/json");
 
@@ -130,7 +136,8 @@ TEST_F(ApiTest, SubmitJobWithExtraFields) {
     job_payload["another_extra"] = 123;
 
     httplib::Headers headers = {
-        {"Authorization", "some_token"}
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
     };
     auto res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
 
@@ -165,6 +172,21 @@ TEST_F(ApiTest, SubmitJobNoAuthHeader) {
     ASSERT_EQ(res->body, "Unauthorized: Missing 'Authorization' header.");
 }
 
+TEST_F(ApiTest, SubmitJobNoApiKey) {
+    nlohmann::json job_payload;
+    job_payload["source_url"] = "http://example.com/video.mp4";
+    job_payload["target_codec"] = "h264";
+
+    httplib::Headers headers = {
+        {"Authorization", "some_token"}
+    };
+    auto res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
+
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 401);
+    ASSERT_EQ(res->body, "Unauthorized: Missing 'X-API-Key' header.");
+}
+
 TEST_F(ApiTest, SubmitJobNonStringSourceUrl) {
     nlohmann::json job_payload;
     job_payload["source_url"] = 123; // Non-string source_url
@@ -173,7 +195,8 @@ TEST_F(ApiTest, SubmitJobNonStringSourceUrl) {
     job_payload["max_retries"] = 5;
 
     httplib::Headers headers = {
-        {"Authorization", "some_token"}
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
     };
     auto res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
 
@@ -190,7 +213,8 @@ TEST_F(ApiTest, SubmitJobNonStringTargetCodec) {
     job_payload["max_retries"] = 5;
 
     httplib::Headers headers = {
-        {"Authorization", "some_token"}
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
     };
     auto res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
 
@@ -207,7 +231,8 @@ TEST_F(ApiTest, SubmitJobNonNumericJobSize) {
     job_payload["max_retries"] = 5;
 
     httplib::Headers headers = {
-        {"Authorization", "some_token"}
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
     };
     auto res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
 
@@ -224,7 +249,8 @@ TEST_F(ApiTest, SubmitJobNonIntegerMaxRetries) {
     job_payload["max_retries"] = 3.5; // Non-integer max_retries
 
     httplib::Headers headers = {
-        {"Authorization", "some_token"}
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
     };
     auto res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
 
@@ -239,7 +265,8 @@ TEST_F(ApiTest, GetJobStatusValid) {
     job_payload["source_url"] = "http://example.com/video.mp4";
     job_payload["target_codec"] = "h264";
     httplib::Headers headers = {
-        {"Authorization", "some_token"}
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
     };
     auto post_res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
     ASSERT_EQ(post_res->status, 200);
@@ -247,7 +274,7 @@ TEST_F(ApiTest, GetJobStatusValid) {
     std::string job_id = post_response_json["job_id"];
 
     // Now, get the job status
-    auto get_res = client->Get(("/jobs/" + job_id).c_str());
+    auto get_res = client->Get(("/jobs/" + job_id).c_str(), headers);
 
     ASSERT_TRUE(get_res != nullptr);
     ASSERT_EQ(get_res->status, 200);
@@ -258,7 +285,11 @@ TEST_F(ApiTest, GetJobStatusValid) {
 }
 
 TEST_F(ApiTest, GetJobStatusInvalid) {
-    auto res = client->Get("/jobs/invalid_job_id");
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res = client->Get("/jobs/invalid_job_id", headers);
 
     ASSERT_TRUE(res != nullptr);
     ASSERT_EQ(res->status, 404);
@@ -266,7 +297,11 @@ TEST_F(ApiTest, GetJobStatusInvalid) {
 }
 
 TEST_F(ApiTest, ListAllJobsEmpty) {
-    auto res = client->Get("/jobs/");
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res = client->Get("/jobs/", headers);
 
     ASSERT_TRUE(res != nullptr);
     ASSERT_EQ(res->status, 200);
@@ -282,7 +317,8 @@ TEST_F(ApiTest, ListAllJobsWithJobs) {
     job1_payload["source_url"] = "http://example.com/video1.mp4";
     job1_payload["target_codec"] = "h264";
     httplib::Headers headers = {
-        {"Authorization", "some_token"}
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
     };
     client->Post("/jobs/", headers, job1_payload.dump(), "application/json");
 
@@ -291,7 +327,7 @@ TEST_F(ApiTest, ListAllJobsWithJobs) {
     job2_payload["target_codec"] = "vp9";
     client->Post("/jobs/", headers, job2_payload.dump(), "application/json");
 
-    auto res = client->Get("/jobs/");
+    auto res = client->Get("/jobs/", headers);
 
     ASSERT_TRUE(res != nullptr);
     ASSERT_EQ(res->status, 200);
@@ -311,7 +347,11 @@ TEST_F(ApiTest, EngineHeartbeatNewEngine) {
     heartbeat_payload["status"] = "idle";
     heartbeat_payload["supported_codecs"] = {"h264", "vp9"};
 
-    auto res = client->Post("/engines/heartbeat", heartbeat_payload.dump(), "application/json");
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res = client->Post("/engines/heartbeat", headers, heartbeat_payload.dump(), "application/json");
 
     ASSERT_TRUE(res != nullptr);
     ASSERT_EQ(res->status, 200);
@@ -327,13 +367,17 @@ TEST_F(ApiTest, EngineHeartbeatExistingEngine) {
     nlohmann::json heartbeat_payload1;
     heartbeat_payload1["engine_id"] = "engine-123";
     heartbeat_payload1["status"] = "idle";
-    client->Post("/engines/heartbeat", heartbeat_payload1.dump(), "application/json");
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    client->Post("/engines/heartbeat", headers, heartbeat_payload1.dump(), "application/json");
 
     // Second heartbeat, updating status
     nlohmann::json heartbeat_payload2;
     heartbeat_payload2["engine_id"] = "engine-123";
     heartbeat_payload2["status"] = "busy";
-    auto res = client->Post("/engines/heartbeat", heartbeat_payload2.dump(), "application/json");
+    auto res = client->Post("/engines/heartbeat", headers, heartbeat_payload2.dump(), "application/json");
 
     ASSERT_TRUE(res != nullptr);
     ASSERT_EQ(res->status, 200);
@@ -347,14 +391,18 @@ TEST_F(ApiTest, ListAllEngines) {
     nlohmann::json engine1_payload;
     engine1_payload["engine_id"] = "engine-1";
     engine1_payload["status"] = "idle";
-    client->Post("/engines/heartbeat", engine1_payload.dump(), "application/json");
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    client->Post("/engines/heartbeat", headers, engine1_payload.dump(), "application/json");
 
     nlohmann::json engine2_payload;
     engine2_payload["engine_id"] = "engine-2";
     engine2_payload["status"] = "busy";
-    client->Post("/engines/heartbeat", engine2_payload.dump(), "application/json");
+    client->Post("/engines/heartbeat", headers, engine2_payload.dump(), "application/json");
 
-    auto res = client->Get("/engines/");
+    auto res = client->Get("/engines/", headers);
 
     ASSERT_TRUE(res != nullptr);
     ASSERT_EQ(res->status, 200);
@@ -371,14 +419,18 @@ TEST_F(ApiTest, SubmitBenchmarkResultValid) {
     nlohmann::json engine_payload;
     engine_payload["engine_id"] = "engine-bm-1";
     engine_payload["status"] = "benchmarking";
-    client->Post("/engines/heartbeat", engine_payload.dump(), "application/json");
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    client->Post("/engines/heartbeat", headers, engine_payload.dump(), "application/json");
 
     // Now, submit benchmark result
     nlohmann::json benchmark_payload;
     benchmark_payload["engine_id"] = "engine-bm-1";
     benchmark_payload["benchmark_time"] = 123.45;
 
-    auto res = client->Post("/engines/benchmark_result", benchmark_payload.dump(), "application/json");
+    auto res = client->Post("/engines/benchmark_result", headers, benchmark_payload.dump(), "application/json");
 
     ASSERT_TRUE(res != nullptr);
     ASSERT_EQ(res->status, 200);
@@ -393,7 +445,11 @@ TEST_F(ApiTest, SubmitBenchmarkResultInvalidEngine) {
     benchmark_payload["engine_id"] = "non-existent-engine";
     benchmark_payload["benchmark_time"] = 123.45;
 
-    auto res = client->Post("/engines/benchmark_result", benchmark_payload.dump(), "application/json");
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res = client->Post("/engines/benchmark_result", headers, benchmark_payload.dump(), "application/json");
 
     ASSERT_TRUE(res != nullptr);
     ASSERT_EQ(res->status, 404);
@@ -406,7 +462,8 @@ TEST_F(ApiTest, CompleteJobValid) {
     job_payload["source_url"] = "http://example.com/video.mp4";
     job_payload["target_codec"] = "h264";
     httplib::Headers headers = {
-        {"Authorization", "some_token"}
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
     };
     auto post_res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
     std::string job_id = nlohmann::json::parse(post_res->body)["job_id"];
@@ -414,7 +471,7 @@ TEST_F(ApiTest, CompleteJobValid) {
     // Complete the job
     nlohmann::json complete_payload;
     complete_payload["output_url"] = "http://example.com/output.mp4";
-    auto complete_res = client->Post(("/jobs/" + job_id + "/complete").c_str(), complete_payload.dump(), "application/json");
+    auto complete_res = client->Post(("/jobs/" + job_id + "/complete").c_str(), headers, complete_payload.dump(), "application/json");
 
     ASSERT_TRUE(complete_res != nullptr);
     ASSERT_EQ(complete_res->status, 200);
@@ -428,7 +485,11 @@ TEST_F(ApiTest, CompleteJobValid) {
 TEST_F(ApiTest, CompleteJobInvalid) {
     nlohmann::json complete_payload;
     complete_payload["output_url"] = "http://example.com/output.mp4";
-    auto res = client->Post("/jobs/invalid_job_id/complete", complete_payload.dump(), "application/json");
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res = client->Post("/jobs/invalid_job_id/complete", headers, complete_payload.dump(), "application/json");
 
     ASSERT_TRUE(res != nullptr);
     ASSERT_EQ(res->status, 404);
@@ -442,7 +503,8 @@ TEST_F(ApiTest, FailJobAndRequeue) {
     job_payload["target_codec"] = "h264";
     job_payload["max_retries"] = 1;
     httplib::Headers headers = {
-        {"Authorization", "some_token"}
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
     };
     auto post_res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
     std::string job_id = nlohmann::json::parse(post_res->body)["job_id"];
@@ -450,7 +512,7 @@ TEST_F(ApiTest, FailJobAndRequeue) {
     // Fail the job
     nlohmann::json fail_payload;
     fail_payload["error_message"] = "Transcoding failed";
-    auto fail_res = client->Post(("/jobs/" + job_id + "/fail").c_str(), fail_payload.dump(), "application/json");
+    auto fail_res = client->Post(("/jobs/" + job_id + "/fail").c_str(), headers, fail_payload.dump(), "application/json");
 
     ASSERT_TRUE(fail_res != nullptr);
     ASSERT_EQ(fail_res->status, 200);
@@ -469,7 +531,8 @@ TEST_F(ApiTest, FailJobAndFailPermanently) {
     job_payload["target_codec"] = "h264";
     job_payload["max_retries"] = 0;
     httplib::Headers headers = {
-        {"Authorization", "some_token"}
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
     };
     auto post_res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
     std::string job_id = nlohmann::json::parse(post_res->body)["job_id"];
@@ -477,7 +540,7 @@ TEST_F(ApiTest, FailJobAndFailPermanently) {
     // Fail the job
     nlohmann::json fail_payload;
     fail_payload["error_message"] = "Transcoding failed";
-    auto fail_res = client->Post(("/jobs/" + job_id + "/fail").c_str(), fail_payload.dump(), "application/json");
+    auto fail_res = client->Post(("/jobs/" + job_id + "/fail").c_str(), headers, fail_payload.dump(), "application/json");
 
     ASSERT_TRUE(fail_res != nullptr);
     ASSERT_EQ(fail_res->status, 200);
