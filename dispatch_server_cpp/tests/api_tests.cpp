@@ -69,3 +69,16 @@ TEST_F(ApiTest, SubmitJobMissingSourceUrl) {
     ASSERT_EQ(res->status, 400);
     ASSERT_EQ(res->body, "Bad Request: 'source_url' is missing or not a string.");
 }
+
+TEST_F(ApiTest, SubmitJobMissingTargetCodec) {
+    nlohmann::json job_payload;
+    job_payload["source_url"] = "http://example.com/video.mp4";
+    job_payload["job_size"] = 100.5;
+    job_payload["max_retries"] = 5;
+
+    auto res = client->Post("/jobs/", job_payload.dump(), "application/json");
+
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 400);
+    ASSERT_EQ(res->body, "Bad Request: 'target_codec' is missing or not a string.");
+}
