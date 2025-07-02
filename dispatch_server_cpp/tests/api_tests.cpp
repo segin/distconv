@@ -439,6 +439,16 @@ TEST_F(ApiTest, ListAllJobsWithOneJob) {
     ASSERT_EQ(response_json[0]["source_url"], "http://example.com/video1.mp4");
 }
 
+TEST_F(ApiTest, ListAllJobsNoApiKey) {
+    httplib::Headers headers = {
+        {"Authorization", "some_token"}
+    };
+    auto res = client->Get("/jobs/", headers);
+
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 401);
+}
+
 TEST_F(ApiTest, EngineHeartbeatNewEngine) {
     nlohmann::json heartbeat_payload;
     heartbeat_payload["engine_id"] = "engine-123";
