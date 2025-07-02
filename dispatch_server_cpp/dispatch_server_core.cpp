@@ -99,6 +99,16 @@ void setup_endpoints(httplib::Server &svr) {
                 res.set_content("Bad Request: 'target_codec' is missing or not a string.", "text/plain");
                 return;
             }
+            if (request_json.contains("job_size") && !request_json["job_size"].is_number()) {
+                res.status = 400;
+                res.set_content("Bad Request: 'job_size' must be a number.", "text/plain");
+                return;
+            }
+            if (request_json.contains("max_retries") && !request_json["max_retries"].is_number_integer()) {
+                res.status = 400;
+                res.set_content("Bad Request: 'max_retries' must be an integer.", "text/plain");
+                return;
+            }
 
             std::string job_id = std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
             
