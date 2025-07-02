@@ -187,6 +187,22 @@ TEST_F(ApiTest, SubmitJobNoApiKey) {
     ASSERT_EQ(res->body, "Unauthorized: Missing 'X-API-Key' header.");
 }
 
+TEST_F(ApiTest, SubmitJobIncorrectApiKey) {
+    nlohmann::json job_payload;
+    job_payload["source_url"] = "http://example.com/video.mp4";
+    job_payload["target_codec"] = "h264";
+
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", "incorrect_api_key"}
+    };
+    auto res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
+
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 401);
+    ASSERT_EQ(res->body, "Unauthorized");
+}
+
 TEST_F(ApiTest, SubmitJobNonStringSourceUrl) {
     nlohmann::json job_payload;
     job_payload["source_url"] = 123; // Non-string source_url
