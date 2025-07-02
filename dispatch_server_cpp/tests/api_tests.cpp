@@ -159,3 +159,17 @@ TEST_F(ApiTest, SubmitJobNonStringTargetCodec) {
     ASSERT_EQ(res->status, 400);
     ASSERT_EQ(res->body, "Bad Request: 'target_codec' is missing or not a string.");
 }
+
+TEST_F(ApiTest, SubmitJobNonNumericJobSize) {
+    nlohmann::json job_payload;
+    job_payload["source_url"] = "http://example.com/video.mp4";
+    job_payload["target_codec"] = "h264";
+    job_payload["job_size"] = "not_a_number"; // Non-numeric job_size
+    job_payload["max_retries"] = 5;
+
+    auto res = client->Post("/jobs/", job_payload.dump(), "application/json");
+
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 400);
+    ASSERT_EQ(res->body, "Bad Request: 'job_size' must be a number.");
+}

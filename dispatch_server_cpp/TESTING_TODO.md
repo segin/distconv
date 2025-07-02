@@ -13,7 +13,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 6.  [x] Test: Submit a job with extra, unexpected fields. Expect HTTP 200 and the extra fields to be ignored.
 7.  [x] Test: Submit a job with a non-string `source_url`. Expect HTTP 400 or for the server to handle type coercion gracefully.
 8.  [x] Test: Submit a job with a non-string `target_codec`. Expect HTTP 400.
-9.  [ ] Test: Submit a job with a non-numeric `job_size`. Expect HTTP 400.
+9.  [x] Test: Submit a job with a non-numeric `job_size`. Expect HTTP 400.
 10. [ ] Test: Submit a job with a non-integer `max_retries`. Expect HTTP 400.
 11. [ ] Test: Submit a job without an API key when one is required. Expect HTTP 401.
 12. [ ] Test: Submit a job with an incorrect API key. Expect HTTP 401.
