@@ -596,6 +596,22 @@ TEST_F(ApiTest, EngineHeartbeatNoApiKey) {
     ASSERT_EQ(res->status, 401);
 }
 
+TEST_F(ApiTest, EngineHeartbeatIncorrectApiKey) {
+    nlohmann::json heartbeat_payload;
+    heartbeat_payload["engine_id"] = "engine-123";
+    heartbeat_payload["status"] = "idle";
+    heartbeat_payload["supported_codecs"] = {"h264", "vp9"};
+
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", "incorrect_api_key"}
+    };
+    auto res = client->Post("/engines/heartbeat", headers, heartbeat_payload.dump(), "application/json");
+
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 401);
+}
+
 TEST_F(ApiTest, SubmitBenchmarkResultValid) {
     // First, register an engine
     nlohmann::json engine_payload;
