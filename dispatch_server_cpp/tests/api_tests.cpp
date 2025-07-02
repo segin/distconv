@@ -4,6 +4,8 @@
 #include "../dispatch_server_core.h"
 #include <fstream> // Required for std::ofstream
 #include <cstdio> // Required for std::remove
+#include <thread>
+#include <chrono>
 
 // Helper function to clear the database before each test
 void clear_db() {
@@ -201,6 +203,30 @@ TEST_F(ApiTest, SubmitJobIncorrectApiKey) {
     ASSERT_TRUE(res != nullptr);
     ASSERT_EQ(res->status, 401);
     ASSERT_EQ(res->body, "Unauthorized");
+}
+
+TEST_F(ApiTest, JobIdIsUnique) {
+    nlohmann::json job_payload;
+    job_payload["source_url"] = "http://example.com/video.mp4";
+    job_payload["target_codec"] = "h264";
+
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res1 = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    auto res2 = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
+
+    ASSERT_TRUE(res1 != nullptr);
+    ASSERT_EQ(res1->status, 200);
+    ASSERT_TRUE(res2 != nullptr);
+    ASSERT_EQ(res2->status, 200);
+
+    nlohmann::json res1_json = nlohmann::json::parse(res1->body);
+    nlohmann::json res2_json = nlohmann::json::parse(res2->body);
+
+    ASSERT_NE(res1_json["job_id"], res2_json["job_id"]);
 }
 
 TEST_F(ApiTest, SubmitJobNonStringSourceUrl) {
