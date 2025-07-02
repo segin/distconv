@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/home/segin/distconv/third_party/httplib -I/home/segin/distconv/third_party/json/single_include
+CXX_INCLUDES = -I/home/segin/distconv/dispatch_server_cpp -I/home/segin/distconv/third_party/json/single_include
 
 CXX_FLAGS = -std=gnu++17
 

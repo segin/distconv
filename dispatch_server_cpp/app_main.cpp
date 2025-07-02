@@ -3,6 +3,7 @@
 
 int main(int argc, char* argv[]) {
     std::cout << "Dispatch Server Application Starting..." << std::endl;
-    // Call the main server function from the core library
-    return run_dispatch_server(argc, argv);
+    DispatchServer server;
+    server.start(8080);
+    return 0;
 }

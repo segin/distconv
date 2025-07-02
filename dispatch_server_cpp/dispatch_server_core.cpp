@@ -7,9 +7,6 @@
 #include "nlohmann/json.hpp"
 #include "dispatch_server_core.h" // Include the new header
 
-// Global API Key
-std::string API_KEY = "";
-
 // In-memory storage for jobs and engines (for now)
 // In a real application, this would be a database
 nlohmann::json jobs_db = nlohmann::json::object();
@@ -49,11 +46,11 @@ void save_state() {
     }
 }
 
-void setup_endpoints(httplib::Server &svr); // Forward declaration
+void setup_endpoints(httplib::Server &svr, const std::string& api_key); // Forward declaration
 
-DispatchServer::DispatchServer() {
+DispatchServer::DispatchServer(const std::string& api_key) : api_key_(api_key) {
     load_state();
-    setup_endpoints(svr);
+    setup_endpoints(svr, api_key_);
 }
 
 void DispatchServer::start(int port, bool block) {
@@ -78,10 +75,15 @@ httplib::Server* DispatchServer::getServer() {
     return &svr;
 }
 
-void setup_endpoints(httplib::Server &svr) {
+void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
     // Endpoint to submit a new transcoding job
     svr.Post("/jobs/", [&](const httplib::Request& req, httplib::Response& res) {
-        if (API_KEY != "" && req.get_header_value("X-API-Key") != API_KEY) {
+        if (req.get_header_value("Authorization") == "") {
+            res.status = 401;
+            res.set_content("Unauthorized: Missing 'Authorization' header.", "text/plain");
+            return;
+        }
+        if (api_key != "" && req.get_header_value("X-API-Key") != api_key) {
             res.status = 401;
             res.set_content("Unauthorized", "text/plain");
             return;
@@ -138,7 +140,7 @@ void setup_endpoints(httplib::Server &svr) {
 
     // Endpoint to get job status
     svr.Get(R"(/jobs/(\w+))", [&](const httplib::Request& req, httplib::Response& res) {
-        if (API_KEY != "" && req.get_header_value("X-API-Key") != API_KEY) {
+        if (api_key != "" && req.get_header_value("X-API-Key") != api_key) {
             res.status = 401;
             res.set_content("Unauthorized", "text/plain");
             return;
@@ -154,7 +156,7 @@ void setup_endpoints(httplib::Server &svr) {
 
     // Endpoint to list all jobs
     svr.Get("/jobs/", [&](const httplib::Request& req, httplib::Response& res) {
-        if (API_KEY != "" && req.get_header_value("X-API-Key") != API_KEY) {
+        if (api_key != "" && req.get_header_value("X-API-Key") != api_key) {
             res.status = 401;
             res.set_content("Unauthorized", "text/plain");
             return;
@@ -168,7 +170,7 @@ void setup_endpoints(httplib::Server &svr) {
 
     // Endpoint to list all engines
     svr.Get("/engines/", [&](const httplib::Request& req, httplib::Response& res) {
-        if (API_KEY != "" && req.get_header_value("X-API-Key") != API_KEY) {
+        if (api_key != "" && req.get_header_value("X-API-Key") != api_key) {
             res.status = 401;
             res.set_content("Unauthorized", "text/plain");
             return;
@@ -182,7 +184,7 @@ void setup_endpoints(httplib::Server &svr) {
 
     // Endpoint for engine heartbeat
     svr.Post("/engines/heartbeat", [&](const httplib::Request& req, httplib::Response& res) {
-        if (API_KEY != "" && req.get_header_value("X-API-Key") != API_KEY) {
+        if (api_key != "" && req.get_header_value("X-API-Key") != api_key) {
             res.status = 401;
             res.set_content("Unauthorized", "text/plain");
             return;
@@ -204,7 +206,7 @@ void setup_endpoints(httplib::Server &svr) {
 
     // Endpoint for benchmark results
     svr.Post("/engines/benchmark_result", [&](const httplib::Request& req, httplib::Response& res) {
-        if (API_KEY != "" && req.get_header_value("X-API-Key") != API_KEY) {
+        if (api_key != "" && req.get_header_value("X-API-Key") != api_key) {
             res.status = 401;
             res.set_content("Unauthorized", "text/plain");
             return;
@@ -231,7 +233,7 @@ void setup_endpoints(httplib::Server &svr) {
 
     // Endpoint to complete a job
     svr.Post(R"(/jobs/(\w+)/complete)", [&](const httplib::Request& req, httplib::Response& res) {
-        if (API_KEY != "" && req.get_header_value("X-API-Key") != API_KEY) {
+        if (api_key != "" && req.get_header_value("X-API-Key") != api_key) {
             res.status = 401;
             res.set_content("Unauthorized", "text/plain");
             return;
@@ -259,7 +261,7 @@ void setup_endpoints(httplib::Server &svr) {
 
     // Endpoint to fail a job
     svr.Post(R"(/jobs/(\w+)/fail)", [&](const httplib::Request& req, httplib::Response& res) {
-        if (API_KEY != "" && req.get_header_value("X-API-Key") != API_KEY) {
+        if (api_key != "" && req.get_header_value("X-API-Key") != api_key) {
             res.status = 401;
             res.set_content("Unauthorized", "text/plain");
             return;
@@ -382,16 +384,17 @@ void setup_endpoints(httplib::Server &svr) {
 }
 
 int run_dispatch_server(int argc, char* argv[]) {
+    std::string api_key = "";
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "--api-key" && i + 1 < argc) {
-            API_KEY = argv[++i];
+            api_key = argv[++i];
         }
     }
 
-    DispatchServer server_instance;
+    DispatchServer server(api_key);
     std::cout << "Dispatch Server listening on port 8080" << std::endl;
-    server_instance.start(8080);
+    server.start(8080);
 
     return 0;
 }

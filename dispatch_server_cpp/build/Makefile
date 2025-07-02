@@ -85,6 +85,51 @@ rebuild_cache:
 rebuild_cache/fast: rebuild_cache
 .PHONY : rebuild_cache/fast
 
+# Special rule for the target list_install_components
+list_install_components:
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Available install components are: \"gmock\" \"gtest\""
+.PHONY : list_install_components
+
+# Special rule for the target list_install_components
+list_install_components/fast: list_install_components
+.PHONY : list_install_components/fast
+
+# Special rule for the target install
+install: preinstall
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Install the project..."
+	/usr/bin/cmake -P cmake_install.cmake
+.PHONY : install
+
+# Special rule for the target install
+install/fast: preinstall/fast
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Install the project..."
+	/usr/bin/cmake -P cmake_install.cmake
+.PHONY : install/fast
+
+# Special rule for the target install/local
+install/local: preinstall
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Installing only the local directory..."
+	/usr/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
+.PHONY : install/local
+
+# Special rule for the target install/local
+install/local/fast: preinstall/fast
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Installing only the local directory..."
+	/usr/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
+.PHONY : install/local/fast
+
+# Special rule for the target install/strip
+install/strip: preinstall
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Installing the project stripped..."
+	/usr/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
+.PHONY : install/strip
+
+# Special rule for the target install/strip
+install/strip/fast: preinstall/fast
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Installing the project stripped..."
+	/usr/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
+.PHONY : install/strip/fast
+
 # The main all target
 all: cmake_check_build_system
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/segin/distconv/dispatch_server_cpp/build/CMakeFiles /home/segin/distconv/dispatch_server_cpp/build//CMakeFiles/progress.marks
@@ -142,6 +187,71 @@ dispatch_server_app/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_app.dir/build.make CMakeFiles/dispatch_server_app.dir/build
 .PHONY : dispatch_server_app/fast
 
+#=============================================================================
+# Target rules for targets named dispatch_server_tests
+
+# Build rule for target.
+dispatch_server_tests: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 dispatch_server_tests
+.PHONY : dispatch_server_tests
+
+# fast build rule for target.
+dispatch_server_tests/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_tests.dir/build.make CMakeFiles/dispatch_server_tests.dir/build
+.PHONY : dispatch_server_tests/fast
+
+#=============================================================================
+# Target rules for targets named gmock
+
+# Build rule for target.
+gmock: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 gmock
+.PHONY : gmock
+
+# fast build rule for target.
+gmock/fast:
+	$(MAKE) $(MAKESILENT) -f _deps/googletest-build/googlemock/CMakeFiles/gmock.dir/build.make _deps/googletest-build/googlemock/CMakeFiles/gmock.dir/build
+.PHONY : gmock/fast
+
+#=============================================================================
+# Target rules for targets named gmock_main
+
+# Build rule for target.
+gmock_main: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 gmock_main
+.PHONY : gmock_main
+
+# fast build rule for target.
+gmock_main/fast:
+	$(MAKE) $(MAKESILENT) -f _deps/googletest-build/googlemock/CMakeFiles/gmock_main.dir/build.make _deps/googletest-build/googlemock/CMakeFiles/gmock_main.dir/build
+.PHONY : gmock_main/fast
+
+#=============================================================================
+# Target rules for targets named gtest
+
+# Build rule for target.
+gtest: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 gtest
+.PHONY : gtest
+
+# fast build rule for target.
+gtest/fast:
+	$(MAKE) $(MAKESILENT) -f _deps/googletest-build/googletest/CMakeFiles/gtest.dir/build.make _deps/googletest-build/googletest/CMakeFiles/gtest.dir/build
+.PHONY : gtest/fast
+
+#=============================================================================
+# Target rules for targets named gtest_main
+
+# Build rule for target.
+gtest_main: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 gtest_main
+.PHONY : gtest_main
+
+# fast build rule for target.
+gtest_main/fast:
+	$(MAKE) $(MAKESILENT) -f _deps/googletest-build/googletest/CMakeFiles/gtest_main.dir/build.make _deps/googletest-build/googletest/CMakeFiles/gtest_main.dir/build
+.PHONY : gtest_main/fast
+
 app_main.o: app_main.cpp.o
 .PHONY : app_main.o
 
@@ -190,6 +300,54 @@ dispatch_server_core.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_core.dir/build.make CMakeFiles/dispatch_server_core.dir/dispatch_server_core.cpp.s
 .PHONY : dispatch_server_core.cpp.s
 
+tests/api_tests.o: tests/api_tests.cpp.o
+.PHONY : tests/api_tests.o
+
+# target to build an object file
+tests/api_tests.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_tests.dir/build.make CMakeFiles/dispatch_server_tests.dir/tests/api_tests.cpp.o
+.PHONY : tests/api_tests.cpp.o
+
+tests/api_tests.i: tests/api_tests.cpp.i
+.PHONY : tests/api_tests.i
+
+# target to preprocess a source file
+tests/api_tests.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_tests.dir/build.make CMakeFiles/dispatch_server_tests.dir/tests/api_tests.cpp.i
+.PHONY : tests/api_tests.cpp.i
+
+tests/api_tests.s: tests/api_tests.cpp.s
+.PHONY : tests/api_tests.s
+
+# target to generate assembly for a file
+tests/api_tests.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_tests.dir/build.make CMakeFiles/dispatch_server_tests.dir/tests/api_tests.cpp.s
+.PHONY : tests/api_tests.cpp.s
+
+tests/main.o: tests/main.cpp.o
+.PHONY : tests/main.o
+
+# target to build an object file
+tests/main.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_tests.dir/build.make CMakeFiles/dispatch_server_tests.dir/tests/main.cpp.o
+.PHONY : tests/main.cpp.o
+
+tests/main.i: tests/main.cpp.i
+.PHONY : tests/main.i
+
+# target to preprocess a source file
+tests/main.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_tests.dir/build.make CMakeFiles/dispatch_server_tests.dir/tests/main.cpp.i
+.PHONY : tests/main.cpp.i
+
+tests/main.s: tests/main.cpp.s
+.PHONY : tests/main.s
+
+# target to generate assembly for a file
+tests/main.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_tests.dir/build.make CMakeFiles/dispatch_server_tests.dir/tests/main.cpp.s
+.PHONY : tests/main.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -197,15 +355,30 @@ help:
 	@echo "... clean"
 	@echo "... depend"
 	@echo "... edit_cache"
+	@echo "... install"
+	@echo "... install/local"
+	@echo "... install/strip"
+	@echo "... list_install_components"
 	@echo "... rebuild_cache"
 	@echo "... dispatch_server_app"
 	@echo "... dispatch_server_core"
+	@echo "... dispatch_server_tests"
+	@echo "... gmock"
+	@echo "... gmock_main"
+	@echo "... gtest"
+	@echo "... gtest_main"
 	@echo "... app_main.o"
 	@echo "... app_main.i"
 	@echo "... app_main.s"
 	@echo "... dispatch_server_core.o"
 	@echo "... dispatch_server_core.i"
 	@echo "... dispatch_server_core.s"
+	@echo "... tests/api_tests.o"
+	@echo "... tests/api_tests.i"
+	@echo "... tests/api_tests.s"
+	@echo "... tests/main.o"
+	@echo "... tests/main.i"
+	@echo "... tests/main.s"
 .PHONY : help
 
 

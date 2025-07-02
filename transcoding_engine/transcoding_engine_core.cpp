@@ -106,6 +106,12 @@ std::string makeHttpRequest(const std::string& url, const std::string& method, c
         // Set CA certificate for HTTPS
         if (!caCertPath.empty()) {
             curl_easy_setopt(curl, CURLOPT_CAINFO, caCertPath.c_str());
+            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
+            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
+        } else {
+            // Allow non-secure connections if no CA path is provided
+            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
         }
 
         if (method == "POST") {
@@ -262,6 +268,11 @@ bool downloadFile(const std::string& url, const std::string& output_path, const 
             curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
             if (!caCertPath.empty()) {
                 curl_easy_setopt(curl, CURLOPT_CAINFO, caCertPath.c_str());
+                curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
+                curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
+            } else {
+                curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+                curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
             }
 
             res = curl_easy_perform(curl);

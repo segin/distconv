@@ -56,11 +56,19 @@ void submitJob(const std::string& source_url, const std::string& target_codec, d
     payload["job_size"] = job_size;
     payload["max_retries"] = max_retries;
 
+    cpr::SslOptions ssl_opts;
+    if (!g_caCertPath.empty()) {
+        ssl_opts.ca_info = g_caCertPath;
+    } else {
+        ssl_opts.verify_peer = false;
+        ssl_opts.verify_host = false;
+    }
+
     cpr::Response r = cpr::Post(cpr::Url{g_dispatchServerUrl + "/jobs/"},
                                  cpr::Header{{"X-API-Key", g_apiKey}},
                                  cpr::Header{{"Content-Type", "application/json"}},
                                  cpr::Body{payload.dump()},
-                                 cpr::VerifySsl{g_caCertPath});
+                                 ssl_opts);
 
     if (r.status_code == 200) {
         nlohmann::json response_json = nlohmann::json::parse(r.text);
@@ -73,9 +81,17 @@ void submitJob(const std::string& source_url, const std::string& target_codec, d
 }
 
 void getJobStatus(const std::string& job_id) {
+    cpr::SslOptions ssl_opts;
+    if (!g_caCertPath.empty()) {
+        ssl_opts.ca_info = g_caCertPath;
+    } else {
+        ssl_opts.verify_peer = false;
+        ssl_opts.verify_host = false;
+    }
+
     cpr::Response r = cpr::Get(cpr::Url{g_dispatchServerUrl + "/jobs/" + job_id},
                                cpr::Header{{"X-API-Key", g_apiKey}},
-                               cpr::VerifySsl{g_caCertPath});
+                               ssl_opts);
 
     if (r.status_code == 200) {
         std::cout << "Job Status for " << job_id << ":" << std::endl;
@@ -86,9 +102,17 @@ void getJobStatus(const std::string& job_id) {
 }
 
 void listAllJobs() {
+    cpr::SslOptions ssl_opts;
+    if (!g_caCertPath.empty()) {
+        ssl_opts.ca_info = g_caCertPath;
+    } else {
+        ssl_opts.verify_peer = false;
+        ssl_opts.verify_host = false;
+    }
+
     cpr::Response r = cpr::Get(cpr::Url{g_dispatchServerUrl + "/jobs/"},
                                cpr::Header{{"X-API-Key", g_apiKey}},
-                               cpr::VerifySsl{g_caCertPath});
+                               ssl_opts);
 
     if (r.status_code == 200) {
         std::cout << "All Jobs:" << std::endl;
@@ -99,9 +123,17 @@ void listAllJobs() {
 }
 
 void listAllEngines() {
+    cpr::SslOptions ssl_opts;
+    if (!g_caCertPath.empty()) {
+        ssl_opts.ca_info = g_caCertPath;
+    } else {
+        ssl_opts.verify_peer = false;
+        ssl_opts.verify_host = false;
+    }
+
     cpr::Response r = cpr::Get(cpr::Url{g_dispatchServerUrl + "/engines/"},
                                cpr::Header{{"X-API-Key", g_apiKey}},
-                               cpr::VerifySsl{g_caCertPath});
+                               ssl_opts);
 
     if (r.status_code == 200) {
         std::cout << "All Engines:" << std::endl;
@@ -242,7 +274,7 @@ void MyFrame::OnSubmit(wxCommandEvent& event)
         std::streambuf *old_cout = std::cout.rdbuf(ss_out.rdbuf());
         std::streambuf *old_cerr = std::cerr.rdbuf(ss_err.rdbuf());
 
-        submitJob(g_dispatchServerUrl, g_apiKey, g_caCertPath, source_url, target_codec, job_size, max_retries);
+        submitJob(source_url, target_codec, job_size, max_retries);
 
         std::cout.rdbuf(old_cout);
         std::cerr.rdbuf(old_cerr);
