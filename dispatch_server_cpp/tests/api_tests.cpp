@@ -533,6 +533,20 @@ TEST_F(ApiTest, ListAllEngines) {
     ASSERT_EQ(response_json[1]["engine_id"], "engine-2");
 }
 
+TEST_F(ApiTest, EngineHeartbeatInvalidJson) {
+    std::string invalid_json_payload = "{this is not json}";
+
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res = client->Post("/engines/heartbeat", headers, invalid_json_payload, "application/json");
+
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 400);
+    ASSERT_TRUE(res->body.rfind("Invalid JSON:", 0) == 0);
+}
+
 TEST_F(ApiTest, SubmitBenchmarkResultValid) {
     // First, register an engine
     nlohmann::json engine_payload;
