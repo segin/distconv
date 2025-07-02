@@ -566,6 +566,17 @@ TEST_F(ApiTest, ListAllEnginesNoApiKey) {
     ASSERT_EQ(res->status, 401);
 }
 
+TEST_F(ApiTest, ListAllEnginesIncorrectApiKey) {
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", "incorrect_api_key"}
+    };
+    auto res = client->Get("/engines/", headers);
+
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 401);
+}
+
 TEST_F(ApiTest, EngineHeartbeatInvalidJson) {
     std::string invalid_json_payload = "{this is not json}";
 
