@@ -63,7 +63,8 @@ CMAKE_BINARY_DIR = /home/segin/distconv/dispatch_server_cpp/build
 # Directory level rules for the build root directory
 
 # The main recursive "all" target.
-all: CMakeFiles/dispatch_server_cpp.dir/all
+all: CMakeFiles/dispatch_server_core.dir/all
+all: CMakeFiles/dispatch_server_app.dir/all
 .PHONY : all
 
 # The main recursive "preinstall" target.
@@ -71,34 +72,61 @@ preinstall:
 .PHONY : preinstall
 
 # The main recursive "clean" target.
-clean: CMakeFiles/dispatch_server_cpp.dir/clean
+clean: CMakeFiles/dispatch_server_core.dir/clean
+clean: CMakeFiles/dispatch_server_app.dir/clean
 .PHONY : clean
 
 #=============================================================================
-# Target rules for target CMakeFiles/dispatch_server_cpp.dir
+# Target rules for target CMakeFiles/dispatch_server_core.dir
 
 # All Build rule for target.
-CMakeFiles/dispatch_server_cpp.dir/all:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_cpp.dir/build.make CMakeFiles/dispatch_server_cpp.dir/depend
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_cpp.dir/build.make CMakeFiles/dispatch_server_cpp.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/segin/distconv/dispatch_server_cpp/build/CMakeFiles --progress-num=1,2 "Built target dispatch_server_cpp"
-.PHONY : CMakeFiles/dispatch_server_cpp.dir/all
+CMakeFiles/dispatch_server_core.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_core.dir/build.make CMakeFiles/dispatch_server_core.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_core.dir/build.make CMakeFiles/dispatch_server_core.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/segin/distconv/dispatch_server_cpp/build/CMakeFiles --progress-num=3,4 "Built target dispatch_server_core"
+.PHONY : CMakeFiles/dispatch_server_core.dir/all
 
 # Build rule for subdir invocation for target.
-CMakeFiles/dispatch_server_cpp.dir/rule: cmake_check_build_system
+CMakeFiles/dispatch_server_core.dir/rule: cmake_check_build_system
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/segin/distconv/dispatch_server_cpp/build/CMakeFiles 2
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/dispatch_server_cpp.dir/all
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/dispatch_server_core.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/segin/distconv/dispatch_server_cpp/build/CMakeFiles 0
-.PHONY : CMakeFiles/dispatch_server_cpp.dir/rule
+.PHONY : CMakeFiles/dispatch_server_core.dir/rule
 
 # Convenience name for target.
-dispatch_server_cpp: CMakeFiles/dispatch_server_cpp.dir/rule
-.PHONY : dispatch_server_cpp
+dispatch_server_core: CMakeFiles/dispatch_server_core.dir/rule
+.PHONY : dispatch_server_core
 
 # clean rule for target.
-CMakeFiles/dispatch_server_cpp.dir/clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_cpp.dir/build.make CMakeFiles/dispatch_server_cpp.dir/clean
-.PHONY : CMakeFiles/dispatch_server_cpp.dir/clean
+CMakeFiles/dispatch_server_core.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_core.dir/build.make CMakeFiles/dispatch_server_core.dir/clean
+.PHONY : CMakeFiles/dispatch_server_core.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/dispatch_server_app.dir
+
+# All Build rule for target.
+CMakeFiles/dispatch_server_app.dir/all: CMakeFiles/dispatch_server_core.dir/all
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_app.dir/build.make CMakeFiles/dispatch_server_app.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_app.dir/build.make CMakeFiles/dispatch_server_app.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/segin/distconv/dispatch_server_cpp/build/CMakeFiles --progress-num=1,2 "Built target dispatch_server_app"
+.PHONY : CMakeFiles/dispatch_server_app.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/dispatch_server_app.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/segin/distconv/dispatch_server_cpp/build/CMakeFiles 4
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/dispatch_server_app.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/segin/distconv/dispatch_server_cpp/build/CMakeFiles 0
+.PHONY : CMakeFiles/dispatch_server_app.dir/rule
+
+# Convenience name for target.
+dispatch_server_app: CMakeFiles/dispatch_server_app.dir/rule
+.PHONY : dispatch_server_app
+
+# clean rule for target.
+CMakeFiles/dispatch_server_app.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_app.dir/build.make CMakeFiles/dispatch_server_app.dir/clean
+.PHONY : CMakeFiles/dispatch_server_app.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.

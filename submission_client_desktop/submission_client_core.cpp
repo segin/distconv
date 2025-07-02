@@ -12,7 +12,7 @@
 
 // Dispatch Server URL and API Key
 // Global configuration (will be set via UI/command line)
-std::string g_dispatchServerUrl = "https://localhost:8080";
+std::string g_dispatchServerUrl = "http://localhost:8080";
 std::string g_apiKey = "your-super-secret-api-key";
 std::string g_caCertPath = "server.crt";
 

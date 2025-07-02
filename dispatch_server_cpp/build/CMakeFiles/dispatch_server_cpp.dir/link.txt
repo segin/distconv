@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/dispatch_server_cpp.dir/main.cpp.o -o dispatch_server_cpp  -lpthread 

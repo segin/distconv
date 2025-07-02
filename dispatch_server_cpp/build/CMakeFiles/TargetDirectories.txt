@@ -1,3 +1,4 @@
-/home/segin/distconv/dispatch_server_cpp/build/CMakeFiles/dispatch_server_cpp.dir
+/home/segin/distconv/dispatch_server_cpp/build/CMakeFiles/dispatch_server_core.dir
+/home/segin/distconv/dispatch_server_cpp/build/CMakeFiles/dispatch_server_app.dir
 /home/segin/distconv/dispatch_server_cpp/build/CMakeFiles/edit_cache.dir
 /home/segin/distconv/dispatch_server_cpp/build/CMakeFiles/rebuild_cache.dir

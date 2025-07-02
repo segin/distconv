@@ -115,7 +115,7 @@ This project will be developed in phases, starting with a minimal viable product
 4.  **TLS/SSL Implementation:**
     *   [ ] Implement TLS/SSL for secure communication between all components.
         *   [ ] Generate self-signed certificates (server.key, server.crt).
-        *   [x] Implement TLS in C++ Central Server (`httplib::SSLServer`).
+        *   [ ] Implement TLS in C++ Central Server (via external proxy like `nginx`).
         *   [x] Implement TLS in C++ Transcoding Engine (using `libcurl` with `--cacert`).
         *   [x] Implement TLS in C++ Submission Client (using `cpr` with `cpr::VerifySsl`).
 

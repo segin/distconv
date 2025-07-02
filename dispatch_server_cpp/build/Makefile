@@ -117,41 +117,78 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named dispatch_server_cpp
+# Target rules for targets named dispatch_server_core
 
 # Build rule for target.
-dispatch_server_cpp: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 dispatch_server_cpp
-.PHONY : dispatch_server_cpp
+dispatch_server_core: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 dispatch_server_core
+.PHONY : dispatch_server_core
 
 # fast build rule for target.
-dispatch_server_cpp/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_cpp.dir/build.make CMakeFiles/dispatch_server_cpp.dir/build
-.PHONY : dispatch_server_cpp/fast
+dispatch_server_core/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_core.dir/build.make CMakeFiles/dispatch_server_core.dir/build
+.PHONY : dispatch_server_core/fast
 
-main.o: main.cpp.o
-.PHONY : main.o
+#=============================================================================
+# Target rules for targets named dispatch_server_app
+
+# Build rule for target.
+dispatch_server_app: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 dispatch_server_app
+.PHONY : dispatch_server_app
+
+# fast build rule for target.
+dispatch_server_app/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_app.dir/build.make CMakeFiles/dispatch_server_app.dir/build
+.PHONY : dispatch_server_app/fast
+
+app_main.o: app_main.cpp.o
+.PHONY : app_main.o
 
 # target to build an object file
-main.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_cpp.dir/build.make CMakeFiles/dispatch_server_cpp.dir/main.cpp.o
-.PHONY : main.cpp.o
+app_main.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_app.dir/build.make CMakeFiles/dispatch_server_app.dir/app_main.cpp.o
+.PHONY : app_main.cpp.o
 
-main.i: main.cpp.i
-.PHONY : main.i
+app_main.i: app_main.cpp.i
+.PHONY : app_main.i
 
 # target to preprocess a source file
-main.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_cpp.dir/build.make CMakeFiles/dispatch_server_cpp.dir/main.cpp.i
-.PHONY : main.cpp.i
+app_main.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_app.dir/build.make CMakeFiles/dispatch_server_app.dir/app_main.cpp.i
+.PHONY : app_main.cpp.i
 
-main.s: main.cpp.s
-.PHONY : main.s
+app_main.s: app_main.cpp.s
+.PHONY : app_main.s
 
 # target to generate assembly for a file
-main.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_cpp.dir/build.make CMakeFiles/dispatch_server_cpp.dir/main.cpp.s
-.PHONY : main.cpp.s
+app_main.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_app.dir/build.make CMakeFiles/dispatch_server_app.dir/app_main.cpp.s
+.PHONY : app_main.cpp.s
+
+dispatch_server_core.o: dispatch_server_core.cpp.o
+.PHONY : dispatch_server_core.o
+
+# target to build an object file
+dispatch_server_core.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_core.dir/build.make CMakeFiles/dispatch_server_core.dir/dispatch_server_core.cpp.o
+.PHONY : dispatch_server_core.cpp.o
+
+dispatch_server_core.i: dispatch_server_core.cpp.i
+.PHONY : dispatch_server_core.i
+
+# target to preprocess a source file
+dispatch_server_core.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_core.dir/build.make CMakeFiles/dispatch_server_core.dir/dispatch_server_core.cpp.i
+.PHONY : dispatch_server_core.cpp.i
+
+dispatch_server_core.s: dispatch_server_core.cpp.s
+.PHONY : dispatch_server_core.s
+
+# target to generate assembly for a file
+dispatch_server_core.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_core.dir/build.make CMakeFiles/dispatch_server_core.dir/dispatch_server_core.cpp.s
+.PHONY : dispatch_server_core.cpp.s
 
 # Help Target
 help:
@@ -161,10 +198,14 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
-	@echo "... dispatch_server_cpp"
-	@echo "... main.o"
-	@echo "... main.i"
-	@echo "... main.s"
+	@echo "... dispatch_server_app"
+	@echo "... dispatch_server_core"
+	@echo "... app_main.o"
+	@echo "... app_main.i"
+	@echo "... app_main.s"
+	@echo "... dispatch_server_core.o"
+	@echo "... dispatch_server_core.i"
+	@echo "... dispatch_server_core.s"
 .PHONY : help
 
 

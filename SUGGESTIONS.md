@@ -42,7 +42,7 @@ This document provides a comprehensive list of suggestions to enhance the archit
 
 17. **Use `io_uring`:** For high-performance I/O on Linux-based components (Server, Engine), investigate using `io_uring` instead of standard blocking I/O or `epoll`.
 
-18. **Offload SSL/TLS Termination:** In a production environment, offload TLS termination to a dedicated load balancer or reverse proxy.
+18. **Offload SSL/TLS Termination:** In a production environment, offload TLS termination to a dedicated load balancer or reverse proxy like `nginx`. The server itself should only handle plain HTTP.
 
 19. **Optimize JSON Parsing:** Investigate faster JSON libraries than `nlohmann/json` if parsing becomes a bottleneck (e.g., `simdjson`).
 

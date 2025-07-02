@@ -378,7 +378,7 @@ int run_transcoding_engine(int argc, char* argv[]) {
     std::cout << "Transcoding Engine Starting..." << std::endl;
 
     // Configuration
-    std::string dispatchServerUrl = "https://localhost:8080"; // Assuming C++ dispatch server runs on localhost:8080
+    std::string dispatchServerUrl = "http://localhost:8080"; // Assuming C++ dispatch server runs on localhost:8080
     std::string engineId = "engine-" + std::to_string(std::random_device{}() % 10000); // Unique ID for this engine
     double storageCapacityGb = 500.0; // Example storage capacity
     bool streamingSupport = true; // This engine supports streaming
