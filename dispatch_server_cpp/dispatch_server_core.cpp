@@ -196,6 +196,11 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
         }
         try {
             nlohmann::json request_json = nlohmann::json::parse(req.body);
+            if (!request_json.contains("engine_id")) {
+                res.status = 400;
+                res.set_content("Bad Request: 'engine_id' is missing.", "text/plain");
+                return;
+            }
             std::string engine_id = request_json["engine_id"];
             engines_db[engine_id] = request_json;
             save_state();

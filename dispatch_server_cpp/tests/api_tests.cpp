@@ -547,6 +547,22 @@ TEST_F(ApiTest, EngineHeartbeatInvalidJson) {
     ASSERT_TRUE(res->body.rfind("Invalid JSON:", 0) == 0);
 }
 
+TEST_F(ApiTest, EngineHeartbeatMissingEngineId) {
+    nlohmann::json heartbeat_payload;
+    heartbeat_payload["status"] = "idle";
+    heartbeat_payload["supported_codecs"] = {"h264", "vp9"};
+
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res = client->Post("/engines/heartbeat", headers, heartbeat_payload.dump(), "application/json");
+
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 400);
+    ASSERT_EQ(res->body, "Bad Request: 'engine_id' is missing.");
+}
+
 TEST_F(ApiTest, SubmitBenchmarkResultValid) {
     // First, register an engine
     nlohmann::json engine_payload;
