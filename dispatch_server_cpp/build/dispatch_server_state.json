@@ -1,15 +1,25 @@
 {
-    "engines": {},
+    "engines": {
+        "engine-123": {
+            "benchmark_time": 100.0,
+            "engine_id": "engine-123",
+            "status": "busy",
+            "supported_codecs": [
+                "h264",
+                "vp9"
+            ]
+        }
+    },
     "jobs": {
-        "1751479385017": {
-            "assigned_engine": null,
-            "job_id": "1751479385017",
+        "1751479488247": {
+            "assigned_engine": "engine-123",
+            "job_id": "1751479488247",
             "job_size": 0.0,
             "max_retries": 3,
             "output_url": null,
             "retries": 0,
             "source_url": "http://example.com/video.mp4",
-            "status": "pending",
+            "status": "assigned",
             "target_codec": "h264"
         }
     }

@@ -399,12 +399,12 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
         }
 
         // Assign the job
-        jobs_db[pending_job["job_id"]]["status"] = "assigned";
-        jobs_db[pending_job["job_id"]]["assigned_engine"] = selected_engine["engine_id"];
-        engines_db[selected_engine["engine_id"]]["status"] = "busy";
+        jobs_db[pending_job["job_id"].get<std::string>()]["status"] = "assigned";
+        jobs_db[pending_job["job_id"].get<std::string>()]["assigned_engine"] = selected_engine["engine_id"];
+        engines_db[selected_engine["engine_id"].get<std::string>()]["status"] = "busy";
         save_state();
 
-        res.set_content(pending_job.dump(), "application/json");
+        res.set_content(jobs_db[pending_job["job_id"].get<std::string>()].dump(), "application/json");
     });
 
     // Placeholder for storage pool configuration (to be implemented later)

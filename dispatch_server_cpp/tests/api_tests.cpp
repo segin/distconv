@@ -910,3 +910,36 @@ TEST_F(ApiTest, FailJobNoApiKey) {
     ASSERT_TRUE(fail_res != nullptr);
     ASSERT_EQ(fail_res->status, 401);
 }
+
+TEST_F(ApiTest, AssignJob) {
+    // Submit a job
+    nlohmann::json job_payload;
+    job_payload["source_url"] = "http://example.com/video.mp4";
+    job_payload["target_codec"] = "h264";
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    client->Post("/jobs/", headers, job_payload.dump(), "application/json");
+
+    // Send a heartbeat from an engine
+    nlohmann::json heartbeat_payload;
+    heartbeat_payload["engine_id"] = "engine-123";
+    heartbeat_payload["status"] = "idle";
+    heartbeat_payload["supported_codecs"] = {"h264", "vp9"};
+    heartbeat_payload["benchmark_time"] = 100.0;
+    client->Post("/engines/heartbeat", headers, heartbeat_payload.dump(), "application/json");
+
+    // Assign the job
+    nlohmann::json assign_payload;
+    assign_payload["engine_id"] = "engine-123";
+    auto res = client->Post("/assign_job/", headers, assign_payload.dump(), "application/json");
+
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 200);
+
+    nlohmann::json res_json = nlohmann::json::parse(res->body);
+    ASSERT_TRUE(res_json.contains("job_id"));
+    ASSERT_EQ(res_json["status"], "assigned");
+    ASSERT_EQ(res_json["assigned_engine"], "engine-123");
+}
