@@ -201,6 +201,11 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
                 res.set_content("Bad Request: 'engine_id' is missing.", "text/plain");
                 return;
             }
+            if (!request_json["engine_id"].is_string()) {
+                res.status = 400;
+                res.set_content("Bad Request: 'engine_id' must be a string.", "text/plain");
+                return;
+            }
             std::string engine_id = request_json["engine_id"];
             engines_db[engine_id] = request_json;
             save_state();
