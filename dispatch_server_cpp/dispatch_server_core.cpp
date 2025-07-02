@@ -88,6 +88,18 @@ void setup_endpoints(httplib::Server &svr) {
         }
         try {
             nlohmann::json request_json = nlohmann::json::parse(req.body);
+
+            if (!request_json.contains("source_url") || !request_json["source_url"].is_string()) {
+                res.status = 400;
+                res.set_content("Bad Request: 'source_url' is missing or not a string.", "text/plain");
+                return;
+            }
+            if (!request_json.contains("target_codec") || !request_json["target_codec"].is_string()) {
+                res.status = 400;
+                res.set_content("Bad Request: 'target_codec' is missing or not a string.", "text/plain");
+                return;
+            }
+
             std::string job_id = std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
             
             nlohmann::json job;
