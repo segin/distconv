@@ -67,7 +67,6 @@ This project will be developed in phases, starting with a minimal viable product
     *   [x] Implement authentication and authorization for the dispatch server API.
     *   [x] Implement API key authentication for the Dispatch Server.
     *   [x] Implement API key authentication for the Dispatch Server.
-    *   [ ] Encrypt communication between the components. (Acknowledged as a critical future enhancement, but beyond current MVP scope due to complexity of full TLS implementation across components.)
 
 2.  **Scalability:**
     *   [x] Optimize the dispatch server to handle a large number of transcoding engines and jobs.
@@ -112,10 +111,9 @@ This project will be developed in phases, starting with a minimal viable product
     *   [x] Implement local job queue persistence using SQLite.
     *   [x] Implement local job queue persistence using SQLite.
 
-4.  **TLS/SSL Implementation:**
-    *   [ ] Implement TLS/SSL for secure communication between all components.
-        *   [ ] Generate self-signed certificates (server.key, server.crt).
-        *   [ ] Implement TLS in C++ Central Server (via external proxy like `nginx`).
+    4.  **TLS/SSL Implementation:**
+    *   [ ] Implement TLS/SSL for secure communication between clients and the server.
+        *   [ ] The Central Server will not implement TLS directly. It is recommended to use a reverse proxy like `nginx` to terminate TLS.
         *   [x] Implement TLS in C++ Transcoding Engine (using `libcurl` with `--cacert`).
         *   [x] Implement TLS in C++ Submission Client (using `cpr` with `cpr::VerifySsl`).
 
@@ -126,10 +124,10 @@ This project will be developed in phases, starting with a minimal viable product
     *   [x] Implement hostname reporting from the Transcoding Engine to the Dispatch Server.
 
 7.  **Unit Testing:**
-    *   [ ] Implement a comprehensive unit testing framework (e.g., Google Test).
-    *   [ ] Write unit tests for the C++ submission client.
-    *   [ ] Write unit tests for the C++ central server.
-    *   [ ] Write unit tests for the C++ transcoding engine.
+    *   [x] Implement a comprehensive unit testing framework (Google Test).
+    *   [ ] Write unit tests for the C++ submission client. (See `submission_client_desktop/TESTING_TODO.md`)
+    *   [ ] Write unit tests for the C++ central server. (See `dispatch_server_cpp/TESTING_TODO.md`)
+    *   [ ] Write unit tests for the C++ transcoding engine. (See `transcoding_engine/TESTING_TODO.md`)
     *   [ ] Integrate Valgrind into the testing process for memory leak detection.
 
 ## Future Enhancements:

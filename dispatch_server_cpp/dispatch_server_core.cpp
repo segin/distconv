@@ -49,19 +49,36 @@ void save_state() {
     }
 }
 
-int run_dispatch_server(int argc, char* argv[]) {
-    for (int i = 1; i < argc; ++i) {
-        std::string arg = argv[i];
-        if (arg == "--api-key" && i + 1 < argc) {
-            API_KEY = argv[++i];
-        }
-    }
+void setup_endpoints(httplib::Server &svr); // Forward declaration
 
-    httplib::Server svr; // Use non-SSL server
-
-    // Load state on startup
+DispatchServer::DispatchServer() {
     load_state();
+    setup_endpoints(svr);
+}
 
+void DispatchServer::start(int port, bool block) {
+    if (block) {
+        svr.listen("0.0.0.0", port);
+    } else {
+        server_thread = std::thread([this, port]() {
+            this->svr.listen("0.0.0.0", port);
+        });
+    }
+}
+
+void DispatchServer::stop() {
+    svr.stop();
+    if (server_thread.joinable()) {
+        server_thread.join();
+    }
+    save_state();
+}
+
+httplib::Server* DispatchServer::getServer() {
+    return &svr;
+}
+
+void setup_endpoints(httplib::Server &svr) {
     // Endpoint to submit a new transcoding job
     svr.Post("/jobs/", [&](const httplib::Request& req, httplib::Response& res) {
         if (API_KEY != "" && req.get_header_value("X-API-Key") != API_KEY) {
@@ -340,14 +357,22 @@ int run_dispatch_server(int argc, char* argv[]) {
     svr.Get("/storage_pools/", [&](const httplib::Request& req, httplib::Response& res) {
         res.set_content("Storage pool configuration to be implemented.", "text/plain");
     });
+}
 
+int run_dispatch_server(int argc, char* argv[]) {
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        if (arg == "--api-key" && i + 1 < argc) {
+            API_KEY = argv[++i];
+        }
+    }
+
+    DispatchServer server_instance;
     std::cout << "Dispatch Server listening on port 8080" << std::endl;
-    svr.listen("0.0.0.0", 8080);
-
-    // Save state on shutdown (this part might not be reached cleanly on SIGINT)
-    save_state();
+    server_instance.start(8080);
 
     return 0;
 }
+
 
 

@@ -3,6 +3,7 @@
 
 #include <string>
 #include "nlohmann/json.hpp"
+#include "httplib.h"
 
 // Global API Key
 extern std::string API_KEY;
@@ -13,6 +14,17 @@ extern nlohmann::json engines_db;
 
 // Persistent storage file
 extern const std::string PERSISTENT_STORAGE_FILE;
+
+class DispatchServer {
+public:
+    DispatchServer();
+    void start(int port, bool block = true);
+    void stop();
+    httplib::Server* getServer();
+private:
+    httplib::Server svr;
+    std::thread server_thread;
+};
 
 // Function declarations
 void load_state();
