@@ -4,10 +4,13 @@
 #include <string>
 #include "nlohmann/json.hpp"
 #include "httplib.h"
+#include <mutex>
 
 // In-memory storage for jobs and engines
 extern nlohmann::json jobs_db;
 extern nlohmann::json engines_db;
+extern std::mutex jobs_mutex;
+extern std::mutex engines_mutex;
 
 // Persistent storage file
 extern const std::string PERSISTENT_STORAGE_FILE;

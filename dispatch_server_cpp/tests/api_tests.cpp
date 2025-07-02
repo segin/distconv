@@ -63,7 +63,10 @@ TEST_F(ApiTest, SubmitValidJob) {
     ASSERT_EQ(response_json["max_retries"], 5);
 
     // Verify job is in the database
-    ASSERT_TRUE(jobs_db.contains(response_json["job_id"]));
+    {
+        std::lock_guard<std::mutex> lock(jobs_mutex);
+        ASSERT_TRUE(jobs_db.contains(response_json["job_id"]));
+    }
 }
 
 TEST_F(ApiTest, SubmitJobMissingSourceUrl) {
@@ -157,8 +160,11 @@ TEST_F(ApiTest, SubmitJobWithExtraFields) {
     // Verify extra fields are NOT present in the response or in the stored job
     ASSERT_FALSE(response_json.contains("extra_field"));
     ASSERT_FALSE(response_json.contains("another_extra"));
-    ASSERT_FALSE(jobs_db[response_json["job_id"]].contains("extra_field"));
-    ASSERT_FALSE(jobs_db[response_json["job_id"]].contains("another_extra"));
+    {
+        std::lock_guard<std::mutex> lock(jobs_mutex);
+        ASSERT_FALSE(jobs_db[response_json["job_id"]].contains("extra_field"));
+        ASSERT_FALSE(jobs_db[response_json["job_id"]].contains("another_extra"));
+    }
 }
 
 TEST_F(ApiTest, SubmitJobNoAuthHeader) {
@@ -478,8 +484,11 @@ TEST_F(ApiTest, EngineHeartbeatNewEngine) {
     ASSERT_EQ(res->body, "Heartbeat received from engine engine-123");
 
     // Verify engine is in the database
-    ASSERT_TRUE(engines_db.contains("engine-123"));
-    ASSERT_EQ(engines_db["engine-123"]["status"], "idle");
+    {
+        std::lock_guard<std::mutex> lock(engines_mutex);
+        ASSERT_TRUE(engines_db.contains("engine-123"));
+        ASSERT_EQ(engines_db["engine-123"]["status"], "idle");
+    }
 }
 
 TEST_F(ApiTest, EngineHeartbeatExistingEngine) {
@@ -503,7 +512,10 @@ TEST_F(ApiTest, EngineHeartbeatExistingEngine) {
     ASSERT_EQ(res->status, 200);
 
     // Verify engine status is updated
-    ASSERT_EQ(engines_db["engine-123"]["status"], "busy");
+    {
+        std::lock_guard<std::mutex> lock(engines_mutex);
+        ASSERT_EQ(engines_db["engine-123"]["status"], "busy");
+    }
 }
 
 TEST_F(ApiTest, ListAllEngines) {
@@ -678,7 +690,10 @@ TEST_F(ApiTest, SubmitBenchmarkResultValid) {
     ASSERT_EQ(res->body, "Benchmark result received from engine engine-bm-1");
 
     // Verify benchmark time is stored
-    ASSERT_EQ(engines_db["engine-bm-1"]["benchmark_time"], 123.45);
+    {
+        std::lock_guard<std::mutex> lock(engines_mutex);
+        ASSERT_EQ(engines_db["engine-bm-1"]["benchmark_time"], 123.45);
+    }
 }
 
 TEST_F(ApiTest, SubmitBenchmarkResultInvalidEngine) {
@@ -719,8 +734,11 @@ TEST_F(ApiTest, CompleteJobValid) {
     ASSERT_EQ(complete_res->body, "Job " + job_id + " marked as completed");
 
     // Verify job status
-    ASSERT_EQ(jobs_db[job_id]["status"], "completed");
-    ASSERT_EQ(jobs_db[job_id]["output_url"], "http://example.com/output.mp4");
+    {
+        std::lock_guard<std::mutex> lock(jobs_mutex);
+        ASSERT_EQ(jobs_db[job_id]["status"], "completed");
+        ASSERT_EQ(jobs_db[job_id]["output_url"], "http://example.com/output.mp4");
+    }
 }
 
 TEST_F(ApiTest, CompleteJobInvalid) {
@@ -826,9 +844,12 @@ TEST_F(ApiTest, FailJobAndRequeue) {
     ASSERT_EQ(fail_res->body, "Job " + job_id + " re-queued");
 
     // Verify job status
-    ASSERT_EQ(jobs_db[job_id]["status"], "pending");
-    ASSERT_EQ(jobs_db[job_id]["retries"], 1);
-    ASSERT_EQ(jobs_db[job_id]["error_message"], "Transcoding failed");
+    {
+        std::lock_guard<std::mutex> lock(jobs_mutex);
+        ASSERT_EQ(jobs_db[job_id]["status"], "pending");
+        ASSERT_EQ(jobs_db[job_id]["retries"], 1);
+        ASSERT_EQ(jobs_db[job_id]["error_message"], "Transcoding failed");
+    }
 }
 
 TEST_F(ApiTest, FailJobInvalidJobId) {
@@ -843,6 +864,36 @@ TEST_F(ApiTest, FailJobInvalidJobId) {
     ASSERT_TRUE(res != nullptr);
     ASSERT_EQ(res->status, 404);
     ASSERT_EQ(res->body, "Job not found");
+}
+
+TEST_F(ApiTest, FailJobAndFailPermanently) {
+    // Submit a job with max_retries = 0
+    nlohmann::json job_payload;
+    job_payload["source_url"] = "http://example.com/video.mp4";
+    job_payload["target_codec"] = "h264";
+    job_payload["max_retries"] = 0;
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto post_res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
+    std::string job_id = nlohmann::json::parse(post_res->body)["job_id"];
+
+    // Fail the job
+    nlohmann::json fail_payload;
+    fail_payload["error_message"] = "Transcoding failed";
+    auto fail_res = client->Post(("/jobs/" + job_id + "/fail").c_str(), headers, fail_payload.dump(), "application/json");
+
+    ASSERT_TRUE(fail_res != nullptr);
+    ASSERT_EQ(fail_res->status, 200);
+    ASSERT_EQ(fail_res->body, "Job " + job_id + " failed permanently");
+
+    // Verify job status
+    {
+        std::lock_guard<std::mutex> lock(jobs_mutex);
+        ASSERT_EQ(jobs_db[job_id]["status"], "failed_permanently");
+        ASSERT_EQ(jobs_db[job_id]["error_message"], "Transcoding failed");
+    }
 }
 
 TEST_F(ApiTest, FailJobMissingErrorMessage) {
@@ -955,6 +1006,34 @@ TEST_F(ApiTest, AssignJobNoPendingJobs) {
         {"Authorization", "some_token"},
         {"X-API-Key", api_key}
     };
+    client->Post("/engines/heartbeat", headers, heartbeat_payload.dump(), "application/json");
+
+    // Assign the job
+    nlohmann::json assign_payload;
+    assign_payload["engine_id"] = "engine-123";
+    auto res = client->Post("/assign_job/", headers, assign_payload.dump(), "application/json");
+
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 204);
+}
+
+TEST_F(ApiTest, AssignJobNoIdleEngines) {
+    // Submit a job
+    nlohmann::json job_payload;
+    job_payload["source_url"] = "http://example.com/video.mp4";
+    job_payload["target_codec"] = "h264";
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    client->Post("/jobs/", headers, job_payload.dump(), "application/json");
+
+    // Send a heartbeat from a busy engine
+    nlohmann::json heartbeat_payload;
+    heartbeat_payload["engine_id"] = "engine-123";
+    heartbeat_payload["status"] = "busy";
+    heartbeat_payload["supported_codecs"] = {"h264", "vp9"};
+    heartbeat_payload["benchmark_time"] = 100.0;
     client->Post("/engines/heartbeat", headers, heartbeat_payload.dump(), "application/json");
 
     // Assign the job

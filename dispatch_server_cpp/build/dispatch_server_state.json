@@ -3,12 +3,24 @@
         "engine-123": {
             "benchmark_time": 100.0,
             "engine_id": "engine-123",
-            "status": "idle",
+            "status": "busy",
             "supported_codecs": [
                 "h264",
                 "vp9"
             ]
         }
     },
-    "jobs": {}
+    "jobs": {
+        "1751480237239": {
+            "assigned_engine": null,
+            "job_id": "1751480237239",
+            "job_size": 0.0,
+            "max_retries": 3,
+            "output_url": null,
+            "retries": 0,
+            "source_url": "http://example.com/video.mp4",
+            "status": "pending",
+            "target_codec": "h264"
+        }
+    }
 }

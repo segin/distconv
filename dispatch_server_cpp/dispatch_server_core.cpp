@@ -11,6 +11,8 @@
 // In a real application, this would be a database
 nlohmann::json jobs_db = nlohmann::json::object();
 nlohmann::json engines_db = nlohmann::json::object();
+std::mutex jobs_mutex;
+std::mutex engines_mutex;
 
 // Persistent storage for jobs and engines
 const std::string PERSISTENT_STORAGE_FILE = "dispatch_server_state.json";
@@ -130,7 +132,10 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
             job["retries"] = 0;
             job["max_retries"] = request_json.value("max_retries", 3);
 
-            jobs_db[job_id] = job;
+            {
+                std::lock_guard<std::mutex> lock(jobs_mutex);
+                jobs_db[job_id] = job;
+            }
             save_state();
 
             res.set_content(job.dump(), "application/json");
@@ -151,6 +156,7 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
             return;
         }
         std::string job_id = req.matches[1];
+        std::lock_guard<std::mutex> lock(jobs_mutex);
         if (jobs_db.contains(job_id)) {
             res.set_content(jobs_db[job_id].dump(), "application/json");
         } else {
@@ -167,8 +173,11 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
             return;
         }
         nlohmann::json all_jobs = nlohmann::json::array();
-        for (auto const& [key, val] : jobs_db.items()) {
-            all_jobs.push_back(val);
+        {
+            std::lock_guard<std::mutex> lock(jobs_mutex);
+            for (auto const& [key, val] : jobs_db.items()) {
+                all_jobs.push_back(val);
+            }
         }
         res.set_content(all_jobs.dump(), "application/json");
     });
@@ -181,8 +190,11 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
             return;
         }
         nlohmann::json all_engines = nlohmann::json::array();
-        for (auto const& [key, val] : engines_db.items()) {
-            all_engines.push_back(val);
+        {
+            std::lock_guard<std::mutex> lock(engines_mutex);
+            for (auto const& [key, val] : engines_db.items()) {
+                all_engines.push_back(val);
+            }
         }
         res.set_content(all_engines.dump(), "application/json");
     });
@@ -207,7 +219,10 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
                 return;
             }
             std::string engine_id = request_json["engine_id"];
-            engines_db[engine_id] = request_json;
+            {
+                std::lock_guard<std::mutex> lock(engines_mutex);
+                engines_db[engine_id] = request_json;
+            }
             save_state();
             res.set_content("Heartbeat received from engine " + engine_id, "text/plain");
         } catch (const nlohmann::json::parse_error& e) {
@@ -229,14 +244,18 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
         try {
             nlohmann::json request_json = nlohmann::json::parse(req.body);
             std::string engine_id = request_json["engine_id"];
-            if (engines_db.contains(engine_id)) {
-                engines_db[engine_id]["benchmark_time"] = request_json["benchmark_time"];
-                save_state();
-                res.set_content("Benchmark result received from engine " + engine_id, "text/plain");
-            } else {
-                res.status = 404;
-                res.set_content("Engine not found", "text/plain");
+            {
+                std::lock_guard<std::mutex> lock(engines_mutex);
+                if (engines_db.contains(engine_id)) {
+                    engines_db[engine_id]["benchmark_time"] = request_json["benchmark_time"];
+                } else {
+                    res.status = 404;
+                    res.set_content("Engine not found", "text/plain");
+                    return;
+                }
             }
+            save_state();
+            res.set_content("Benchmark result received from engine " + engine_id, "text/plain");
         } catch (const nlohmann::json::parse_error& e) {
             res.status = 400;
             res.set_content("Invalid JSON: " + std::string(e.what()), "text/plain");
@@ -261,15 +280,19 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
                 res.set_content("Bad Request: 'output_url' is missing.", "text/plain");
                 return;
             }
-            if (jobs_db.contains(job_id)) {
-                jobs_db[job_id]["status"] = "completed";
-                jobs_db[job_id]["output_url"] = request_json["output_url"];
-                save_state();
-                res.set_content("Job " + job_id + " marked as completed", "text/plain");
-            } else {
-                res.status = 404;
-                res.set_content("Job not found", "text/plain");
+            {
+                std::lock_guard<std::mutex> lock(jobs_mutex);
+                if (jobs_db.contains(job_id)) {
+                    jobs_db[job_id]["status"] = "completed";
+                    jobs_db[job_id]["output_url"] = request_json["output_url"];
+                } else {
+                    res.status = 404;
+                    res.set_content("Job not found", "text/plain");
+                    return;
+                }
             }
+            save_state();
+            res.set_content("Job " + job_id + " marked as completed", "text/plain");
         } catch (const nlohmann::json::parse_error& e) {
             res.status = 400;
             res.set_content("Invalid JSON: " + std::string(e.what()), "text/plain");
@@ -294,22 +317,26 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
                 res.set_content("Bad Request: 'error_message' is missing.", "text/plain");
                 return;
             }
-            if (jobs_db.contains(job_id)) {
-                jobs_db[job_id]["retries"] = jobs_db[job_id].value("retries", 0) + 1;
-                if (jobs_db[job_id]["retries"] <= jobs_db[job_id].value("max_retries", 3)) {
-                    jobs_db[job_id]["status"] = "pending"; // Re-queue
-                    jobs_db[job_id]["error_message"] = request_json["error_message"];
-                    res.set_content("Job " + job_id + " re-queued", "text/plain");
+            {
+                std::lock_guard<std::mutex> lock(jobs_mutex);
+                if (jobs_db.contains(job_id)) {
+                    jobs_db[job_id]["retries"] = jobs_db[job_id].value("retries", 0) + 1;
+                    if (jobs_db[job_id]["retries"] <= jobs_db[job_id].value("max_retries", 3)) {
+                        jobs_db[job_id]["status"] = "pending"; // Re-queue
+                        jobs_db[job_id]["error_message"] = request_json["error_message"];
+                        res.set_content("Job " + job_id + " re-queued", "text/plain");
+                    } else {
+                        jobs_db[job_id]["status"] = "failed_permanently";
+                        jobs_db[job_id]["error_message"] = request_json["error_message"];
+                        res.set_content("Job " + job_id + " failed permanently", "text/plain");
+                    }
                 } else {
-                    jobs_db[job_id]["status"] = "failed_permanently";
-                    jobs_db[job_id]["error_message"] = request_json["error_message"];
-                    res.set_content("Job " + job_id + " failed permanently", "text/plain");
+                    res.status = 404;
+                    res.set_content("Job not found", "text/plain");
+                    return;
                 }
-                save_state();
-            } else {
-                res.status = 404;
-                res.set_content("Job not found", "text/plain");
             }
+            save_state();
         } catch (const nlohmann::json::parse_error& e) {
             res.status = 400;
             res.set_content("Invalid JSON: " + std::string(e.what()), "text/plain");
@@ -337,10 +364,13 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
         }
 
         nlohmann::json pending_job = nullptr;
-        for (auto const& [job_key, job_val] : jobs_db.items()) {
-            if (job_val["status"] == "pending") {
-                pending_job = job_val;
-                break;
+        {
+            std::lock_guard<std::mutex> lock(jobs_mutex);
+            for (auto const& [job_key, job_val] : jobs_db.items()) {
+                if (job_val["status"] == "pending") {
+                    pending_job = job_val;
+                    break;
+                }
             }
         }
 
@@ -352,9 +382,12 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
         // Find an idle engine with benchmarking data
         nlohmann::json selected_engine = nullptr;
         std::vector<nlohmann::json> available_engines;
-        for (auto const& [eng_id, eng_data] : engines_db.items()) {
-            if (eng_data["status"] == "idle" && eng_data.contains("benchmark_time")) {
-                available_engines.push_back(eng_data);
+        {
+            std::lock_guard<std::mutex> lock(engines_mutex);
+            for (auto const& [eng_id, eng_data] : engines_db.items()) {
+                if (eng_data["status"] == "idle" && eng_data.contains("benchmark_time")) {
+                    available_engines.push_back(eng_data);
+                }
             }
         }
 
@@ -362,7 +395,7 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
             res.status = 204; // No Content
             return;
         }
-
+        
         // Sort engines by benchmark_time (faster engines first)
         std::sort(available_engines.begin(), available_engines.end(), [](const nlohmann::json& a, const nlohmann::json& b) {
             return a["benchmark_time"] < b["benchmark_time"];
@@ -399,9 +432,13 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
         }
 
         // Assign the job
-        jobs_db[pending_job["job_id"].get<std::string>()]["status"] = "assigned";
-        jobs_db[pending_job["job_id"].get<std::string>()]["assigned_engine"] = selected_engine["engine_id"];
-        engines_db[selected_engine["engine_id"].get<std::string>()]["status"] = "busy";
+        {
+            std::lock_guard<std::mutex> jobs_lock(jobs_mutex);
+            std::lock_guard<std::mutex> engines_lock(engines_mutex);
+            jobs_db[pending_job["job_id"].get<std::string>()]["status"] = "assigned";
+            jobs_db[pending_job["job_id"].get<std::string>()]["assigned_engine"] = selected_engine["engine_id"];
+            engines_db[selected_engine["engine_id"].get<std::string>()]["status"] = "busy";
+        }
         save_state();
 
         res.set_content(jobs_db[pending_job["job_id"].get<std::string>()].dump(), "application/json");
