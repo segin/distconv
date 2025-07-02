@@ -865,3 +865,24 @@ TEST_F(ApiTest, FailJobMissingErrorMessage) {
     ASSERT_EQ(fail_res->status, 400);
     ASSERT_EQ(fail_res->body, "Bad Request: 'error_message' is missing.");
 }
+
+TEST_F(ApiTest, FailJobInvalidJson) {
+    // Submit a job first
+    nlohmann::json job_payload;
+    job_payload["source_url"] = "http://example.com/video.mp4";
+    job_payload["target_codec"] = "h264";
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto post_res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
+    std::string job_id = nlohmann::json::parse(post_res->body)["job_id"];
+
+    // Fail the job
+    std::string invalid_json_payload = "{this is not json}";
+    auto fail_res = client->Post(("/jobs/" + job_id + "/fail").c_str(), headers, invalid_json_payload, "application/json");
+
+    ASSERT_TRUE(fail_res != nullptr);
+    ASSERT_EQ(fail_res->status, 400);
+    ASSERT_TRUE(fail_res->body.rfind("Invalid JSON:", 0) == 0);
+}
