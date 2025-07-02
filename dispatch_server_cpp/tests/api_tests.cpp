@@ -779,6 +779,30 @@ TEST_F(ApiTest, CompleteJobInvalidJson) {
     ASSERT_TRUE(complete_res->body.rfind("Invalid JSON:", 0) == 0);
 }
 
+TEST_F(ApiTest, CompleteJobNoApiKey) {
+    // Submit a job first
+    nlohmann::json job_payload;
+    job_payload["source_url"] = "http://example.com/video.mp4";
+    job_payload["target_codec"] = "h264";
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto post_res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
+    std::string job_id = nlohmann::json::parse(post_res->body)["job_id"];
+
+    // Complete the job
+    nlohmann::json complete_payload;
+    complete_payload["output_url"] = "http://example.com/output.mp4";
+    httplib::Headers no_api_key_headers = {
+        {"Authorization", "some_token"}
+    };
+    auto complete_res = client->Post(("/jobs/" + job_id + "/complete").c_str(), no_api_key_headers, complete_payload.dump(), "application/json");
+
+    ASSERT_TRUE(complete_res != nullptr);
+    ASSERT_EQ(complete_res->status, 401);
+}
+
 TEST_F(ApiTest, FailJobAndRequeue) {
     // Submit a job with max_retries > 0
     nlohmann::json job_payload;
