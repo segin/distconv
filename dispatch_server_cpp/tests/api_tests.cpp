@@ -737,6 +737,27 @@ TEST_F(ApiTest, CompleteJobInvalid) {
     ASSERT_EQ(res->body, "Job not found");
 }
 
+TEST_F(ApiTest, CompleteJobMissingOutputUrl) {
+    // Submit a job first
+    nlohmann::json job_payload;
+    job_payload["source_url"] = "http://example.com/video.mp4";
+    job_payload["target_codec"] = "h264";
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto post_res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
+    std::string job_id = nlohmann::json::parse(post_res->body)["job_id"];
+
+    // Complete the job
+    nlohmann::json complete_payload;
+    auto complete_res = client->Post(("/jobs/" + job_id + "/complete").c_str(), headers, complete_payload.dump(), "application/json");
+
+    ASSERT_TRUE(complete_res != nullptr);
+    ASSERT_EQ(complete_res->status, 400);
+    ASSERT_EQ(complete_res->body, "Bad Request: 'output_url' is missing.");
+}
+
 TEST_F(ApiTest, FailJobAndRequeue) {
     // Submit a job with max_retries > 0
     nlohmann::json job_payload;

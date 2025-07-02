@@ -256,6 +256,11 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
         std::string job_id = req.matches[1];
         try {
             nlohmann::json request_json = nlohmann::json::parse(req.body);
+            if (!request_json.contains("output_url")) {
+                res.status = 400;
+                res.set_content("Bad Request: 'output_url' is missing.", "text/plain");
+                return;
+            }
             if (jobs_db.contains(job_id)) {
                 jobs_db[job_id]["status"] = "completed";
                 jobs_db[job_id]["output_url"] = request_json["output_url"];
