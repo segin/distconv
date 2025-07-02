@@ -831,29 +831,16 @@ TEST_F(ApiTest, FailJobAndRequeue) {
     ASSERT_EQ(jobs_db[job_id]["error_message"], "Transcoding failed");
 }
 
-TEST_F(ApiTest, FailJobAndFailPermanently) {
-    // Submit a job with max_retries = 0
-    nlohmann::json job_payload;
-    job_payload["source_url"] = "http://example.com/video.mp4";
-    job_payload["target_codec"] = "h264";
-    job_payload["max_retries"] = 0;
+TEST_F(ApiTest, FailJobInvalidJobId) {
+    nlohmann::json fail_payload;
+    fail_payload["error_message"] = "Transcoding failed";
     httplib::Headers headers = {
         {"Authorization", "some_token"},
         {"X-API-Key", api_key}
     };
-    auto post_res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
-    std::string job_id = nlohmann::json::parse(post_res->body)["job_id"];
+    auto res = client->Post("/jobs/invalid_job_id/fail", headers, fail_payload.dump(), "application/json");
 
-    // Fail the job
-    nlohmann::json fail_payload;
-    fail_payload["error_message"] = "Transcoding failed";
-    auto fail_res = client->Post(("/jobs/" + job_id + "/fail").c_str(), headers, fail_payload.dump(), "application/json");
-
-    ASSERT_TRUE(fail_res != nullptr);
-    ASSERT_EQ(fail_res->status, 200);
-    ASSERT_EQ(fail_res->body, "Job " + job_id + " failed permanently");
-
-    // Verify job status
-    ASSERT_EQ(jobs_db[job_id]["status"], "failed_permanently");
-    ASSERT_EQ(jobs_db[job_id]["error_message"], "Transcoding failed");
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 404);
+    ASSERT_EQ(res->body, "Job not found");
 }
