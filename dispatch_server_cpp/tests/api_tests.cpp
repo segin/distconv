@@ -449,6 +449,17 @@ TEST_F(ApiTest, ListAllJobsNoApiKey) {
     ASSERT_EQ(res->status, 401);
 }
 
+TEST_F(ApiTest, ListAllJobsIncorrectApiKey) {
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", "incorrect_api_key"}
+    };
+    auto res = client->Get("/jobs/", headers);
+
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 401);
+}
+
 TEST_F(ApiTest, EngineHeartbeatNewEngine) {
     nlohmann::json heartbeat_payload;
     heartbeat_payload["engine_id"] = "engine-123";
