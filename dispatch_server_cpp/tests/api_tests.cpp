@@ -386,6 +386,7 @@ TEST_F(ApiTest, ListAllJobsEmpty) {
 }
 
 TEST_F(ApiTest, ListAllJobsWithJobs) {
+    clear_db();
     // Submit two jobs
     nlohmann::json job1_payload;
     job1_payload["source_url"] = "http://example.com/video1.mp4";
@@ -395,7 +396,7 @@ TEST_F(ApiTest, ListAllJobsWithJobs) {
         {"X-API-Key", api_key}
     };
     client->Post("/jobs/", headers, job1_payload.dump(), "application/json");
-
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
     nlohmann::json job2_payload;
     job2_payload["source_url"] = "http://example.com/video2.mp4";
     job2_payload["target_codec"] = "vp9";
@@ -578,6 +579,21 @@ TEST_F(ApiTest, EngineHeartbeatNonStringEngineId) {
     ASSERT_TRUE(res != nullptr);
     ASSERT_EQ(res->status, 400);
     ASSERT_EQ(res->body, "Bad Request: 'engine_id' must be a string.");
+}
+
+TEST_F(ApiTest, EngineHeartbeatNoApiKey) {
+    nlohmann::json heartbeat_payload;
+    heartbeat_payload["engine_id"] = "engine-123";
+    heartbeat_payload["status"] = "idle";
+    heartbeat_payload["supported_codecs"] = {"h264", "vp9"};
+
+    httplib::Headers headers = {
+        {"Authorization", "some_token"}
+    };
+    auto res = client->Post("/engines/heartbeat", headers, heartbeat_payload.dump(), "application/json");
+
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 401);
 }
 
 TEST_F(ApiTest, SubmitBenchmarkResultValid) {
