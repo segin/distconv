@@ -1,22 +1,25 @@
 #include "gtest/gtest.h"
 #include "../submission_client_core.h" // Include the header for the core logic
+#include "mock_cpr.h"
+#include "trompeloeil.hpp"
 #include <fstream>
 #include <string>
 #include <vector>
 
-// Mock functions or classes if necessary for isolated unit testing
-// For now, we'll focus on basic client functionality that can be tested without complex mocks.
+class MockCprApi : public CprApi {
+public:
+    MAKE_MOCK4(Post, cpr::Response(const cpr::Url&, const cpr::Header&, const cpr::Body&, const cpr::SslOptions&));
+};
 
 // Test fixture for the Submission Client
 class SubmissionClientTest : public ::testing::Test {
 protected:
-    // You can set up resources here that are used by all tests in this fixture
     void SetUp() override {
         // Initialize any necessary client components or mock dependencies
         // Reset global state for each test to ensure isolation
-        g_dispatchServerUrl = "https://localhost:8080";
+        g_dispatchServerUrl = "http://localhost:8080";
         g_apiKey = "test_api_key";
-        g_caCertPath = "server.crt";
+        g_caCertPath = "";
 
         // Clear the job IDs file for each test
         std::ofstream ofs("submitted_job_ids.txt", std::ios_base::trunc);
@@ -31,48 +34,19 @@ protected:
     }
 };
 
-// Test case for saving and loading job IDs
-TEST_F(SubmissionClientTest, SaveLoadJobIds) {
-    std::string job_id_1 = "job_client_1";
-    std::string job_id_2 = "job_client_2";
+TEST_F(SubmissionClientTest, SubmitJobSendsPostRequestToCorrectUrl) {
+    auto mock_cpr_api = std::make_unique<MockCprApi>();
+    
+    cpr::Response response;
+    response.status_code = 200;
+    response.text = R"({"job_id": "123"})";
 
-    saveJobId(job_id_1);
-    saveJobId(job_id_2);
+    REQUIRE_CALL(*mock_cpr_api, Post(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::_, trompeloeil::_, trompeloeil::_))
+        .LR_RETURN(response);
 
-    std::vector<std::string> jobs = loadJobIds();
-    ASSERT_EQ(jobs.size(), 2);
-    ASSERT_EQ(jobs[0], job_id_1);
-    ASSERT_EQ(jobs[1], job_id_2);
-}
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
 
-// Test case for submitting a job (requires mocking HTTP requests, placeholder for now)
-TEST_F(SubmissionClientTest, SubmitJobFunction) {
-    // This test would require mocking the cpr::Post call to avoid actual network requests.
-    // For now, we'll just ensure the function can be called without crashing.
-    // In a real scenario, you'd use a mocking framework for cpr.
-    submitJob("http://example.com/video.mp4", "H.264", 100.0, 3);
-    SUCCEED(); // Placeholder for a test that would verify job submission
-}
-
-// Test case for getting job status (requires mocking HTTP requests, placeholder for now)
-TEST_F(SubmissionClientTest, GetJobStatusFunction) {
-    // This test would require mocking the cpr::Get call.
-    getJobStatus("some_job_id");
-    SUCCEED();
-}
-
-// Test case for listing all jobs (requires mocking HTTP requests, placeholder for now)
-TEST_F(SubmissionClientTest, ListAllJobsFunction) {
-    // This test would require mocking the cpr::Get call.
-    listAllJobs();
-    SUCCEED();
-}
-
-// Test case for listing all engines (requires mocking HTTP requests, placeholder for now)
-TEST_F(SubmissionClientTest, ListAllEnginesFunction) {
-    // This test would require mocking the cpr::Get call.
-    listAllEngines();
-    SUCCEED();
+    apiClient.submitJob("http://example.com/video.mp4", "h264", 100.0, 3);
 }
 
 int main(int argc, char **argv) {

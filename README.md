@@ -112,10 +112,9 @@ This project will be developed in phases, starting with a minimal viable product
     *   [x] Implement local job queue persistence using SQLite.
 
     4.  **TLS/SSL Implementation:**
-    *   [ ] Implement TLS/SSL for secure communication between clients and the server.
-        *   [ ] The Central Server will not implement TLS directly. It is recommended to use a reverse proxy like `nginx` to terminate TLS.
-        *   [x] Implement TLS in C++ Transcoding Engine (using `libcurl` with `--cacert`).
-        *   [x] Implement TLS in C++ Submission Client (using `cpr` with `cpr::VerifySsl`).
+    *   [ ] The Central Server will *not* implement TLS/SSL directly. It is designed to operate behind a reverse proxy (e.g., `nginx`) which will handle TLS termination. The server will rely on headers like `X-Forwarded-For` provided by the reverse proxy for client identification.
+    *   [x] Implement TLS in C++ Transcoding Engine (using `libcurl` with `--cacert`).
+    *   [x] Implement TLS in C++ Submission Client (using `cpr` with `cpr::VerifySsl`).
 
 5.  **API Key Provisioning:**
     *   [x] Implement API key provisioning for the Transcoding Engine.
