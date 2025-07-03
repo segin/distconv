@@ -43,7 +43,7 @@ This document outlines the unit tests to be implemented for the C++ wxWidgets Su
 32. [ ] Test: `listAllJobs` disables SSL verification when no CA path is provided.
 
 ### D. `listAllEngines`
-33. [ ] Test: `listAllEngines` sends a GET request to the correct URL (`/engines/`).
+33. [x] Test: `listAllEngines` sends a GET request to the correct URL (`/engines/`).
 34. [ ] Test: `listAllEngines` includes the `X-API-Key` header.
 35. [ ] Test: `listAllEngines` handles a successful (HTTP 200) response.
 36. [ ] Test: `listAllEngines` handles a server error (e.g., HTTP 500) response.
