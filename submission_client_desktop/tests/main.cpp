@@ -388,6 +388,28 @@ TEST_F(SubmissionClientTest, ListAllJobsHandlesTransportError) {
     }, std::runtime_error);
 }
 
+TEST_F(SubmissionClientTest, ListAllJobsUsesSslVerificationWhenCaPathProvided) {
+    auto mock_cpr_api = std::make_unique<MockCprApi>();
+    
+    cpr::Response response;
+    response.status_code = 200;
+    response.text = R"([{"job_id": "job1", "status": "pending"}])";
+
+    std::string expected_ca_path = "/path/to/ca.crt";
+    g_caCertPath = expected_ca_path;
+
+    REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::_, trompeloeil::capture(ssl_opts_arg)))
+        .LR_RETURN(response);
+
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+
+    apiClient.listAllJobs();
+
+    ASSERT_EQ(ssl_opts_arg.ca_info, expected_ca_path);
+    ASSERT_TRUE(ssl_opts_arg.verify_peer);
+    ASSERT_TRUE(ssl_opts_arg.verify_host);
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
