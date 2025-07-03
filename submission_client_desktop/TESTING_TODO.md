@@ -44,11 +44,11 @@ This document outlines the unit tests to be implemented for the C++ wxWidgets Su
 
 ### D. `listAllEngines`
 33. [x] Test: `listAllEngines` sends a GET request to the correct URL (`/engines/`).
-34. [ ] Test: `listAllEngines` includes the `X-API-Key` header.
-35. [ ] Test: `listAllEngines` handles a successful (HTTP 200) response.
-36. [ ] Test: `listAllEngines` handles a server error (e.g., HTTP 500) response.
-37. [ ] Test: `listAllEngines` handles a transport error.
-38. [ ] Test: `listAllEngines` correctly parses and returns the JSON array response.
+34. [x] Test: `listAllEngines` includes the `X-API-Key` header.
+35. [x] Test: `listAllEngines` handles a successful (HTTP 200) response.
+36. [x] Test: `listAllEngines` handles a server error (e.g., HTTP 500) response.
+37. [x] Test: `listAllEngines` handles a transport error.
+38. [x] Test: `listAllEngines` correctly parses and returns the JSON array response.
 39. [ ] Test: `listAllEngines` uses SSL verification when a CA path is provided.
 40. [ ] Test: `listAllEngines` disables SSL verification when no CA path is provided.
 
