@@ -25,7 +25,7 @@ This document outlines the unit tests to be implemented for the C++ wxWidgets Su
 16. [x] Test: `getJobStatus` sends a GET request to the correct URL (`/jobs/{job_id}`).
 17. [x] Test: `getJobStatus` includes the `X-API-Key` header.
 18. [x] Test: `getJobStatus` handles a successful (HTTP 200) response.
-19. [ ] Test: `getJobStatus` handles a not found (HTTP 404) response.
+19. [x] Test: `getJobStatus` handles a not found (HTTP 404) response.
 20. [ ] Test: `getJobStatus` handles a server error (e.g., HTTP 500) response.
 21. [ ] Test: `getJobStatus` handles a transport error.
 22. [ ] Test: `getJobStatus` correctly parses and returns the JSON response.

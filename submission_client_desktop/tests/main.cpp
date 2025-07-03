@@ -206,6 +206,44 @@ TEST_F(SubmissionClientTest, GetJobStatusHandlesSuccessfulResponse) {
     ASSERT_EQ(result_json["status"], "pending");
 }
 
+TEST_F(SubmissionClientTest, GetJobStatusHandlesNotFoundResponse) {
+    auto mock_cpr_api = std::make_unique<MockCprApi>();
+    
+    cpr::Response response;
+    response.status_code = 404;
+    response.text = "Job not found";
+
+    std::string job_id = "non_existent_job_id";
+
+    REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/jobs/" + job_id}, trompeloeil::_, trompeloeil::_))
+        .LR_RETURN(response);
+
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+
+    ASSERT_THROW({
+        apiClient.getJobStatus(job_id);
+    }, std::runtime_error);
+}
+
+TEST_F(SubmissionClientTest, GetJobStatusHandlesServerError) {
+    auto mock_cpr_api = std::make_unique<MockCprApi>();
+    
+    cpr::Response response;
+    response.status_code = 500;
+    response.text = "Internal Server Error";
+
+    std::string job_id = "test_job_id_123";
+
+    REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/jobs/" + job_id}, trompeloeil::_, trompeloeil::_))
+        .LR_RETURN(response);
+
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+
+    ASSERT_THROW({
+        apiClient.getJobStatus(job_id);
+    }, std::runtime_error);
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
