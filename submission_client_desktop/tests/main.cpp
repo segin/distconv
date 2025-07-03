@@ -473,6 +473,23 @@ TEST_F(SubmissionClientTest, ListAllEnginesHandlesSuccessfulResponse) {
     ASSERT_EQ(result_json[1]["status"], "busy");
 }
 
+TEST_F(SubmissionClientTest, ListAllEnginesHandlesServerError) {
+    auto mock_cpr_api = std::make_unique<MockCprApi>();
+    
+    cpr::Response response;
+    response.status_code = 500;
+    response.text = "Internal Server Error";
+
+    REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/engines/"}, trompeloeil::_, trompeloeil::_))
+        .LR_RETURN(response);
+
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+
+    ASSERT_THROW({
+        apiClient.listAllEngines();
+    }, std::runtime_error);
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
