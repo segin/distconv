@@ -36,7 +36,7 @@ This document outlines the unit tests to be implemented for the C++ wxWidgets Su
 25. [x] Test: `listAllJobs` sends a GET request to the correct URL (`/jobs/`).
 26. [x] Test: `listAllJobs` includes the `X-API-Key` header.
 27. [x] Test: `listAllJobs` handles a successful (HTTP 200) response.
-28. [ ] Test: `listAllJobs` handles a server error (e.g., HTTP 500) response.
+28. [x] Test: `listAllJobs` handles a server error (e.g., HTTP 500) response.
 29. [ ] Test: `listAllJobs` handles a transport error.
 30. [ ] Test: `listAllJobs` correctly parses and returns the JSON array response.
 31. [ ] Test: `listAllJobs` uses SSL verification when a CA path is provided.
