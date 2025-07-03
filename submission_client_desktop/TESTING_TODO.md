@@ -27,7 +27,7 @@ This document outlines the unit tests to be implemented for the C++ wxWidgets Su
 18. [x] Test: `getJobStatus` handles a successful (HTTP 200) response.
 19. [x] Test: `getJobStatus` handles a not found (HTTP 404) response.
 20. [x] Test: `getJobStatus` handles a server error (e.g., HTTP 500) response.
-21. [ ] Test: `getJobStatus` handles a transport error.
+21. [x] Test: `getJobStatus` handles a transport error.
 22. [ ] Test: `getJobStatus` correctly parses and returns the JSON response.
 23. [ ] Test: `getJobStatus` uses SSL verification when a CA path is provided.
 24. [ ] Test: `getJobStatus` disables SSL verification when no CA path is provided.

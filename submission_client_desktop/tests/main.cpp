@@ -244,6 +244,26 @@ TEST_F(SubmissionClientTest, GetJobStatusHandlesServerError) {
     }, std::runtime_error);
 }
 
+TEST_F(SubmissionClientTest, GetJobStatusHandlesTransportError) {
+    auto mock_cpr_api = std::make_unique<MockCprApi>();
+    
+    cpr::Response response;
+    response.status_code = 0; // Indicates a transport error
+    response.error.code = cpr::Error::codes::HostLookupError;
+    response.error.message = "Could not resolve host";
+
+    std::string job_id = "test_job_id_123";
+
+    REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/jobs/" + job_id}, trompeloeil::_, trompeloeil::_))
+        .LR_RETURN(response);
+
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+
+    ASSERT_THROW({
+        apiClient.getJobStatus(job_id);
+    }, std::runtime_error);
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
