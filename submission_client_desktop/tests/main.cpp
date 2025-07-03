@@ -331,6 +331,28 @@ TEST_F(SubmissionClientTest, ListAllJobsSendsGetRequestToCorrectUrl) {
     ASSERT_EQ(result_json[1]["job_id"], "job2");
 }
 
+TEST_F(SubmissionClientTest, ListAllJobsHandlesSuccessfulResponse) {
+    auto mock_cpr_api = std::make_unique<MockCprApi>();
+    
+    cpr::Response response;
+    response.status_code = 200;
+    response.text = R"([{"job_id": "job1", "status": "pending"}, {"job_id": "job2", "status": "completed"}])";
+
+    REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::_, trompeloeil::_))
+        .LR_RETURN(response);
+
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+
+    nlohmann::json result_json = apiClient.listAllJobs();
+
+    ASSERT_TRUE(result_json.is_array());
+    ASSERT_EQ(result_json.size(), 2);
+    ASSERT_EQ(result_json[0]["job_id"], "job1");
+    ASSERT_EQ(result_json[0]["status"], "pending");
+    ASSERT_EQ(result_json[1]["job_id"], "job2");
+    ASSERT_EQ(result_json[1]["status"], "completed");
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
