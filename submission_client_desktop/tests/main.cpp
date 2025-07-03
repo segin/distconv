@@ -451,6 +451,28 @@ TEST_F(SubmissionClientTest, ListAllEnginesSendsGetRequestToCorrectUrl) {
     ASSERT_EQ(result_json[1]["engine_id"], "engine2");
 }
 
+TEST_F(SubmissionClientTest, ListAllEnginesHandlesSuccessfulResponse) {
+    auto mock_cpr_api = std::make_unique<MockCprApi>();
+    
+    cpr::Response response;
+    response.status_code = 200;
+    response.text = R"([{"engine_id": "engine1", "status": "idle"}, {"engine_id": "engine2", "status": "busy"}])";
+
+    REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/engines/"}, trompeloeil::_, trompeloeil::_))
+        .LR_RETURN(response);
+
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+
+    nlohmann::json result_json = apiClient.listAllEngines();
+
+    ASSERT_TRUE(result_json.is_array());
+    ASSERT_EQ(result_json.size(), 2);
+    ASSERT_EQ(result_json[0]["engine_id"], "engine1");
+    ASSERT_EQ(result_json[0]["status"], "idle");
+    ASSERT_EQ(result_json[1]["engine_id"], "engine2");
+    ASSERT_EQ(result_json[1]["status"], "busy");
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
