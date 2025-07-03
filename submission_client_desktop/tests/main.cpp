@@ -288,6 +288,28 @@ TEST_F(SubmissionClientTest, GetJobStatusUsesSslVerificationWhenCaPathProvided) 
     ASSERT_TRUE(ssl_opts_arg.verify_host);
 }
 
+TEST_F(SubmissionClientTest, GetJobStatusDisablesSslVerificationWhenNoCaPathProvided) {
+    auto mock_cpr_api = std::make_unique<MockCprApi>();
+    
+    cpr::Response response;
+    response.status_code = 200;
+    response.text = R"({"job_id": "test_job_id_123", "status": "pending"})";
+
+    g_caCertPath = ""; // Ensure no CA path is provided
+
+    std::string job_id = "test_job_id_123";
+
+    REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/jobs/" + job_id}, trompeloeil::_, trompeloeil::capture(ssl_opts_arg)))
+        .LR_RETURN(response);
+
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+
+    apiClient.getJobStatus(job_id);
+
+    ASSERT_FALSE(ssl_opts_arg.verify_peer);
+    ASSERT_FALSE(ssl_opts_arg.verify_host);
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
