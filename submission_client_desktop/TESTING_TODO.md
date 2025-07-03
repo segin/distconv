@@ -49,7 +49,7 @@ This document outlines the unit tests to be implemented for the C++ wxWidgets Su
 36. [x] Test: `listAllEngines` handles a server error (e.g., HTTP 500) response.
 37. [x] Test: `listAllEngines` handles a transport error.
 38. [x] Test: `listAllEngines` correctly parses and returns the JSON array response.
-39. [ ] Test: `listAllEngines` uses SSL verification when a CA path is provided.
+39. [x] Test: `listAllEngines` uses SSL verification when a CA path is provided.
 40. [ ] Test: `listAllEngines` disables SSL verification when no CA path is provided.
 
 ### E. Local Job ID Storage
