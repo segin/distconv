@@ -21,8 +21,12 @@ protected:
         g_apiKey = "test_api_key";
         g_caCertPath = "";
 
+        // Use a temporary file for job IDs during tests
+        temp_job_ids_file_ = "test_submitted_job_ids.txt";
+        JOB_IDS_FILE = temp_job_ids_file_;
+
         // Clear the job IDs file for each test
-        std::ofstream ofs("submitted_job_ids.txt", std::ios_base::trunc);
+        std::ofstream ofs(JOB_IDS_FILE, std::ios_base::trunc);
         if (ofs.is_open()) {
             ofs.close();
         }
@@ -30,8 +34,10 @@ protected:
 
     void TearDown() override {
         // Clean up resources
-        remove("submitted_job_ids.txt");
+        remove(JOB_IDS_FILE.c_str());
     }
+
+    std::string temp_job_ids_file_;
 };
 
 TEST_F(SubmissionClientTest, SubmitJobSendsPostRequestToCorrectUrl) {
@@ -41,12 +47,163 @@ TEST_F(SubmissionClientTest, SubmitJobSendsPostRequestToCorrectUrl) {
     response.status_code = 200;
     response.text = R"({"job_id": "123"})";
 
+    REQUIRE_CALL(*mock_cpr_api, Post(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::capture(header_arg), trompeloeil::capture(body_arg), trompeloeil::_))
+        .LR_RETURN(response);
+
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+
+    std::string expected_source_url = "http://example.com/video.mp4";
+    std::string expected_target_codec = "h264";
+    double expected_job_size = 100.0;
+    int expected_max_retries = 3;
+    nlohmann::json result_json = apiClient.submitJob(expected_source_url, expected_target_codec, expected_job_size, expected_max_retries);
+
+    nlohmann::json sent_payload = nlohmann::json::parse(body_arg.str());
+    ASSERT_EQ(sent_payload["source_url"], expected_source_url);
+    ASSERT_EQ(sent_payload["target_codec"], expected_target_codec);
+    ASSERT_EQ(sent_payload["job_size"], expected_job_size);
+    ASSERT_EQ(sent_payload["max_retries"], expected_max_retries);
+    ASSERT_EQ(header_arg["X-API-Key"], g_apiKey);
+    ASSERT_EQ(header_arg["Content-Type"], "application/json");
+    ASSERT_TRUE(result_json.contains("job_id"));
+    ASSERT_EQ(result_json["job_id"], "123");
+}
+
+TEST_F(SubmissionClientTest, SubmitJobCallsSaveJobIdOnSuccess) {
+    auto mock_cpr_api = std::make_unique<MockCprApi>();
+    
+    cpr::Response response;
+    response.status_code = 200;
+    response.text = R"({"job_id": "test_job_id_456"})";
+
     REQUIRE_CALL(*mock_cpr_api, Post(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::_, trompeloeil::_, trompeloeil::_))
         .LR_RETURN(response);
 
     ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
 
     apiClient.submitJob("http://example.com/video.mp4", "h264", 100.0, 3);
+
+    std::vector<std::string> saved_job_ids = loadJobIds();
+    ASSERT_EQ(saved_job_ids.size(), 1);
+    ASSERT_EQ(saved_job_ids[0], "test_job_id_456");
+}
+
+TEST_F(SubmissionClientTest, SubmitJobUsesSslVerificationWhenCaPathProvided) {
+    auto mock_cpr_api = std::make_unique<MockCprApi>();
+    
+    cpr::Response response;
+    response.status_code = 200;
+    response.text = R"({"job_id": "123"})";
+
+    std::string expected_ca_path = "/path/to/ca.crt";
+    g_caCertPath = expected_ca_path;
+
+    REQUIRE_CALL(*mock_cpr_api, Post(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::_, trompeloeil::_, trompeloeil::capture(ssl_opts_arg)))
+        .LR_RETURN(response);
+
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+
+    apiClient.submitJob("http://example.com/video.mp4", "h264", 100.0, 3);
+
+    ASSERT_EQ(ssl_opts_arg.ca_info, expected_ca_path);
+    ASSERT_TRUE(ssl_opts_arg.verify_peer);
+    ASSERT_TRUE(ssl_opts_arg.verify_host);
+}
+
+TEST_F(SubmissionClientTest, SubmitJobDisablesSslVerificationWhenNoCaPathProvided) {
+    auto mock_cpr_api = std::make_unique<MockCprApi>();
+    
+    cpr::Response response;
+    response.status_code = 200;
+    response.text = R"({"job_id": "123"})";
+
+    g_caCertPath = ""; // Ensure no CA path is provided
+
+    REQUIRE_CALL(*mock_cpr_api, Post(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::_, trompeloeil::_, trompeloeil::capture(ssl_opts_arg)))
+        .LR_RETURN(response);
+
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+
+    apiClient.submitJob("http://example.com/video.mp4", "h264", 100.0, 3);
+
+    ASSERT_FALSE(ssl_opts_arg.verify_peer);
+    ASSERT_FALSE(ssl_opts_arg.verify_host);
+}
+
+TEST_F(SubmissionClientTest, SubmitJobHandlesServerError) {
+    auto mock_cpr_api = std::make_unique<MockCprApi>();
+    
+    cpr::Response response;
+    response.status_code = 500;
+    response.text = "Internal Server Error";
+
+    REQUIRE_CALL(*mock_cpr_api, Post(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::_, trompeloeil::_, trompeloeil::_))
+        .LR_RETURN(response);
+
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+
+    ASSERT_THROW({
+        apiClient.submitJob("http://example.com/video.mp4", "h264", 100.0, 3);
+    }, std::runtime_error);
+}
+
+TEST_F(SubmissionClientTest, SubmitJobHandlesClientError) {
+    auto mock_cpr_api = std::make_unique<MockCprApi>();
+    
+    cpr::Response response;
+    response.status_code = 400;
+    response.text = "Bad Request: Missing parameter";
+
+    REQUIRE_CALL(*mock_cpr_api, Post(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::_, trompeloeil::_, trompeloeil::_))
+        .LR_RETURN(response);
+
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+
+    ASSERT_THROW({
+        apiClient.submitJob("http://example.com/video.mp4", "h264", 100.0, 3);
+    }, std::runtime_error);
+}
+
+TEST_F(SubmissionClientTest, SubmitJobHandlesTransportError) {
+    auto mock_cpr_api = std::make_unique<MockCprApi>();
+    
+    cpr::Response response;
+    response.status_code = 0; // Indicates a transport error
+    response.error.code = cpr::Error::codes::HostLookupError;
+    response.error.message = "Could not resolve host";
+
+    REQUIRE_CALL(*mock_cpr_api, Post(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::_, trompeloeil::_, trompeloeil::_))
+        .LR_RETURN(response);
+
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+
+    ASSERT_THROW({
+        apiClient.submitJob("http://example.com/video.mp4", "h264", 100.0, 3);
+    }, std::runtime_error);
+}
+
+TEST_F(SubmissionClientTest, GetJobStatusHandlesSuccessfulResponse) {
+    auto mock_cpr_api = std::make_unique<MockCprApi>();
+    
+    cpr::Response response;
+    response.status_code = 200;
+    response.text = R"({"job_id": "test_job_id_123", "status": "pending"})";
+
+    std::string job_id = "test_job_id_123";
+
+    REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/jobs/" + job_id}, trompeloeil::capture(header_arg), trompeloeil::_))
+        .LR_RETURN(response);
+
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+
+    std::string job_id = "test_job_id_123";
+    nlohmann::json result_json = apiClient.getJobStatus(job_id);
+
+    ASSERT_EQ(header_arg["X-API-Key"], g_apiKey);
+    ASSERT_TRUE(result_json.contains("job_id"));
+    ASSERT_EQ(result_json["job_id"], job_id);
+    ASSERT_TRUE(result_json.contains("status"));
+    ASSERT_EQ(result_json["status"], "pending");
 }
 
 int main(int argc, char **argv) {

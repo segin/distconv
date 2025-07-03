@@ -36,6 +36,9 @@ extern std::string g_dispatchServerUrl;
 extern std::string g_apiKey;
 extern std::string g_caCertPath;
 
+// Local storage for job IDs
+extern std::string JOB_IDS_FILE;
+
 // Function declarations
 void saveJobId(const std::string& job_id);
 std::vector<std::string> loadJobIds();

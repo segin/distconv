@@ -18,7 +18,7 @@ std::string g_apiKey = "your-super-secret-api-key";
 std::string g_caCertPath = "server.crt";
 
 // Local storage for job IDs
-const std::string JOB_IDS_FILE = "submitted_job_ids.txt";
+std::string JOB_IDS_FILE = "submitted_job_ids.txt";
 
 ApiClient::ApiClient(const std::string& server_url, const std::string& api_key, const std::string& ca_cert_path, std::unique_ptr<CprApi> cpr_api)
     : server_url_(server_url), api_key_(api_key), ca_cert_path_(ca_cert_path), cpr_api_(std::move(cpr_api)) {}
