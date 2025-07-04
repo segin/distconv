@@ -37,4 +37,8 @@ target_include_directories(dispatch_server_tests PRIVATE
     /home/segin/distconv/third_party/json/single_include
 )
 
+enable_testing()
+include(GoogleTest)
+gtest_discover_tests(dispatch_server_tests)
+
 

@@ -5,7 +5,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 ## I. API Endpoint Tests (50 Tests)
 
 ### A. `POST /jobs/` (Submit Job)
-1.  [ ] Test: Submit a valid job with all required fields. Expect HTTP 200 and a valid job JSON object in response.
+1.  [x] Test: Submit a valid job with all required fields. Expect HTTP 200 and a valid job JSON object in response.
 2.  [x] Test: Submit a job with a missing `source_url`. Expect HTTP 400.
 3.  [x] Test: Submit a job with a missing `target_codec`. Expect HTTP 400.
 4.  [x] Test: Submit a job with an invalid JSON body. Expect HTTP 400.
@@ -15,60 +15,60 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 8.  [x] Test: Submit a job with a non-string `target_codec`. Expect HTTP 400.
 9.  [x] Test: Submit a job with a non-numeric `job_size`. Expect HTTP 400.
 10. [x] Test: Submit a job with a non-integer `max_retries`. Expect HTTP 400.
-11. [ ] Test: Submit a job without an API key when one is required. Expect HTTP 401.
-12. [ ] Test: Submit a job with an incorrect API key. Expect HTTP 401.
-13. [ ] Test: Submit a job with a valid API key. Expect HTTP 200.
-14. [ ] Test: Verify the `job_id` created is unique across multiple quick submissions.
+11. [x] Test: Submit a job without an API key when one is required. Expect HTTP 401.
+12. [x] Test: Submit a job with an incorrect API key. Expect HTTP 401.
+13. [x] Test: Submit a job with a valid API key. Expect HTTP 200.
+14. [x] Test: Verify the `job_id` created is unique across multiple quick submissions.
 15. [ ] Test: Verify the job status is correctly initialized to "pending".
 
 ### B. `GET /jobs/{job_id}` (Get Job Status)
-16. [ ] Test: Request status for a valid, existing job ID. Expect HTTP 200 and the correct job JSON.
-17. [ ] Test: Request status for a non-existent job ID. Expect HTTP 404.
-18. [ ] Test: Request status for a malformed job ID. Expect HTTP 404 or appropriate routing failure.
-19. [ ] Test: Request status without an API key when one is required. Expect HTTP 401.
-20. [ ] Test: Request status with an incorrect API key. Expect HTTP 401.
+16. [x] Test: Request status for a valid, existing job ID. Expect HTTP 200 and the correct job JSON.
+17. [x] Test: Request status for a non-existent job ID. Expect HTTP 404.
+18. [x] Test: Request status for a malformed job ID. Expect HTTP 404 or appropriate routing failure.
+19. [x] Test: Request status without an API key when one is required. Expect HTTP 401.
+20. [x] Test: Request status with an incorrect API key. Expect HTTP 401.
 
 ### C. `GET /jobs/` (List All Jobs)
-21. [ ] Test: List all jobs when no jobs exist. Expect HTTP 200 and an empty JSON array.
-22. [ ] Test: List all jobs when one job exists. Expect HTTP 200 and a JSON array with one job object.
-23. [ ] Test: List all jobs when multiple jobs exist. Expect HTTP 200 and a JSON array with all job objects.
-24. [ ] Test: List jobs without an API key when one is required. Expect HTTP 401.
-25. [ ] Test: List jobs with an incorrect API key. Expect HTTP 401.
+21. [x] Test: List all jobs when no jobs exist. Expect HTTP 200 and an empty JSON array.
+22. [x] Test: List all jobs when one job exists. Expect HTTP 200 and a JSON array with one job object.
+23. [x] Test: List all jobs when multiple jobs exist. Expect HTTP 200 and a JSON array with all job objects.
+24. [x] Test: List jobs without an API key when one is required. Expect HTTP 401.
+25. [x] Test: List jobs with an incorrect API key. Expect HTTP 401.
 
 ### D. `POST /engines/heartbeat`
-26. [ ] Test: Send a valid heartbeat from a new engine. Expect HTTP 200 and the engine to be added to the database.
-27. [ ] Test: Send a valid heartbeat from an existing engine. Expect HTTP 200 and the engine's data to be updated.
-28. [ ] Test: Send a heartbeat with invalid JSON. Expect HTTP 400.
-29. [ ] Test: Send a heartbeat with a missing `engine_id`. Expect HTTP 400 or server-side error.
-30. [ ] Test: Send a heartbeat with a non-string `engine_id`. Expect HTTP 400.
-31. [ ] Test: Send a heartbeat without an API key when one is required. Expect HTTP 401.
-32. [ ] Test: Send a heartbeat with an incorrect API key. Expect HTTP 401.
+26. [x] Test: Send a valid heartbeat from a new engine. Expect HTTP 200 and the engine to be added to the database.
+27. [x] Test: Send a valid heartbeat from an existing engine. Expect HTTP 200 and the engine's data to be updated.
+28. [x] Test: Send a heartbeat with invalid JSON. Expect HTTP 400.
+29. [x] Test: Send a heartbeat with a missing `engine_id`. Expect HTTP 400 or server-side error.
+30. [x] Test: Send a heartbeat with a non-string `engine_id`. Expect HTTP 400.
+31. [x] Test: Send a heartbeat without an API key when one is required. Expect HTTP 401.
+32. [x] Test: Send a heartbeat with an incorrect API key. Expect HTTP 401.
 
 ### E. `GET /engines/` (List All Engines)
-33. [ ] Test: List all engines when no engines exist. Expect HTTP 200 and an empty JSON array.
-34. [ ] Test: List all engines when one engine exists. Expect HTTP 200 and a JSON array with one engine object.
-35. [ ] Test: List all engines when multiple engines exist. Expect HTTP 200 and a JSON array with all engine objects.
-36. [ ] Test: List engines without an API key when one is required. Expect HTTP 401.
-37. [ ] Test: List engines with an incorrect API key. Expect HTTP 401.
+33. [x] Test: List all engines when no engines exist. Expect HTTP 200 and an empty JSON array.
+34. [x] Test: List all engines when one engine exists. Expect HTTP 200 and a JSON array with one engine object.
+35. [x] Test: List all engines when multiple engines exist. Expect HTTP 200 and a JSON array with all engine objects.
+36. [x] Test: List engines without an API key when one is required. Expect HTTP 401.
+37. [x] Test: List engines with an incorrect API key. Expect HTTP 401.
 
 ### F. `POST /jobs/{job_id}/complete`
-38. [ ] Test: Mark a valid, assigned job as complete. Expect HTTP 200.
-39. [ ] Test: Mark a non-existent job as complete. Expect HTTP 404.
-40. [ ] Test: Mark a job as complete with a missing `output_url`. Expect HTTP 400.
-41. [ ] Test: Mark a job as complete with invalid JSON. Expect HTTP 400.
-42. [ ] Test: Mark a job as complete without an API key when required. Expect HTTP 401.
+38. [x] Test: Mark a valid, assigned job as complete. Expect HTTP 200.
+39. [x] Test: Mark a non-existent job as complete. Expect HTTP 404.
+40. [x] Test: Mark a job as complete with a missing `output_url`. Expect HTTP 400.
+41. [x] Test: Mark a job as complete with invalid JSON. Expect HTTP 400.
+42. [x] Test: Mark a job as complete without an API key when required. Expect HTTP 401.
 
 ### G. `POST /jobs/{job_id}/fail`
-43. [ ] Test: Mark a valid, assigned job as failed. Expect HTTP 200.
-44. [ ] Test: Mark a non-existent job as failed. Expect HTTP 404.
-45. [ ] Test: Mark a job as failed with a missing `error_message`. Expect HTTP 400.
-46. [ ] Test: Mark a job as failed with invalid JSON. Expect HTTP 400.
-47. [ ] Test: Mark a job as failed without an API key when required. Expect HTTP 401.
+43. [x] Test: Mark a valid, assigned job as failed. Expect HTTP 200.
+44. [x] Test: Mark a non-existent job as failed. Expect HTTP 404.
+45. [x] Test: Mark a job as failed with a missing `error_message`. Expect HTTP 400.
+46. [x] Test: Mark a job as failed with invalid JSON. Expect HTTP 400.
+47. [x] Test: Mark a job as failed without an API key when required. Expect HTTP 401.
 
 ### H. `POST /assign_job/`
-48. [ ] Test: Request a job when jobs are pending and engines are idle. Expect HTTP 200 and a job object.
-49. [ ] Test: Request a job when no jobs are pending. Expect HTTP 204.
-50. [ ] Test: Request a job when jobs are pending but no engines are idle. Expect HTTP 204.
+48. [x] Test: Request a job when jobs are pending and engines are idle. Expect HTTP 200 and a job object.
+49. [x] Test: Request a job when no jobs are pending. Expect HTTP 204.
+50. [x] Test: Request a job when jobs are pending but no engines are idle. Expect HTTP 204.
 
 ## II. State Management & Logic (50 Tests)
 
@@ -77,7 +77,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 52. [ ] Test: Job becomes `assigned` after `POST /assign_job/`.
 53. [ ] Test: Job becomes `completed` after `POST /jobs/{job_id}/complete`.
 54. [ ] Test: Job becomes `pending` again after `POST /jobs/{job_id}/fail` if retries are available.
-55. [ ] Test: Job becomes `failed_permanently` after `POST /jobs/{job_id}/fail` if retries are exhausted.
+55. [x] Test: Job becomes `failed_permanently` after `POST /jobs/{job_id}/fail` if retries are exhausted.
 56. [ ] Test: A `completed` job cannot be marked as failed.
 57. [ ] Test: A `failed_permanently` job cannot be marked as failed again.
 58. [ ] Test: A `completed` job is not returned by `POST /assign_job/`.
@@ -170,7 +170,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 127. [ ] Test: Server handles a job ID that looks like a number but is a string.
 128. [ ] Test: Server handles a heartbeat for an engine that was assigned a job that no longer exists.
 129. [ ] Test: Server handles a request to complete a job that was never assigned.
-130. [ ] Test: Server handles a request to fail a job that was never assigned.
+130. [ ] Test: Server handles a request to fail a a job that was never assigned.
 131. [ ] Test: Server handles a job submission with a negative `job_size`.
 132. [ ] Test: Server handles a job submission with a negative `max_retries`.
 133. [ ] Test: Server handles a heartbeat with a negative `storage_capacity_gb`.

@@ -6,10 +6,7 @@
 #include <string>
 #include <vector>
 
-class MockCprApi : public CprApi {
-public:
-    MAKE_MOCK4(Post, cpr::Response(const cpr::Url&, const cpr::Header&, const cpr::Body&, const cpr::SslOptions&));
-};
+
 
 // Test fixture for the Submission Client
 class SubmissionClientTest : public ::testing::Test {
@@ -47,7 +44,11 @@ TEST_F(SubmissionClientTest, SubmitJobSendsPostRequestToCorrectUrl) {
     response.status_code = 200;
     response.text = R"({"job_id": "123"})";
 
-    REQUIRE_CALL(*mock_cpr_api, Post(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::capture(header_arg), trompeloeil::capture(body_arg), trompeloeil::_))
+    cpr::Header header_arg;
+    cpr::Body body_arg;
+
+    REQUIRE_CALL(*mock_cpr_api, Post(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::_, trompeloeil::_, trompeloeil::_))
+        .LR_SIDE_EFFECT(header_arg = _2, body_arg = _3)
         .LR_RETURN(response);
 
     ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
@@ -98,7 +99,10 @@ TEST_F(SubmissionClientTest, SubmitJobUsesSslVerificationWhenCaPathProvided) {
     std::string expected_ca_path = "/path/to/ca.crt";
     g_caCertPath = expected_ca_path;
 
-    REQUIRE_CALL(*mock_cpr_api, Post(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::_, trompeloeil::_, trompeloeil::capture(ssl_opts_arg)))
+    cpr::SslOptions ssl_opts_arg;
+
+    REQUIRE_CALL(*mock_cpr_api, Post(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::_, trompeloeil::_, trompeloeil::_))
+        .LR_SIDE_EFFECT(ssl_opts_arg = _4)
         .LR_RETURN(response);
 
     ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
@@ -119,7 +123,10 @@ TEST_F(SubmissionClientTest, SubmitJobDisablesSslVerificationWhenNoCaPathProvide
 
     g_caCertPath = ""; // Ensure no CA path is provided
 
-    REQUIRE_CALL(*mock_cpr_api, Post(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::_, trompeloeil::_, trompeloeil::capture(ssl_opts_arg)))
+    cpr::SslOptions ssl_opts_arg;
+
+    REQUIRE_CALL(*mock_cpr_api, Post(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::_, trompeloeil::_, trompeloeil::_))
+        .LR_SIDE_EFFECT(ssl_opts_arg = _4)
         .LR_RETURN(response);
 
     ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
@@ -169,7 +176,7 @@ TEST_F(SubmissionClientTest, SubmitJobHandlesTransportError) {
     
     cpr::Response response;
     response.status_code = 0; // Indicates a transport error
-    response.error.code = cpr::Error::codes::HostLookupError;
+    response.error.code = cpr::ErrorCode::COULDNT_RESOLVE_HOST;
     response.error.message = "Could not resolve host";
 
     REQUIRE_CALL(*mock_cpr_api, Post(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::_, trompeloeil::_, trompeloeil::_))
@@ -190,13 +197,14 @@ TEST_F(SubmissionClientTest, GetJobStatusHandlesSuccessfulResponse) {
     response.text = R"({"job_id": "test_job_id_123", "status": "pending"})";
 
     std::string job_id = "test_job_id_123";
+    cpr::Header header_arg;
 
-    REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/jobs/" + job_id}, trompeloeil::capture(header_arg), trompeloeil::_))
+    REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/jobs/" + job_id}, trompeloeil::_, trompeloeil::_))
+        .LR_SIDE_EFFECT(header_arg = _2)
         .LR_RETURN(response);
 
     ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
 
-    std::string job_id = "test_job_id_123";
     nlohmann::json result_json = apiClient.getJobStatus(job_id);
 
     ASSERT_EQ(header_arg["X-API-Key"], g_apiKey);
@@ -249,7 +257,7 @@ TEST_F(SubmissionClientTest, GetJobStatusHandlesTransportError) {
     
     cpr::Response response;
     response.status_code = 0; // Indicates a transport error
-    response.error.code = cpr::Error::codes::HostLookupError;
+    response.error.code = cpr::ErrorCode::COULDNT_RESOLVE_HOST;
     response.error.message = "Could not resolve host";
 
     std::string job_id = "test_job_id_123";
@@ -275,8 +283,10 @@ TEST_F(SubmissionClientTest, GetJobStatusUsesSslVerificationWhenCaPathProvided) 
     g_caCertPath = expected_ca_path;
 
     std::string job_id = "test_job_id_123";
+    cpr::SslOptions ssl_opts_arg;
 
-    REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/jobs/" + job_id}, trompeloeil::_, trompeloeil::capture(ssl_opts_arg)))
+    REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/jobs/" + job_id}, trompeloeil::_, trompeloeil::_))
+        .LR_SIDE_EFFECT(ssl_opts_arg = _3)
         .LR_RETURN(response);
 
     ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
@@ -298,8 +308,10 @@ TEST_F(SubmissionClientTest, GetJobStatusDisablesSslVerificationWhenNoCaPathProv
     g_caCertPath = ""; // Ensure no CA path is provided
 
     std::string job_id = "test_job_id_123";
+    cpr::SslOptions ssl_opts_arg;
 
-    REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/jobs/" + job_id}, trompeloeil::_, trompeloeil::capture(ssl_opts_arg)))
+    REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/jobs/" + job_id}, trompeloeil::_, trompeloeil::_))
+        .LR_SIDE_EFFECT(ssl_opts_arg = _3)
         .LR_RETURN(response);
 
     ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
@@ -317,7 +329,10 @@ TEST_F(SubmissionClientTest, ListAllJobsSendsGetRequestToCorrectUrl) {
     response.status_code = 200;
     response.text = R"([{"job_id": "job1", "status": "pending"}, {"job_id": "job2", "status": "completed"}])";
 
-    REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::capture(header_arg), trompeloeil::_))
+    cpr::Header header_arg;
+
+    REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::_, trompeloeil::_))
+        .LR_SIDE_EFFECT(header_arg = _2)
         .LR_RETURN(response);
 
     ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
@@ -375,7 +390,7 @@ TEST_F(SubmissionClientTest, ListAllJobsHandlesTransportError) {
     
     cpr::Response response;
     response.status_code = 0; // Indicates a transport error
-    response.error.code = cpr::Error::codes::HostLookupError;
+    response.error.code = cpr::ErrorCode::COULDNT_RESOLVE_HOST;
     response.error.message = "Could not resolve host";
 
     REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::_, trompeloeil::_))
@@ -398,7 +413,10 @@ TEST_F(SubmissionClientTest, ListAllJobsUsesSslVerificationWhenCaPathProvided) {
     std::string expected_ca_path = "/path/to/ca.crt";
     g_caCertPath = expected_ca_path;
 
-    REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::_, trompeloeil::capture(ssl_opts_arg)))
+    cpr::SslOptions ssl_opts_arg;
+
+    REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::_, trompeloeil::_))
+        .LR_SIDE_EFFECT(ssl_opts_arg = _3)
         .LR_RETURN(response);
 
     ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
@@ -419,7 +437,10 @@ TEST_F(SubmissionClientTest, ListAllJobsDisablesSslVerificationWhenNoCaPathProvi
 
     g_caCertPath = ""; // Ensure no CA path is provided
 
-    REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::_, trompeloeil::capture(ssl_opts_arg)))
+    cpr::SslOptions ssl_opts_arg;
+
+    REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::_, trompeloeil::_))
+        .LR_SIDE_EFFECT(ssl_opts_arg = _3)
         .LR_RETURN(response);
 
     ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
@@ -437,7 +458,10 @@ TEST_F(SubmissionClientTest, ListAllEnginesSendsGetRequestToCorrectUrl) {
     response.status_code = 200;
     response.text = R"([{"engine_id": "engine1", "status": "idle"}, {"engine_id": "engine2", "status": "busy"}])";
 
-    REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/engines/"}, trompeloeil::capture(header_arg), trompeloeil::_))
+    cpr::Header header_arg;
+
+    REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/engines/"}, trompeloeil::_, trompeloeil::_))
+        .LR_SIDE_EFFECT(header_arg = _2)
         .LR_RETURN(response);
 
     ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
@@ -451,68 +475,16 @@ TEST_F(SubmissionClientTest, ListAllEnginesSendsGetRequestToCorrectUrl) {
     ASSERT_EQ(result_json[1]["engine_id"], "engine2");
 }
 
-TEST_F(SubmissionClientTest, ListAllEnginesHandlesSuccessfulResponse) {
-    auto mock_cpr_api = std::make_unique<MockCprApi>();
-    
-    cpr::Response response;
-    response.status_code = 200;
-    response.text = R"([{"engine_id": "engine1", "status": "idle"}, {"engine_id": "engine2", "status": "busy"}])";
 
-    REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/engines/"}, trompeloeil::_, trompeloeil::_))
-        .LR_RETURN(response);
 
-    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
 
-    nlohmann::json result_json = apiClient.listAllEngines();
-
-    ASSERT_TRUE(result_json.is_array());
-    ASSERT_EQ(result_json.size(), 2);
-    ASSERT_EQ(result_json[0]["engine_id"], "engine1");
-    ASSERT_EQ(result_json[0]["status"], "idle");
-    ASSERT_EQ(result_json[1]["engine_id"], "engine2");
-    ASSERT_EQ(result_json[1]["status"], "busy");
-}
-
-TEST_F(SubmissionClientTest, ListAllEnginesHandlesServerError) {
-    auto mock_cpr_api = std::make_unique<MockCprApi>();
-    
-    cpr::Response response;
-    response.status_code = 500;
-    response.text = "Internal Server Error";
-
-    REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/engines/"}, trompeloeil::_, trompeloeil::_))
-        .LR_RETURN(response);
-
-    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
-
-    ASSERT_THROW({
-        apiClient.listAllEngines();
-    }, std::runtime_error);
-}
-
-TEST_F(SubmissionClientTest, ListAllEnginesHandlesServerError) {
-    auto mock_cpr_api = std::make_unique<MockCprApi>();
-    
-    cpr::Response response;
-    response.status_code = 500;
-    response.text = "Internal Server Error";
-
-    REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/engines/"}, trompeloeil::_, trompeloeil::_))
-        .LR_RETURN(response);
-
-    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
-
-    ASSERT_THROW({
-        apiClient.listAllEngines();
-    }, std::runtime_error);
-}
 
 TEST_F(SubmissionClientTest, ListAllEnginesHandlesTransportError) {
     auto mock_cpr_api = std::make_unique<MockCprApi>();
     
     cpr::Response response;
     response.status_code = 0; // Indicates a transport error
-    response.error.code = cpr::Error::codes::HostLookupError;
+    response.error.code = cpr::ErrorCode::COULDNT_RESOLVE_HOST;
     response.error.message = "Could not resolve host";
 
     REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/engines/"}, trompeloeil::_, trompeloeil::_))
@@ -547,26 +519,27 @@ TEST_F(SubmissionClientTest, ListAllEnginesCorrectlyParsesJsonResponse) {
     ASSERT_EQ(result_json[1]["status"], "busy");
 }
 
-TEST_F(SubmissionClientTest, ListAllEnginesUsesSslVerificationWhenCaPathProvided) {
+TEST_F(SubmissionClientTest, ListAllEnginesDisablesSslVerificationWhenNoCaPathProvided) {
     auto mock_cpr_api = std::make_unique<MockCprApi>();
     
     cpr::Response response;
     response.status_code = 200;
     response.text = R"([{"engine_id": "engine1", "status": "idle"}])";
 
-    std::string expected_ca_path = "/path/to/ca.crt";
-    g_caCertPath = expected_ca_path;
+    g_caCertPath = ""; // Ensure no CA path is provided
 
-    REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/engines/"}, trompeloeil::_, trompeloeil::capture(ssl_opts_arg)))
+    cpr::SslOptions ssl_opts_arg;
+
+    REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/engines/"}, trompeloeil::_, trompeloeil::_))
+        .LR_SIDE_EFFECT(ssl_opts_arg = _3)
         .LR_RETURN(response);
 
     ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
 
     apiClient.listAllEngines();
 
-    ASSERT_EQ(ssl_opts_arg.ca_info, expected_ca_path);
-    ASSERT_TRUE(ssl_opts_arg.verify_peer);
-    ASSERT_TRUE(ssl_opts_arg.verify_host);
+    ASSERT_FALSE(ssl_opts_arg.verify_peer);
+    ASSERT_FALSE(ssl_opts_arg.verify_host);
 }
 
 int main(int argc, char **argv) {

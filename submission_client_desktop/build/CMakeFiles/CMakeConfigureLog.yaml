@@ -10926,3 +10926,139 @@ events:
         
       exitCode: 0
 ...
+
+---
+events:
+  -
+    kind: "try_run-v1"
+    backtrace:
+      - "build/_deps/zlib-src/cmake/detect-arch.cmake:26 (try_run)"
+      - "build/_deps/zlib-src/CMakeLists.txt:47 (include)"
+    directories:
+      source: "/home/segin/distconv/submission_client_desktop/build/_deps/zlib-build/CMakeFiles/CMakeTmp"
+      binary: "/home/segin/distconv/submission_client_desktop/build/_deps/zlib-build/CMakeFiles/CMakeTmp"
+    cmakeVariables:
+      CMAKE_C_FLAGS: ""
+      CMAKE_C_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_MODULE_PATH: "/home/segin/distconv/third_party/cpr/cmake;"
+    buildResult:
+      variable: "compile_result_unused"
+      cached: true
+      stdout: |
+        Change Dir: '/home/segin/distconv/submission_client_desktop/build/_deps/zlib-build/CMakeFiles/CMakeTmp'
+        
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_2b9c7/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_2b9c7.dir/build.make CMakeFiles/cmTC_2b9c7.dir/build
+        gmake[1]: Entering directory '/home/segin/distconv/submission_client_desktop/build/_deps/zlib-build/CMakeFiles/CMakeTmp'
+        Building C object CMakeFiles/cmTC_2b9c7.dir/detect-arch.c.o
+        /usr/bin/cc   -std=c11 -o CMakeFiles/cmTC_2b9c7.dir/detect-arch.c.o -c /home/segin/distconv/submission_client_desktop/build/_deps/zlib-src/cmake/detect-arch.c
+        /home/segin/distconv/submission_client_desktop/build/_deps/zlib-src/cmake/detect-arch.c:8:6: error: #error archfound x86_64
+            8 |     #error archfound x86_64
+              |      ^~~~~
+        gmake[1]: *** [CMakeFiles/cmTC_2b9c7.dir/build.make:78: CMakeFiles/cmTC_2b9c7.dir/detect-arch.c.o] Error 1
+        gmake[1]: Leaving directory '/home/segin/distconv/submission_client_desktop/build/_deps/zlib-build/CMakeFiles/CMakeTmp'
+        gmake: *** [Makefile:127: cmTC_2b9c7/fast] Error 2
+        
+      exitCode: 2
+    runResult:
+      variable: "run_result_unused"
+      cached: true
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/home/segin/distconv/third_party/cpr/include/CMakeLists.txt:64 (try_compile)"
+    directories:
+      source: "/home/segin/distconv/submission_client_desktop/build/cpr/include/std_fs/CMakeFiles/CMakeTmp"
+      binary: "/home/segin/distconv/submission_client_desktop/build/cpr/include/std_fs/CMakeFiles/CMakeTmp"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -pthread -Wall -Wextra -Wpedantic -Werror"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_MODULE_PATH: "/home/segin/distconv/third_party/cpr/cmake;"
+    buildResult:
+      variable: "STD_FS_SUPPORTED"
+      cached: true
+      stdout: |
+        Change Dir: '/home/segin/distconv/submission_client_desktop/build/cpr/include/std_fs/CMakeFiles/CMakeTmp'
+        
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_a9917/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_a9917.dir/build.make CMakeFiles/cmTC_a9917.dir/build
+        gmake[1]: Entering directory '/home/segin/distconv/submission_client_desktop/build/cpr/include/std_fs/CMakeFiles/CMakeTmp'
+        Building CXX object CMakeFiles/cmTC_a9917.dir/std_fs_support_test.cpp.o
+        /usr/bin/c++   -pthread -Wall -Wextra -Wpedantic -Werror  -std=c++17 -o CMakeFiles/cmTC_a9917.dir/std_fs_support_test.cpp.o -c /home/segin/distconv/third_party/cpr/cmake/std_fs_support_test.cpp
+        Linking CXX executable cmTC_a9917
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a9917.dir/link.txt --verbose=1
+        /usr/bin/c++  -pthread -Wall -Wextra -Wpedantic -Werror  CMakeFiles/cmTC_a9917.dir/std_fs_support_test.cpp.o -o cmTC_a9917 
+        gmake[1]: Leaving directory '/home/segin/distconv/submission_client_desktop/build/cpr/include/std_fs/CMakeFiles/CMakeTmp'
+        
+      exitCode: 0
+...
+
+---
+events:
+  -
+    kind: "try_run-v1"
+    backtrace:
+      - "build/_deps/zlib-src/cmake/detect-arch.cmake:26 (try_run)"
+      - "build/_deps/zlib-src/CMakeLists.txt:47 (include)"
+    directories:
+      source: "/home/segin/distconv/submission_client_desktop/build/_deps/zlib-build/CMakeFiles/CMakeTmp"
+      binary: "/home/segin/distconv/submission_client_desktop/build/_deps/zlib-build/CMakeFiles/CMakeTmp"
+    cmakeVariables:
+      CMAKE_C_FLAGS: ""
+      CMAKE_C_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_MODULE_PATH: "/home/segin/distconv/third_party/cpr/cmake;"
+    buildResult:
+      variable: "compile_result_unused"
+      cached: true
+      stdout: |
+        Change Dir: '/home/segin/distconv/submission_client_desktop/build/_deps/zlib-build/CMakeFiles/CMakeTmp'
+        
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_48dd6/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_48dd6.dir/build.make CMakeFiles/cmTC_48dd6.dir/build
+        gmake[1]: Entering directory '/home/segin/distconv/submission_client_desktop/build/_deps/zlib-build/CMakeFiles/CMakeTmp'
+        Building C object CMakeFiles/cmTC_48dd6.dir/detect-arch.c.o
+        /usr/bin/cc   -std=c11 -o CMakeFiles/cmTC_48dd6.dir/detect-arch.c.o -c /home/segin/distconv/submission_client_desktop/build/_deps/zlib-src/cmake/detect-arch.c
+        /home/segin/distconv/submission_client_desktop/build/_deps/zlib-src/cmake/detect-arch.c:8:6: error: #error archfound x86_64
+            8 |     #error archfound x86_64
+              |      ^~~~~
+        gmake[1]: *** [CMakeFiles/cmTC_48dd6.dir/build.make:78: CMakeFiles/cmTC_48dd6.dir/detect-arch.c.o] Error 1
+        gmake[1]: Leaving directory '/home/segin/distconv/submission_client_desktop/build/_deps/zlib-build/CMakeFiles/CMakeTmp'
+        gmake: *** [Makefile:127: cmTC_48dd6/fast] Error 2
+        
+      exitCode: 2
+    runResult:
+      variable: "run_result_unused"
+      cached: true
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/home/segin/distconv/third_party/cpr/include/CMakeLists.txt:64 (try_compile)"
+    directories:
+      source: "/home/segin/distconv/submission_client_desktop/build/cpr/include/std_fs/CMakeFiles/CMakeTmp"
+      binary: "/home/segin/distconv/submission_client_desktop/build/cpr/include/std_fs/CMakeFiles/CMakeTmp"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -pthread -Wall -Wextra -Wpedantic -Werror"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_MODULE_PATH: "/home/segin/distconv/third_party/cpr/cmake;"
+    buildResult:
+      variable: "STD_FS_SUPPORTED"
+      cached: true
+      stdout: |
+        Change Dir: '/home/segin/distconv/submission_client_desktop/build/cpr/include/std_fs/CMakeFiles/CMakeTmp'
+        
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_e770f/fast
+        /usr/bin/gmake  -f CMakeFiles/cmTC_e770f.dir/build.make CMakeFiles/cmTC_e770f.dir/build
+        gmake[1]: Entering directory '/home/segin/distconv/submission_client_desktop/build/cpr/include/std_fs/CMakeFiles/CMakeTmp'
+        Building CXX object CMakeFiles/cmTC_e770f.dir/std_fs_support_test.cpp.o
+        /usr/bin/c++   -pthread -Wall -Wextra -Wpedantic -Werror  -std=c++17 -o CMakeFiles/cmTC_e770f.dir/std_fs_support_test.cpp.o -c /home/segin/distconv/third_party/cpr/cmake/std_fs_support_test.cpp
+        Linking CXX executable cmTC_e770f
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_e770f.dir/link.txt --verbose=1
+        /usr/bin/c++  -pthread -Wall -Wextra -Wpedantic -Werror  CMakeFiles/cmTC_e770f.dir/std_fs_support_test.cpp.o -o cmTC_e770f 
+        gmake[1]: Leaving directory '/home/segin/distconv/submission_client_desktop/build/cpr/include/std_fs/CMakeFiles/CMakeTmp'
+        
+      exitCode: 0
+...

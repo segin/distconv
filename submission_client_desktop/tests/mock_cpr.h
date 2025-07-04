@@ -4,9 +4,10 @@
 #include "trompeloeil.hpp"
 #include "cpr/cpr.h"
 
-class MockCpr {
+class MockCprApi : public CprApi {
 public:
-    MAKE_MOCK5(Post, cpr::Response(const cpr::Url&, const cpr::Header&, const cpr::Header&, const cpr::Body&, const cpr::SslOptions&));
+    MAKE_MOCK4(Post, cpr::Response(const cpr::Url&, const cpr::Header&, const cpr::Body&, const cpr::SslOptions&));
+    MAKE_MOCK3(Get, cpr::Response(const cpr::Url&, const cpr::Header&, const cpr::SslOptions&));
 };
 
 #endif // MOCK_CPR_H
