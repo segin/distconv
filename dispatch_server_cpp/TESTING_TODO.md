@@ -73,8 +73,8 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 ## II. State Management & Logic (50 Tests)
 
 ### A. Job State Transitions
-51. [ ] Test: Job is `pending` after submission.
-52. [ ] Test: Job becomes `assigned` after `POST /assign_job/`.
+51. [x] Test: Job is `pending` after submission.
+52. [x] Test: Job becomes `assigned` after `POST /assign_job/`.
 53. [ ] Test: Job becomes `completed` after `POST /jobs/{job_id}/complete`.
 54. [ ] Test: Job becomes `pending` again after `POST /jobs/{job_id}/fail` if retries are available.
 55. [x] Test: Job becomes `failed_permanently` after `POST /jobs/{job_id}/fail` if retries are exhausted.

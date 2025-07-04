@@ -1059,6 +1059,44 @@ TEST_F(ApiTest, JobStatusIsPending) {
     }
 }
 
+TEST_F(ApiTest, JobBecomesAssigned) {
+    // Submit a job
+    nlohmann::json job_payload;
+    job_payload["source_url"] = "http://example.com/video.mp4";
+    job_payload["target_codec"] = "h264";
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto post_res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
+    std::string job_id = nlohmann::json::parse(post_res->body)["job_id"];
+
+    // Send a heartbeat from an engine
+    nlohmann::json heartbeat_payload;
+    heartbeat_payload["engine_id"] = "engine-123";
+    heartbeat_payload["status"] = "idle";
+    heartbeat_payload["supported_codecs"] = {"h264", "vp9"};
+    heartbeat_payload["benchmark_time"] = 100.0;
+    client->Post("/engines/heartbeat", headers, heartbeat_payload.dump(), "application/json");
+
+    // Assign the job
+    nlohmann::json assign_payload;
+    assign_payload["engine_id"] = "engine-123";
+    auto res = client->Post("/assign_job/", headers, assign_payload.dump(), "application/json");
+
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 200);
+
+    nlohmann::json res_json = nlohmann::json::parse(res->body);
+    ASSERT_EQ(res_json["status"], "assigned");
+
+    // Verify the status in the database
+    {
+        std::lock_guard<std::mutex> lock(jobs_mutex);
+        ASSERT_EQ(jobs_db[job_id]["status"], "assigned");
+    }
+}
+
 TEST_F(ApiTest, AssignJobNoPendingJobs) {
     // Send a heartbeat from an engine
     nlohmann::json heartbeat_payload;
