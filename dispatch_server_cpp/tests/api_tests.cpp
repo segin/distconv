@@ -788,7 +788,7 @@ TEST_F(ApiTest, CompleteJobMissingOutputUrl) {
 
     ASSERT_TRUE(complete_res != nullptr);
     ASSERT_EQ(complete_res->status, 400);
-    ASSERT_EQ(complete_res->body, "Bad Request: 'output_url' is missing.");
+    ASSERT_EQ(complete_res->body, "Bad Request: 'output_url' must be a string.");
 }
 
 TEST_F(ApiTest, CompleteJobNonStringOutputUrl) {
@@ -1030,6 +1030,33 @@ TEST_F(ApiTest, AssignJob) {
     ASSERT_TRUE(res_json.contains("job_id"));
     ASSERT_EQ(res_json["status"], "assigned");
     ASSERT_EQ(res_json["assigned_engine"], "engine-123");
+}
+
+TEST_F(ApiTest, JobStatusIsPending) {
+    nlohmann::json job_payload;
+    job_payload["source_url"] = "http://example.com/video.mp4";
+    job_payload["target_codec"] = "h264";
+
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
+
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 200);
+
+    nlohmann::json res_json = nlohmann::json::parse(res->body);
+    std::string job_id = res_json["job_id"];
+
+    // Verify the status in the response
+    ASSERT_EQ(res_json["status"], "pending");
+
+    // Verify the status in the database
+    {
+        std::lock_guard<std::mutex> lock(jobs_mutex);
+        ASSERT_EQ(jobs_db[job_id]["status"], "pending");
+    }
 }
 
 TEST_F(ApiTest, AssignJobNoPendingJobs) {

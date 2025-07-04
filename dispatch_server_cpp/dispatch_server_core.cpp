@@ -275,9 +275,9 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
         std::string job_id = req.matches[1];
         try {
             nlohmann::json request_json = nlohmann::json::parse(req.body);
-            if (!request_json.contains("output_url")) {
+            if (!request_json.contains("output_url") || !request_json["output_url"].is_string()) {
                 res.status = 400;
-                res.set_content("Bad Request: 'output_url' is missing.", "text/plain");
+                res.set_content("Bad Request: 'output_url' must be a string.", "text/plain");
                 return;
             }
             {
