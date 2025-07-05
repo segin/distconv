@@ -84,7 +84,17 @@ TEST_F(ApiTest, SubmitJobNonNumericJobSize) {
 
 
 
+TEST_F(ApiTest, GetJobStatusInvalid) {
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res = client->Get("/jobs/invalid_job_id", headers);
 
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 404);
+    ASSERT_EQ(res->body, "Job not found");
+}
 
 TEST_F(ApiTest, GetJobStatusMalformedId) {
     httplib::Headers headers = {
