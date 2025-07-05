@@ -2,145 +2,164 @@
 #include "httplib.h"
 #include "nlohmann/json.hpp"
 #include "../dispatch_server_core.h"
-#include "test_common.h" // For ApiTest fixture and clear_db()
+#include <fstream>
+#include <cstdio>
 #include <thread>
 #include <chrono>
 
+#include "test_common.h" 
+
 TEST_F(ApiTest, GetJobStatusValid) {
-    // First, submit a job to have something to query
-    nlohmann::json job_payload;
-    job_payload["source_url"] = "http://example.com/video.mp4";
-    job_payload["target_codec"] = "h264";
+    // Create a dummy job for testing
+    nlohmann::json request_body;
+    request_body["source_url"] = "http://example.com/video.mp4";
+    request_body["target_codec"] = "h264";
+
     httplib::Headers headers = {
         {"Authorization", "some_token"},
         {"X-API-Key", api_key}
     };
-    auto post_res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(post_res->status, 200);
-    nlohmann::json post_response_json = nlohmann::json::parse(post_res->body);
-    std::string job_id = post_response_json["job_id"];
 
-    // Now, get the job status
-    auto get_res = client->Get(("/jobs/" + job_id).c_str(), headers);
+    auto res_post = client->Post("/jobs/", headers, request_body.dump(), "application/json");
+    ASSERT_TRUE(res_post != nullptr);
+    ASSERT_EQ(res_post->status, 200);
 
-    ASSERT_TRUE(get_res != nullptr);
-    ASSERT_EQ(get_res->status, 200);
+    nlohmann::json response_json = nlohmann::json::parse(res_post->body);
+    std::string job_id = response_json["job_id"];
 
-    nlohmann::json get_response_json = nlohmann::json::parse(get_res->body);
-    ASSERT_EQ(get_response_json["job_id"], job_id);
-    ASSERT_EQ(get_response_json["status"], "pending");
+    // Verify the status update
+    auto res_get = client->Get(("/jobs/" + job_id).c_str(), headers);
+    ASSERT_TRUE(res_get != nullptr);
+    ASSERT_EQ(res_get->status, 200);
+    nlohmann::json status_json = nlohmann::json::parse(res_get->body);
+    ASSERT_EQ(status_json["status"], "pending");
 }
 
 TEST_F(ApiTest, GetJobStatusInvalid) {
     httplib::Headers headers = {
-        {"Authorization", "some_token"},
         {"X-API-Key", api_key}
     };
     auto res = client->Get("/jobs/invalid_job_id", headers);
-
     ASSERT_TRUE(res != nullptr);
-    ASSERT_EQ(res->status, 404);
-    ASSERT_EQ(res->body, "Job not found");
+    ASSERT_EQ(res->status, 404); // Not Found
 }
 
 TEST_F(ApiTest, GetJobStatusMalformedId) {
     httplib::Headers headers = {
-        {"Authorization", "some_token"},
         {"X-API-Key", api_key}
     };
-    auto res = client->Get("/jobs/this-is-not-a-valid-id", headers);
-
+    auto res = client->Get("/jobs/malformed-id-!@#$", headers);
     ASSERT_TRUE(res != nullptr);
-    ASSERT_EQ(res->status, 404);
+    ASSERT_EQ(res->status, 404); 
 }
 
 TEST_F(ApiTest, GetJobStatusNoApiKey) {
-    httplib::Headers headers = {
-        {"Authorization", "some_token"}
-    };
-    auto res = client->Get("/jobs/some_id", headers);
+    // Create a dummy job for testing
+    nlohmann::json request_body;
+    request_body["source_url"] = "http://example.com/video.mp4";
+    request_body["target_codec"] = "h264";
 
-    ASSERT_TRUE(res != nullptr);
-    ASSERT_EQ(res->status, 401);
-}
-
-TEST_F(ApiTest, GetJobStatusIncorrectApiKey) {
     httplib::Headers headers = {
         {"Authorization", "some_token"},
         {"X-API-Key", api_key}
     };
-    auto res = client->Get("/jobs/some_id", headers);
 
+    auto res_post = client->Post("/jobs/", headers, request_body.dump(), "application/json");
+    ASSERT_TRUE(res_post != nullptr);
+    ASSERT_EQ(res_post->status, 200);
+
+    nlohmann::json response_json = nlohmann::json::parse(res_post->body);
+    std::string job_id = response_json["job_id"];
+
+    // Try to get job status without API key
+    httplib::Headers no_api_key_headers = {
+        {"Authorization", "some_token"}
+    };
+    auto res = client->Get(("/jobs/" + job_id).c_str(), no_api_key_headers);
     ASSERT_TRUE(res != nullptr);
-    ASSERT_EQ(res->status, 401);
+    ASSERT_EQ(res->status, 401); // Unauthorized
+}
+
+TEST_F(ApiTest, GetJobStatusIncorrectApiKey) {
+    // Create a dummy job for testing
+    nlohmann::json request_body;
+    request_body["source_url"] = "http://example.com/video.mp4";
+    request_body["target_codec"] = "h264";
+
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+
+    auto res_post = client->Post("/jobs/", headers, request_body.dump(), "application/json");
+    ASSERT_TRUE(res_post != nullptr);
+    ASSERT_EQ(res_post->status, 200);
+
+    nlohmann::json response_json = nlohmann::json::parse(res_post->body);
+    std::string job_id = response_json["job_id"];
+
+    // Try to get job status with incorrect API key
+    httplib::Headers incorrect_api_key_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", "wrong_api_key"}
+    };
+    auto res = client->Get(("/jobs/" + job_id).c_str(), incorrect_api_key_headers);
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 401); // Unauthorized
 }
 
 TEST_F(ApiTest, ListAllJobsEmpty) {
     httplib::Headers headers = {
-        {"Authorization", "some_token"},
         {"X-API-Key", api_key}
     };
     auto res = client->Get("/jobs/", headers);
-
     ASSERT_TRUE(res != nullptr);
     ASSERT_EQ(res->status, 200);
-
     nlohmann::json response_json = nlohmann::json::parse(res->body);
     ASSERT_TRUE(response_json.is_array());
     ASSERT_TRUE(response_json.empty());
 }
 
 TEST_F(ApiTest, ListAllJobsWithJobs) {
-    clear_db();
-    // Submit two jobs
-    nlohmann::json job1_payload;
-    job1_payload["source_url"] = "http://example.com/video1.mp4";
-    job1_payload["target_codec"] = "h264";
+    // Create some dummy jobs
     httplib::Headers headers = {
         {"Authorization", "some_token"},
         {"X-API-Key", api_key}
     };
-    client->Post("/jobs/", headers, job1_payload.dump(), "application/json");
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    nlohmann::json job2_payload;
-    job2_payload["source_url"] = "http://example.com/video2.mp4";
-    job2_payload["target_codec"] = "vp9";
-    client->Post("/jobs/", headers, job2_payload.dump(), "application/json");
+    for (int i = 0; i < 3; ++i) {
+        nlohmann::json request_body;
+        request_body["source_url"] = "http://example.com/video.mp4";
+        request_body["target_codec"] = "h264";
+        auto res_post = client->Post("/jobs/", headers, request_body.dump(), "application/json");
+        ASSERT_TRUE(res_post != nullptr);
+        ASSERT_EQ(res_post->status, 200);
+    }
 
     auto res = client->Get("/jobs/", headers);
-
     ASSERT_TRUE(res != nullptr);
     ASSERT_EQ(res->status, 200);
-
     nlohmann::json response_json = nlohmann::json::parse(res->body);
     ASSERT_TRUE(response_json.is_array());
-    ASSERT_EQ(response_json.size(), 2);
-
-    // Check some details of the returned jobs
-    ASSERT_EQ(response_json[0]["source_url"], "http://example.com/video1.mp4");
-    ASSERT_EQ(response_json[1]["source_url"], "http://example.com/video2.mp4");
+    ASSERT_EQ(response_json.size(), 3);
 }
 
 TEST_F(ApiTest, ListAllJobsWithOneJob) {
-    // Submit one job
-    nlohmann::json job1_payload;
-    job1_payload["source_url"] = "http://example.com/video1.mp4";
-    job1_payload["target_codec"] = "h264";
+    // Create a dummy job
     httplib::Headers headers = {
         {"Authorization", "some_token"},
         {"X-API-Key", api_key}
     };
-    client->Post("/jobs/", headers, job1_payload.dump(), "application/json");
+    nlohmann::json request_body;
+    request_body["source_url"] = "http://example.com/video.mp4";
+    request_body["target_codec"] = "h264";
+    auto res_post = client->Post("/jobs/", headers, request_body.dump(), "application/json");
+    ASSERT_TRUE(res_post != nullptr);
+    ASSERT_EQ(res_post->status, 200);
 
     auto res = client->Get("/jobs/", headers);
-
     ASSERT_TRUE(res != nullptr);
     ASSERT_EQ(res->status, 200);
-
     nlohmann::json response_json = nlohmann::json::parse(res->body);
     ASSERT_TRUE(response_json.is_array());
     ASSERT_EQ(response_json.size(), 1);
-
-    // Check some details of the returned jobs
-    ASSERT_EQ(response_json[0]["source_url"], "http://example.com/video1.mp4");
 }

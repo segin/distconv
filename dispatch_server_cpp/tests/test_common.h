@@ -11,7 +11,7 @@
 #include <chrono>
 
 // Helper function to clear the database before each test
-void clear_db() {
+inline void clear_db() {
     jobs_db = nlohmann::json::object();
     engines_db = nlohmann::json::object();
     // Also clear the persistent storage file
@@ -32,6 +32,7 @@ protected:
         // Start the server in a non-blocking way
         server->start(port, false);
         client = new httplib::Client("localhost", port);
+        client->set_connection_timeout(5);
     }
 
     void TearDown() override {

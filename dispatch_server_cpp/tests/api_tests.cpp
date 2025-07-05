@@ -7,33 +7,16 @@
 #include <thread>
 #include <chrono>
 
-// Helper function to clear the database before each test
-void clear_db() {
-    jobs_db = nlohmann::json::object();
-    engines_db = nlohmann::json::object();
-    // Also clear the persistent storage file
-    std::remove(PERSISTENT_STORAGE_FILE.c_str());
-}
+#include "test_common.h" // For ApiTest fixture and clear_db()
 
 // Test fixture for API tests
 class ApiTest : public ::testing::Test {
 protected:
-    DispatchServer *server;
-    httplib::Client *client;
-    int port = 8080; // Default port for tests
-    std::string api_key = "test_api_key";
+    httplib::Client cli;
+    ApiTest() : cli("localhost", 8080) {}
 
     void SetUp() override {
+        // Clear the database before each test
         clear_db();
-        server = new DispatchServer(api_key);
-        // Start the server in a non-blocking way
-        server->start(port, false);
-        client = new httplib::Client("localhost", port);
-    }
-
-    void TearDown() override {
-        delete client;
-        server->stop();
-        delete server;
     }
 };
