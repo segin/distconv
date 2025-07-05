@@ -98,15 +98,7 @@ TEST_F(ApiTest, GetJobStatusInvalid) {
 
 
 
-TEST_F(ApiTest, GetJobStatusNoApiKey) {
-    httplib::Headers headers = {
-        {"Authorization", "some_token"}
-    };
-    auto res = client->Get("/jobs/some_id", headers);
 
-    ASSERT_TRUE(res != nullptr);
-    ASSERT_EQ(res->status, 401);
-}
 
 TEST_F(ApiTest, GetJobStatusIncorrectApiKey) {
     httplib::Headers headers = {

@@ -51,3 +51,13 @@ TEST_F(ApiTest, GetJobStatusMalformedId) {
     ASSERT_TRUE(res != nullptr);
     ASSERT_EQ(res->status, 404);
 }
+
+TEST_F(ApiTest, GetJobStatusNoApiKey) {
+    httplib::Headers headers = {
+        {"Authorization", "some_token"}
+    };
+    auto res = client->Get("/jobs/some_id", headers);
+
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 401);
+}
