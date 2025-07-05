@@ -61,3 +61,29 @@ TEST_F(ApiTest, GetJobStatusNoApiKey) {
     ASSERT_TRUE(res != nullptr);
     ASSERT_EQ(res->status, 401);
 }
+
+TEST_F(ApiTest, GetJobStatusIncorrectApiKey) {
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res = client->Get("/jobs/some_id", headers);
+
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 401);
+}
+
+TEST_F(ApiTest, ListAllJobsEmpty) {
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res = client->Get("/jobs/", headers);
+
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 200);
+
+    nlohmann::json response_json = nlohmann::json::parse(res->body);
+    ASSERT_TRUE(response_json.is_array());
+    ASSERT_TRUE(response_json.empty());
+}
