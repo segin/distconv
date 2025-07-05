@@ -96,23 +96,7 @@ TEST_F(ApiTest, SubmitJobNonNumericJobSize) {
     ASSERT_EQ(res->body, "Bad Request: 'job_size' must be a number.");
 }
 
-TEST_F(ApiTest, SubmitJobNonIntegerMaxRetries) {
-    nlohmann::json job_payload;
-    job_payload["source_url"] = "http://example.com/video.mp4";
-    job_payload["target_codec"] = "h264";
-    job_payload["job_size"] = 100.5;
-    job_payload["max_retries"] = 3.5; // Non-integer max_retries
 
-    httplib::Headers headers = {
-        {"Authorization", "some_token"},
-        {"X-API-Key", api_key}
-    };
-    auto res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
-
-    ASSERT_TRUE(res != nullptr);
-    ASSERT_EQ(res->status, 400);
-    ASSERT_EQ(res->body, "Bad Request: 'max_retries' must be an integer.");
-}
 
 TEST_F(ApiTest, GetJobStatusValid) {
     // First, submit a job to have something to query

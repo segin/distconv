@@ -3,6 +3,8 @@
 #include "nlohmann/json.hpp"
 #include "../dispatch_server_core.h"
 #include "test_common.h" // For ApiTest fixture and clear_db()
+#include <thread>
+#include <chrono>
 
 TEST_F(ApiTest, SubmitValidJob) {
     nlohmann::json job_payload;
