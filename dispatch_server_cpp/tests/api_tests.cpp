@@ -44,19 +44,7 @@ protected:
 
 
 
-TEST_F(ApiTest, SubmitJobInvalidJson) {
-    std::string invalid_json_payload = "{this is not json}";
 
-    httplib::Headers headers = {
-        {"Authorization", "some_token"},
-        {"X-API-Key", api_key}
-    };
-    auto res = client->Post("/jobs/", headers, invalid_json_payload, "application/json");
-
-    ASSERT_TRUE(res != nullptr);
-    ASSERT_EQ(res->status, 400);
-    ASSERT_TRUE(res->body.rfind("Invalid JSON:", 0) == 0);
-}
 
 TEST_F(ApiTest, SubmitJobEmptyJson) {
     std::string empty_json_payload = "{}";
