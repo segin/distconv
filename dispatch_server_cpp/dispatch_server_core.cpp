@@ -192,8 +192,10 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
         nlohmann::json all_engines = nlohmann::json::array();
         {
             std::lock_guard<std::mutex> lock(engines_mutex);
-            for (auto const& [key, val] : engines_db.items()) {
-                all_engines.push_back(val);
+            if (!engines_db.empty()) {
+                for (auto const& [key, val] : engines_db.items()) {
+                    all_engines.push_back(val);
+                }
             }
         }
         res.set_content(all_engines.dump(), "application/json");
