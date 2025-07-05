@@ -115,9 +115,11 @@ TEST_F(ApiTest, ListEnginesWithEngines) {
     ASSERT_EQ(response_json.size(), 3);
 }
 
+
 TEST_F(ApiTest, ListEnginesWithOneEngine) {
     // Create a dummy engine
     httplib::Headers headers = {
+        {"Authorization", "some_token"},
         {"X-API-Key", api_key}
     };
     nlohmann::json request_body;
@@ -135,3 +137,30 @@ TEST_F(ApiTest, ListEnginesWithOneEngine) {
     ASSERT_TRUE(response_json.is_array());
     ASSERT_EQ(response_json.size(), 1);
 }
+
+TEST_F(ApiTest, EngineStatusIsIdleAfterHeartbeat) {
+    // 1. Send a heartbeat
+    nlohmann::json engine_payload = {
+        {"engine_id", "engine-123"},
+        {"engine_type", "transcoder"},
+        {"supported_codecs", {"h264", "vp9"}},
+        {"status", "idle"}
+    };
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res_heartbeat = client->Post("/engines/heartbeat", admin_headers, engine_payload.dump(), "application/json");
+    ASSERT_EQ(res_heartbeat->status, 200);
+
+    // 2. Get the engine status
+    auto res_get = client->Get("/engines/", admin_headers);
+    ASSERT_EQ(res_get->status, 200);
+
+    // 3. Assert that the engine status is "idle"
+    nlohmann::json response_json = nlohmann::json::parse(res_get->body);
+    ASSERT_TRUE(response_json.is_array());
+    ASSERT_EQ(response_json.size(), 1);
+    ASSERT_EQ(response_json[0]["status"], "idle");
+}
+
