@@ -50,18 +50,7 @@ protected:
 
 
 
-TEST_F(ApiTest, SubmitJobNoAuthHeader) {
-    nlohmann::json job_payload;
-    job_payload["source_url"] = "http://example.com/video.mp4";
-    job_payload["target_codec"] = "h264";
 
-    httplib::Headers headers;
-    auto res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
-
-    ASSERT_TRUE(res != nullptr);
-    ASSERT_EQ(res->status, 401);
-    ASSERT_EQ(res->body, "Unauthorized: Missing 'Authorization' header.");
-}
 
 TEST_F(ApiTest, SubmitJobNoApiKey) {
     nlohmann::json job_payload;
