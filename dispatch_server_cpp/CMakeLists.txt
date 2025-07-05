@@ -30,11 +30,12 @@ target_include_directories(dispatch_server_app PRIVATE
 )
 
 # Unit Tests
-add_executable(dispatch_server_tests tests/main.cpp tests/api_tests.cpp)
+add_executable(dispatch_server_tests tests/main.cpp tests/jobs_post_api_tests.cpp)
 target_link_libraries(dispatch_server_tests dispatch_server_core gtest_main)
 target_include_directories(dispatch_server_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     /home/segin/distconv/third_party/json/single_include
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests
 )
 
 enable_testing()
