@@ -3,6 +3,8 @@
 #include "nlohmann/json.hpp"
 #include "../dispatch_server_core.h"
 #include "test_common.h" // For ApiTest fixture and clear_db()
+#include <thread>
+#include <chrono>
 
 TEST_F(ApiTest, SubmitValidJob) {
     nlohmann::json job_payload;
@@ -175,4 +177,100 @@ TEST_F(ApiTest, SubmitJobIncorrectApiKey) {
     ASSERT_TRUE(res != nullptr);
     ASSERT_EQ(res->status, 401);
     ASSERT_EQ(res->body, "Unauthorized");
+}
+
+TEST_F(ApiTest, JobIdIsUnique) {
+    nlohmann::json job_payload;
+    job_payload["source_url"] = "http://example.com/video.mp4";
+    job_payload["target_codec"] = "h264";
+
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res1 = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    auto res2 = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
+
+    ASSERT_TRUE(res1 != nullptr);
+    ASSERT_EQ(res1->status, 200);
+    ASSERT_TRUE(res2 != nullptr);
+    ASSERT_EQ(res2->status, 200);
+
+    nlohmann::json res1_json = nlohmann::json::parse(res1->body);
+    nlohmann::json res2_json = nlohmann::json::parse(res2->body);
+
+    ASSERT_NE(res1_json["job_id"], res2_json["job_id"]);
+}
+
+TEST_F(ApiTest, SubmitJobNonStringSourceUrl) {
+    nlohmann::json job_payload;
+    job_payload["source_url"] = 123; // Non-string source_url
+    job_payload["target_codec"] = "h264";
+    job_payload["job_size"] = 100.5;
+    job_payload["max_retries"] = 5;
+
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
+
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 400);
+    ASSERT_EQ(res->body, "Bad Request: 'source_url' is missing or not a string.");
+}
+
+TEST_F(ApiTest, SubmitJobNonStringTargetCodec) {
+    nlohmann::json job_payload;
+    job_payload["source_url"] = "http://example.com/video.mp4";
+    job_payload["target_codec"] = 123; // Non-string target_codec
+    job_payload["job_size"] = 100.5;
+    job_payload["max_retries"] = 5;
+
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
+
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 400);
+    ASSERT_EQ(res->body, "Bad Request: 'target_codec' is missing or not a string.");
+}
+
+TEST_F(ApiTest, SubmitJobNonNumericJobSize) {
+    nlohmann::json job_payload;
+    job_payload["source_url"] = "http://example.com/video.mp4";
+    job_payload["target_codec"] = "h264";
+    job_payload["job_size"] = "not_a_number"; // Non-numeric job_size
+    job_payload["max_retries"] = 5;
+
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
+
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 400);
+    ASSERT_EQ(res->body, "Bad Request: 'job_size' must be a number.");
+}
+
+TEST_F(ApiTest, SubmitJobNonIntegerMaxRetries) {
+    nlohmann::json job_payload;
+    job_payload["source_url"] = "http://example.com/video.mp4";
+    job_payload["target_codec"] = "h264";
+    job_payload["job_size"] = 100.5;
+    job_payload["max_retries"] = 3.5; // Non-integer max_retries
+
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
+
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 400);
+    ASSERT_EQ(res->body, "Bad Request: 'max_retries' must be an integer.");
 }

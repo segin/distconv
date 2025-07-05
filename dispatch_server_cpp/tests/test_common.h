@@ -1,3 +1,6 @@
+#ifndef DISPATCH_SERVER_TEST_COMMON_H
+#define DISPATCH_SERVER_TEST_COMMON_H
+
 #include "gtest/gtest.h"
 #include "httplib.h"
 #include "nlohmann/json.hpp"
@@ -37,3 +40,5 @@ protected:
         delete server;
     }
 };
+
+#endif // DISPATCH_SERVER_TEST_COMMON_H
