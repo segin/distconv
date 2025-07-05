@@ -322,9 +322,9 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
             {
                 std::lock_guard<std::mutex> lock(jobs_mutex);
                 if (jobs_db.contains(job_id)) {
-                    if (jobs_db[job_id]["status"] == "completed") {
+                    if (jobs_db[job_id]["status"] == "completed" || jobs_db[job_id]["status"] == "failed_permanently") {
                         res.status = 400;
-                        res.set_content("Bad Request: Cannot fail a completed job.", "text/plain");
+                        res.set_content("Bad Request: Job is already in a final state.", "text/plain");
                         return;
                     }
                     jobs_db[job_id]["retries"] = jobs_db[job_id].value("retries", 0) + 1;
