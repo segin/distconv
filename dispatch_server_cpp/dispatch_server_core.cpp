@@ -149,7 +149,17 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
     });
 
     // Endpoint to get job status
-    svr.Get(R"(/jobs/([^/]+))", [api_key](const httplib::Request& req, httplib::Response& res) {
+    svr.Get(R"(/jobs/(.+))", [api_key](const httplib::Request& req, httplib::Response& res) {
+        if (req.get_header_value("Authorization") == "") {
+            res.status = 401;
+            res.set_content("Unauthorized: Missing 'Authorization' header.", "text/plain");
+            return;
+        }
+        if (api_key != "" && req.get_header_value("X-API-Key") == "") {
+            res.status = 401;
+            res.set_content("Unauthorized: Missing 'X-API-Key' header.", "text/plain");
+            return;
+        }
         if (api_key != "" && req.get_header_value("X-API-Key") != api_key) {
             res.status = 401;
             res.set_content("Unauthorized", "text/plain");
@@ -175,8 +185,10 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
         nlohmann::json all_jobs = nlohmann::json::array();
         {
             std::lock_guard<std::mutex> lock(jobs_mutex);
-            for (auto const& [key, val] : jobs_db.items()) {
-                all_jobs.push_back(val);
+            if (!jobs_db.empty()) {
+                for (auto const& [key, val] : jobs_db.items()) {
+                    all_jobs.push_back(val);
+                }
             }
         }
         res.set_content(all_jobs.dump(), "application/json");

@@ -37,6 +37,7 @@ TEST_F(ApiTest, GetJobStatusValid) {
 
 TEST_F(ApiTest, GetJobStatusInvalid) {
     httplib::Headers headers = {
+        {"Authorization", "some_token"},
         {"X-API-Key", api_key}
     };
     auto res = client->Get("/jobs/invalid_job_id", headers);
@@ -46,6 +47,7 @@ TEST_F(ApiTest, GetJobStatusInvalid) {
 
 TEST_F(ApiTest, GetJobStatusMalformedId) {
     httplib::Headers headers = {
+        {"Authorization", "some_token"},
         {"X-API-Key", api_key}
     };
     auto res = client->Get("/jobs/malformed-id-!@#$", headers);
@@ -110,6 +112,7 @@ TEST_F(ApiTest, GetJobStatusIncorrectApiKey) {
 
 TEST_F(ApiTest, ListAllJobsEmpty) {
     httplib::Headers headers = {
+        {"Authorization", "some_token"},
         {"X-API-Key", api_key}
     };
     auto res = client->Get("/jobs/", headers);
