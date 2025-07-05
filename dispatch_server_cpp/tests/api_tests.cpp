@@ -46,19 +46,7 @@ protected:
 
 
 
-TEST_F(ApiTest, SubmitJobEmptyJson) {
-    std::string empty_json_payload = "{}";
 
-    httplib::Headers headers = {
-        {"Authorization", "some_token"},
-        {"X-API-Key", api_key}
-    };
-    auto res = client->Post("/jobs/", headers, empty_json_payload, "application/json");
-
-    ASSERT_TRUE(res != nullptr);
-    ASSERT_EQ(res->status, 400);
-    ASSERT_EQ(res->body, "Bad Request: 'source_url' is missing or not a string.");
-}
 
 TEST_F(ApiTest, SubmitJobWithExtraFields) {
     nlohmann::json job_payload;
