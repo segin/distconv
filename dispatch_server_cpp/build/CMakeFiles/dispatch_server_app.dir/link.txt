@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/dispatch_server_app.dir/app_main.cpp.o -o dispatch_server_app  libdispatch_server_core.a -lpthread 
