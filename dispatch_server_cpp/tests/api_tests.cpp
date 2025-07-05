@@ -1097,6 +1097,33 @@ TEST_F(ApiTest, JobBecomesAssigned) {
     }
 }
 
+TEST_F(ApiTest, JobBecomesCompleted) {
+    // Submit a job first
+    nlohmann::json job_payload;
+    job_payload["source_url"] = "http://example.com/video.mp4";
+    job_payload["target_codec"] = "h264";
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto post_res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
+    std::string job_id = nlohmann::json::parse(post_res->body)["job_id"];
+
+    // Complete the job
+    nlohmann::json complete_payload;
+    complete_payload["output_url"] = "http://example.com/output.mp4";
+    auto complete_res = client->Post(("/jobs/" + job_id + "/complete").c_str(), headers, complete_payload.dump(), "application/json");
+
+    ASSERT_TRUE(complete_res != nullptr);
+    ASSERT_EQ(complete_res->status, 200);
+
+    // Verify job status
+    {
+        std::lock_guard<std::mutex> lock(jobs_mutex);
+        ASSERT_EQ(jobs_db[job_id]["status"], "completed");
+    }
+}
+
 TEST_F(ApiTest, AssignJobNoPendingJobs) {
     // Send a heartbeat from an engine
     nlohmann::json heartbeat_payload;
