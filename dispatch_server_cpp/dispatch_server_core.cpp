@@ -295,10 +295,19 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
                 return;
             }
             {
-                std::lock_guard<std::mutex> lock(jobs_mutex);
+                std::lock_guard<std::mutex> jobs_lock(jobs_mutex);
                 if (jobs_db.contains(job_id)) {
                     jobs_db[job_id]["status"] = "completed";
                     jobs_db[job_id]["output_url"] = request_json["output_url"];
+                    
+                    // Free up the engine that was working on this job
+                    if (jobs_db[job_id].contains("assigned_engine") && !jobs_db[job_id]["assigned_engine"].is_null()) {
+                        std::string engine_id = jobs_db[job_id]["assigned_engine"];
+                        std::lock_guard<std::mutex> engines_lock(engines_mutex);
+                        if (engines_db.contains(engine_id)) {
+                            engines_db[engine_id]["status"] = "idle";
+                        }
+                    }
                 } else {
                     res.status = 404;
                     res.set_content("Job not found", "text/plain");
