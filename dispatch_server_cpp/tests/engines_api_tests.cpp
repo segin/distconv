@@ -16,6 +16,7 @@ TEST_F(ApiTest, RegisterEngineValid) {
     request_body["supported_codecs"] = {"h264", "vp9"};
 
     httplib::Headers headers = {
+        {"Authorization", "some_token"},
         {"X-API-Key", api_key}
     };
 

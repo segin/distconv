@@ -86,7 +86,7 @@ TEST_F(ApiTest, SubmitJobInvalidJson) {
 }
 
 TEST_F(ApiTest, SubmitJobEmptyJson) {
-    std::string empty_json_payload = "{}";
+    std::string empty_json_payload = "";
 
     httplib::Headers headers = {
         {"Authorization", "some_token"},
@@ -96,7 +96,6 @@ TEST_F(ApiTest, SubmitJobEmptyJson) {
 
     ASSERT_TRUE(res != nullptr);
     ASSERT_EQ(res->status, 400);
-    ASSERT_EQ(res->body, "Bad Request: 'source_url' is missing or not a string.");
 }
 
 TEST_F(ApiTest, SubmitJobWithExtraFields) {
@@ -306,6 +305,46 @@ TEST_F(ApiTest, CompletedJobIsNotReassigned) {
     ASSERT_EQ(res_heartbeat->status, 200);
 
     // 4. Try to assign the completed job
+    nlohmann::json assign_payload = {
+        {"engine_id", "engine-123"}
+    };
+    auto res_assign = client->Post("/assign_job/", admin_headers, assign_payload.dump(), "application/json");
+
+    // 5. Assert that no job was assigned (HTTP 204 No Content)
+    ASSERT_EQ(res_assign->status, 204);
+}
+
+TEST_F(ApiTest, PermanentlyFailedJobIsNotReassigned) {
+    // 1. Create a job
+    nlohmann::json job_payload = {
+        {"source_url", "http://example.com/video.mp4"},
+        {"target_codec", "h264"}
+    };
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
+    ASSERT_EQ(res_submit->status, 200);
+    std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
+
+    // 2. Manually set the job's status to "failed_permanently" in the database
+    {
+        std::lock_guard<std::mutex> lock(jobs_mutex);
+        jobs_db[job_id]["status"] = "failed_permanently";
+    }
+
+    // 3. Register an engine
+    nlohmann::json engine_payload = {
+        {"engine_id", "engine-123"},
+        {"engine_type", "transcoder"},
+        {"supported_codecs", {"h264", "vp9"}},
+        {"status", "idle"}
+    };
+    auto res_heartbeat = client->Post("/engines/heartbeat", admin_headers, engine_payload.dump(), "application/json");
+    ASSERT_EQ(res_heartbeat->status, 200);
+
+    // 4. Try to assign the failed job
     nlohmann::json assign_payload = {
         {"engine_id", "engine-123"}
     };

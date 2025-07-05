@@ -149,7 +149,7 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
     });
 
     // Endpoint to get job status
-    svr.Get(R"(/jobs/(\w+))", [api_key](const httplib::Request& req, httplib::Response& res) {
+    svr.Get(R"(/jobs/([^/]+))", [api_key](const httplib::Request& req, httplib::Response& res) {
         if (api_key != "" && req.get_header_value("X-API-Key") != api_key) {
             res.status = 401;
             res.set_content("Unauthorized", "text/plain");
