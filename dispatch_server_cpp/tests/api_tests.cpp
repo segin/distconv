@@ -1059,6 +1059,34 @@ TEST_F(ApiTest, JobStatusIsPending) {
     }
 }
 
+TEST_F(ApiTest, JobBecomesFailedPermanently) {
+    // Submit a job with max_retries = 0
+    nlohmann::json job_payload;
+    job_payload["source_url"] = "http://example.com/video.mp4";
+    job_payload["target_codec"] = "h264";
+    job_payload["max_retries"] = 0;
+    httplib::Headers headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto post_res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
+    std::string job_id = nlohmann::json::parse(post_res->body)["job_id"];
+
+    // Fail the job
+    nlohmann::json fail_payload;
+    fail_payload["error_message"] = "Transcoding failed";
+    auto fail_res = client->Post(("/jobs/" + job_id + "/fail").c_str(), headers, fail_payload.dump(), "application/json");
+
+    ASSERT_TRUE(fail_res != nullptr);
+    ASSERT_EQ(fail_res->status, 200);
+
+    // Verify job status
+    {
+        std::lock_guard<std::mutex> lock(jobs_mutex);
+        ASSERT_EQ(jobs_db[job_id]["status"], "failed_permanently");
+    }
+}
+
 TEST_F(ApiTest, JobBecomesAssigned) {
     // Submit a job
     nlohmann::json job_payload;
