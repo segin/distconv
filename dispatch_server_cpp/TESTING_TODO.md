@@ -142,7 +142,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 
 ### B. Thread Safety
 105. [x] Test: Submit multiple jobs concurrently from different threads. Verify all are added correctly.
-106. [ ] Test: Send multiple heartbeats concurrently from different threads. Verify all engines are updated correctly.
+106. [x] Test: Send multiple heartbeats concurrently from different threads. Verify all engines are updated correctly.
 107. [ ] Test: Concurrently submit jobs and send heartbeats. Verify data integrity.
 108. [ ] Test: Concurrently assign jobs and complete jobs. Verify state transitions are correct.
 109. [ ] Test: Access the main jobs database (`jobs_db`) from multiple threads with proper locking.

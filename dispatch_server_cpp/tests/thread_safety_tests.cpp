@@ -38,3 +38,39 @@ TEST_F(ApiTest, SubmitMultipleJobsConcurrently) {
     ASSERT_TRUE(all_jobs.is_array());
     ASSERT_EQ(all_jobs.size(), num_jobs);
 }
+
+TEST_F(ApiTest, SendMultipleHeartbeatsConcurrently) {
+    const int num_engines = 100;
+    std::vector<std::future<void>> futures;
+
+    for (int i = 0; i < num_engines; ++i) {
+        futures.push_back(std::async(std::launch::async, [this, i]() {
+            nlohmann::json engine_payload = {
+                {"engine_id", "engine-" + std::to_string(i)},
+                {"engine_type", "transcoder"},
+                {"supported_codecs", {"h264", "vp9"}},
+                {"status", "idle"},
+                {"benchmark_time", 100.0 + i}
+            };
+            httplib::Headers headers = {
+                {"Authorization", "some_token"},
+                {"X-API-Key", this->api_key}
+            };
+            auto res = this->client->Post("/engines/heartbeat", headers, engine_payload.dump(), "application/json");
+            ASSERT_TRUE(res != nullptr);
+            ASSERT_EQ(res->status, 200);
+        }));
+    }
+
+    for (auto &f : futures) {
+        f.get(); // Wait for all heartbeats to be sent
+    }
+
+    // Verify that all engines are in the database
+    auto res_get_all_engines = this->client->Get("/engines/", this->admin_headers);
+    ASSERT_TRUE(res_get_all_engines != nullptr);
+    ASSERT_EQ(res_get_all_engines->status, 200);
+    nlohmann::json all_engines = nlohmann::json::parse(res_get_all_engines->body);
+    ASSERT_TRUE(all_engines.is_array());
+    ASSERT_EQ(all_engines.size(), num_engines);
+}
