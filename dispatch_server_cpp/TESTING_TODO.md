@@ -88,8 +88,8 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 61. [ ] Test: Engine status is `idle` after a heartbeat.
 62. [ ] Test: Engine status becomes `busy` after being assigned a job.
 63. [ ] Test: Engine status becomes `idle` again after the job it was assigned is marked `completed`.
-64. [ ] Test: Engine status becomes `idle` again after the job it was assigned is marked `failed`.
-65. [ ] Test: A `busy` engine is not assigned another job.
+64. [x] Test: Engine status becomes `idle` again after the job it was assigned is marked `failed`.
+65. [x] Test: A `busy` engine is not assigned another job.
 
 ### C. Job Resubmission Logic
 66. [ ] Test: A failed job has its `retries` count incremented.

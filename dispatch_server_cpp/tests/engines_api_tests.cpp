@@ -294,3 +294,48 @@ TEST_F(ApiTest, EngineStatusBecomesIdleAfterJobCompletion) {
     ASSERT_EQ(engines_json[0]["status"], "idle");
 }
 
+TEST_F(ApiTest, BusyEngineIsNotAssignedAnotherJob) {
+    // 1. Register an engine
+    nlohmann::json engine_payload = {
+        {"engine_id", "engine-123"},
+        {"engine_type", "transcoder"},
+        {"supported_codecs", {"h264", "vp9"}},
+        {"status", "idle"},
+        {"benchmark_time", 100.0}
+    };
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res_heartbeat = client->Post("/engines/heartbeat", admin_headers, engine_payload.dump(), "application/json");
+    ASSERT_EQ(res_heartbeat->status, 200);
+
+    // 2. Create two jobs
+    nlohmann::json job_payload_1 = {
+        {"source_url", "http://example.com/video1.mp4"},
+        {"target_codec", "h264"}
+    };
+    auto res_submit_1 = client->Post("/jobs/", admin_headers, job_payload_1.dump(), "application/json");
+    ASSERT_EQ(res_submit_1->status, 200);
+    std::string job_id_1 = nlohmann::json::parse(res_submit_1->body)["job_id"];
+
+    nlohmann::json job_payload_2 = {
+        {"source_url", "http://example.com/video2.mp4"},
+        {"target_codec", "vp9"}
+    };
+    auto res_submit_2 = client->Post("/jobs/", admin_headers, job_payload_2.dump(), "application/json");
+    ASSERT_EQ(res_submit_2->status, 200);
+    std::string job_id_2 = nlohmann::json::parse(res_submit_2->body)["job_id"];
+
+    // 3. Assign the first job to the engine
+    nlohmann::json assign_payload = {
+        {"engine_id", "engine-123"}
+    };
+    auto res_assign_1 = client->Post("/assign_job/", admin_headers, assign_payload.dump(), "application/json");
+    ASSERT_EQ(res_assign_1->status, 200);
+
+    // 4. Try to assign the second job
+    auto res_assign_2 = client->Post("/assign_job/", admin_headers, assign_payload.dump(), "application/json");
+    ASSERT_EQ(res_assign_2->status, 204); // No Content, because the only engine is busy
+}
+
