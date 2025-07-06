@@ -119,7 +119,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 86. [x] Test: `load_state` handles a non-existent file gracefully (starts with empty state).
 87. [x] Test: `load_state` handles a corrupt/invalid JSON file gracefully.
 88. [x] Test: `load_state` handles an empty JSON file gracefully.
-89. [ ] Test: State is preserved after a simulated server restart (call `save_state` then `load_state`).
+89. [x] Test: State is preserved after a simulated server restart (call `save_state` then `load_state`).
 90. [ ] Test: Submitting a new job triggers `save_state`.
 91. [ ] Test: A heartbeat triggers `save_state`.
 92. [ ] Test: Completing a job triggers `save_state`.

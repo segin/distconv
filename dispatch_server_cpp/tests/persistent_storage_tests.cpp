@@ -181,3 +181,49 @@ TEST_F(ApiTest, LoadStateHandlesEmptyFile) {
         ASSERT_TRUE(engines_db.empty());
     }
 }
+
+TEST_F(ApiTest, StateIsPreservedAfterRestart) {
+    // 1. Create a job and register an engine
+    nlohmann::json job_payload = {
+        {"source_url", "http://example.com/video.mp4"},
+        {"target_codec", "h264"}
+    };
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
+    ASSERT_EQ(res_submit->status, 200);
+    std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
+
+    nlohmann::json engine_payload = {
+        {"engine_id", "engine-123"},
+        {"engine_type", "transcoder"},
+        {"supported_codecs", {"h264", "vp9"}},
+        {"status", "idle"},
+        {"benchmark_time", 100.0}
+    };
+    auto res_heartbeat = client->Post("/engines/heartbeat", admin_headers, engine_payload.dump(), "application/json");
+    ASSERT_EQ(res_heartbeat->status, 200);
+
+    // 2. Save the state
+    save_state();
+
+    // 3. Clear the in-memory database
+    clear_db();
+
+    // 4. Load the state
+    load_state();
+
+    // 5. Verify that the job and engine are loaded correctly
+    {
+        std::lock_guard<std::mutex> lock(jobs_mutex);
+        ASSERT_TRUE(jobs_db.contains(job_id));
+        ASSERT_EQ(jobs_db[job_id]["source_url"], "http://example.com/video.mp4");
+    }
+    {
+        std::lock_guard<std::mutex> lock(engines_mutex);
+        ASSERT_TRUE(engines_db.contains("engine-123"));
+        ASSERT_EQ(engines_db["engine-123"]["status"], "idle");
+    }
+}
