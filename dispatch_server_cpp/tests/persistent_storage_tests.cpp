@@ -251,3 +251,55 @@ TEST_F(ApiTest, SubmitJobTriggersSaveState) {
     ASSERT_TRUE(state.contains("jobs"));
     ASSERT_TRUE(state["jobs"].contains(job_id));
 }
+
+TEST_F(ApiTest, HeartbeatTriggersSaveState) {
+    // 1. Send a heartbeat
+    nlohmann::json engine_payload = {
+        {"engine_id", "engine-123"},
+        {"engine_type", "transcoder"},
+        {"supported_codecs", {"h264", "vp9"}},
+        {"status", "idle"},
+        {"benchmark_time", 100.0}
+    };
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res_heartbeat = client->Post("/engines/heartbeat", admin_headers, engine_payload.dump(), "application/json");
+    ASSERT_EQ(res_heartbeat->status, 200);
+
+    // 2. Verify that the state file was written to
+    std::ifstream ifs(PERSISTENT_STORAGE_FILE);
+    ASSERT_TRUE(ifs.is_open());
+    nlohmann::json state = nlohmann::json::parse(ifs);
+    ifs.close();
+
+    ASSERT_TRUE(state.contains("engines"));
+    ASSERT_TRUE(state["engines"].contains("engine-123"));
+}
+
+TEST_F(ApiTest, HeartbeatTriggersSaveState) {
+    // 1. Send a heartbeat
+    nlohmann::json engine_payload = {
+        {"engine_id", "engine-123"},
+        {"engine_type", "transcoder"},
+        {"supported_codecs", {"h264", "vp9"}},
+        {"status", "idle"},
+        {"benchmark_time", 100.0}
+    };
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res_heartbeat = client->Post("/engines/heartbeat", admin_headers, engine_payload.dump(), "application/json");
+    ASSERT_EQ(res_heartbeat->status, 200);
+
+    // 2. Verify that the state file was written to
+    std::ifstream ifs(PERSISTENT_STORAGE_FILE);
+    ASSERT_TRUE(ifs.is_open());
+    nlohmann::json state = nlohmann::json::parse(ifs);
+    ifs.close();
+
+    ASSERT_TRUE(state.contains("engines"));
+    ASSERT_TRUE(state["engines"].contains("engine-123"));
+}
