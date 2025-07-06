@@ -101,7 +101,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 
 ### D. Scheduling Logic
 72. [x] Test: Scheduler assigns a pending job to an idle engine.
-73. [ ] Test: Scheduler does not assign a job if no engines are registered.
+73. [x] Test: Scheduler does not assign a job if no engines are registered.
 74. [ ] Test: Scheduler does not assign a job if all registered engines are busy.
 75. [ ] Test: Scheduler correctly assigns a large job to a streaming-capable engine if available.
 76. [ ] Test: Scheduler assigns a large job to the fastest non-streaming engine if no streaming engines are available.

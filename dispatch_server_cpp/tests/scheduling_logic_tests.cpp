@@ -48,3 +48,25 @@ TEST_F(ApiTest, SchedulerAssignsJobToIdleEngine) {
     ASSERT_EQ(job_json["status"], "assigned");
     ASSERT_EQ(job_json["assigned_engine"], "engine-123");
 }
+
+TEST_F(ApiTest, SchedulerDoesNotAssignJobIfNoEngines) {
+    // 1. Create a job
+    nlohmann::json job_payload = {
+        {"source_url", "http://example.com/video.mp4"},
+        {"target_codec", "h264"}
+    };
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
+    ASSERT_EQ(res_submit->status, 200);
+    std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
+
+    // 2. Try to assign the job
+    nlohmann::json assign_payload = {
+        {"engine_id", "engine-123"}
+    };
+    auto res_assign = client->Post("/assign_job/", admin_headers, assign_payload.dump(), "application/json");
+    ASSERT_EQ(res_assign->status, 204); // No Content, because no engines are registered
+}
