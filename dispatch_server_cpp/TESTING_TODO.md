@@ -94,7 +94,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 ### C. Job Resubmission Logic
 66. [x] Test: A failed job has its `retries` count incremented.
 67. [x] Test: A failed job with `retries` < `max_retries` is re-queued (status `pending`).
-68. [ ] Test: A failed job with `retries` == `max_retries` becomes `failed_permanently`.
+68. [x] Test: A failed job with `retries` == `max_retries` becomes `failed_permanently`.
 69. [ ] Test: `max_retries` defaults to 3 if not provided in the submission.
 70. [ ] Test: `max_retries` can be set to 0.
 71. [ ] Test: A job with `max_retries`=0 that fails goes to `failed_permanently` immediately.

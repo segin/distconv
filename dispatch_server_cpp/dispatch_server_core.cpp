@@ -15,7 +15,7 @@ std::mutex jobs_mutex;
 std::mutex engines_mutex;
 
 // Persistent storage for jobs and engines
-const std::string PERSISTENT_STORAGE_FILE = "dispatch_server_state.json";
+std::string PERSISTENT_STORAGE_FILE = "dispatch_server_state.json";
 
 void load_state() {
     std::ifstream ifs(PERSISTENT_STORAGE_FILE);
@@ -51,7 +51,6 @@ void save_state() {
 void setup_endpoints(httplib::Server &svr, const std::string& api_key); // Forward declaration
 
 DispatchServer::DispatchServer(const std::string& api_key) : api_key_(api_key) {
-    load_state();
     setup_endpoints(svr, api_key_);
 }
 
@@ -349,7 +348,7 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
                         return;
                     }
                     jobs_db[job_id]["retries"] = jobs_db[job_id].value("retries", 0) + 1;
-                    if (jobs_db[job_id]["retries"] <= jobs_db[job_id].value("max_retries", 3)) {
+                    if (jobs_db[job_id]["retries"] < jobs_db[job_id].value("max_retries", 3)) {
                         jobs_db[job_id]["status"] = "pending"; // Re-queue
                         jobs_db[job_id]["error_message"] = request_json["error_message"];
                         res.set_content("Job " + job_id + " re-queued", "text/plain");
