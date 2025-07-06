@@ -478,7 +478,7 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
     });
 }
 
-int run_dispatch_server(int argc, char* argv[], bool block_server) {
+int run_dispatch_server(int argc, char* argv[]) {
     std::string api_key = "";
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
@@ -489,7 +489,7 @@ int run_dispatch_server(int argc, char* argv[], bool block_server) {
 
     DispatchServer server(api_key);
     std::cout << "Dispatch Server listening on port 8080" << std::endl;
-    server.start(8080, block_server);
+    server.start(8080);
 
     return 0;
 }

@@ -30,6 +30,6 @@ private:
 void load_state();
 void save_state();
 void setup_endpoints(httplib::Server &svr, const std::string& api_key);
-int run_dispatch_server(int argc, char* argv[], bool block_server = true);
+int run_dispatch_server(int argc, char* argv[]);
 
 #endif // DISPATCH_SERVER_CORE_H
