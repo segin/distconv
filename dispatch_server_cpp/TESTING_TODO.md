@@ -81,7 +81,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 56. [x] Test: A `completed` job cannot be marked as failed.
 57. [x] Test: A `failed_permanently` job cannot be marked as failed again.
 58. [x] Test: A `completed` job is not returned by `POST /assign_job/`.
-59. [ ] Test: A `failed_permanently` job is not returned by `POST /assign_job/`.
+59. [x] Test: A `failed_permanently` job is not returned by `POST /assign_job/`.
 60. [ ] Test: An `assigned` job is not returned by `POST /assign_job/`.
 
 ### B. Engine State Transitions
