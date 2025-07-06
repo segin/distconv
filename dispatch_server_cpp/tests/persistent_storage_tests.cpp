@@ -474,6 +474,32 @@ TEST_F(ApiTest, LoadStateHandlesEmptyJobsOrEnginesKeys) {
     std::remove(temp_storage_file.c_str());
 }
 
+TEST_F(ApiTest, LoadStateHandlesOnlyJobsKey) {
+    // 1. Create a state file with only a "jobs" key
+    std::string temp_storage_file = "temp_state.json";
+    PERSISTENT_STORAGE_FILE = temp_storage_file;
+    nlohmann::json state_with_only_jobs = {
+        {"jobs", {{"job1", {{"source_url", "url1"}}}}}
+    };
+    std::ofstream ofs(temp_storage_file);
+    ofs << state_with_only_jobs.dump(4);
+    ofs.close();
+
+    // 2. Load the state
+    load_state();
+
+    // 3. Verify that jobs are loaded and engines are empty
+    {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        ASSERT_TRUE(jobs_db.contains("job1"));
+        ASSERT_EQ(jobs_db["job1"]["source_url"], "url1");
+        ASSERT_TRUE(engines_db.empty());
+    }
+
+    // 4. Clean up the temporary file
+    std::remove(temp_storage_file.c_str());
+}
+
 TEST_F(ApiTest, SaveStateProducesWellFormattedJson) {
     // 1. Create a job and an engine
     nlohmann::json job_payload = {
