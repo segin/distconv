@@ -164,6 +164,7 @@ TEST_F(ApiTest, EngineStatusIsIdleAfterHeartbeat) {
     ASSERT_EQ(response_json[0]["status"], "idle");
 }
 
+
 TEST_F(ApiTest, EngineStatusIsBusyAfterJobAssign) {
     // 1. Create a job
     nlohmann::json job_payload = {
@@ -207,45 +208,6 @@ TEST_F(ApiTest, EngineStatusIsBusyAfterJobAssign) {
     ASSERT_EQ(response_json[0]["status"], "busy");
 }
 
-TEST_F(ApiTest, EngineStatusBecomesBusyAfterJobAssignment) {
-    // 1. Register an engine
-    nlohmann::json engine_payload = {
-        {"engine_id", "engine-123"},
-        {"engine_type", "transcoder"},
-        {"supported_codecs", {"h264", "vp9"}},
-        {"status", "idle"},
-        {"benchmark_time", 100.0}
-    };
-    httplib::Headers admin_headers = {
-        {"Authorization", "some_token"},
-        {"X-API-Key", api_key}
-    };
-    auto res_heartbeat = client->Post("/engines/heartbeat", admin_headers, engine_payload.dump(), "application/json");
-    ASSERT_EQ(res_heartbeat->status, 200);
-
-    // 2. Create a job
-    nlohmann::json job_payload = {
-        {"source_url", "http://example.com/video.mp4"},
-        {"target_codec", "h264"}
-    };
-    auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
-    std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
-
-    // 3. Assign the job to the engine
-    nlohmann::json assign_payload = {
-        {"engine_id", "engine-123"}
-    };
-    auto res_assign = client->Post("/assign_job/", admin_headers, assign_payload.dump(), "application/json");
-    ASSERT_EQ(res_assign->status, 200);
-
-    // 4. Check the engine's status
-    auto res_get_engine = client->Get("/engines/", admin_headers);
-    ASSERT_EQ(res_get_engine->status, 200);
-    nlohmann::json engines_json = nlohmann::json::parse(res_get_engine->body);
-    ASSERT_TRUE(engines_json.is_array() && !engines_json.empty());
-    ASSERT_EQ(engines_json[0]["status"], "busy");
-}
 
 TEST_F(ApiTest, EngineStatusBecomesIdleAfterJobCompletion) {
     // 1. Register an engine
