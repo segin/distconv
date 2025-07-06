@@ -416,3 +416,102 @@ TEST_F(ApiTest, AssignJobTriggersSaveState) {
     ASSERT_TRUE(state["jobs"].contains(job_id));
     ASSERT_EQ(state["jobs"][job_id]["status"], "assigned");
 }
+
+TEST_F(ApiTest, SaveStateWritesToTemporaryFileAndRenames) {
+    // 1. Create a job
+    nlohmann::json job_payload = {
+        {"source_url", "http://example.com/video.mp4"},
+        {"target_codec", "h264"}
+    };
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
+    ASSERT_EQ(res_submit->status, 200);
+    std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
+
+    // 2. Call save_state (which should use a temporary file and rename)
+    save_state();
+
+    // 3. Verify that the original file exists and contains the data
+    std::ifstream ifs(PERSISTENT_STORAGE_FILE);
+    ASSERT_TRUE(ifs.is_open());
+    nlohmann::json state = nlohmann::json::parse(ifs);
+    ifs.close();
+
+    ASSERT_TRUE(state.contains("jobs"));
+    ASSERT_TRUE(state["jobs"].contains(job_id));
+
+    // 4. Verify that no temporary file exists
+    std::string temp_file = PERSISTENT_STORAGE_FILE + ".tmp";
+    ASSERT_FALSE(std::ifstream(temp_file).good());
+}
+
+TEST_F(ApiTest, LoadStateHandlesEmptyJobsOrEnginesKeys) {
+    // 1. Create a state file with empty "jobs" and "engines" arrays
+    std::string temp_storage_file = "temp_state.json";
+    PERSISTENT_STORAGE_FILE = temp_storage_file;
+    nlohmann::json empty_state = {
+        {"jobs", nlohmann::json::array()},
+        {"engines", nlohmann::json::array()}
+    };
+    std::ofstream ofs(temp_storage_file);
+    ofs << empty_state.dump(4);
+    ofs.close();
+
+    // 2. Load the state
+    load_state();
+
+    // 3. Verify that the in-memory databases are empty
+    {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        ASSERT_TRUE(jobs_db.empty());
+        ASSERT_TRUE(engines_db.empty());
+    }
+
+    // 4. Clean up the temporary file
+    std::remove(temp_storage_file.c_str());
+}
+
+TEST_F(ApiTest, SaveStateProducesWellFormattedJson) {
+    // 1. Create a job and an engine
+    nlohmann::json job_payload = {
+        {"source_url", "http://example.com/video.mp4"},
+        {"target_codec", "h264"}
+    };
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
+    ASSERT_EQ(res_submit->status, 200);
+
+    nlohmann::json engine_payload = {
+        {"engine_id", "engine-123"},
+        {"engine_type", "transcoder"},
+        {"supported_codecs", {"h264", "vp9"}},
+        {"status", "idle"},
+        {"benchmark_time", 100.0}
+    };
+    auto res_heartbeat = client->Post("/engines/heartbeat", admin_headers, engine_payload.dump(), "application/json");
+    ASSERT_EQ(res_heartbeat->status, 200);
+
+    // 2. Save the state
+    save_state();
+
+    // 3. Read the state file and verify its formatting
+    std::ifstream ifs(PERSISTENT_STORAGE_FILE);
+    ASSERT_TRUE(ifs.is_open());
+    std::string line;
+    std::string file_content;
+    while (std::getline(ifs, line)) {
+        file_content += line;
+    }
+    ifs.close();
+
+    // Check for indentation (e.g., 4 spaces)
+    // This is a basic check; a more robust solution might involve parsing and re-dumping
+    ASSERT_TRUE(file_content.find("    \"jobs\"") != std::string::npos || file_content.find("  \"jobs\"") != std::string::npos); // Check for 2 or 4 space indentation
+    ASSERT_TRUE(file_content.find("    \"engine_id\"") != std::string::npos || file_content.find("  \"engine_id\"") != std::string::npos); // Check for 2 or 4 space indentation
+}

@@ -1,15 +1,4 @@
 {
-    "engines": {
-        "engine-123": {
-            "benchmark_time": 100.0,
-            "engine_id": "engine-123",
-            "engine_type": "transcoder",
-            "status": "idle",
-            "supported_codecs": [
-                "h264",
-                "vp9"
-            ]
-        }
-    },
-    "jobs": {}
+    "engines": [],
+    "jobs": []
 }

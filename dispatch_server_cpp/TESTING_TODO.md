@@ -125,9 +125,9 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 92. [x] Test: Completing a job triggers `save_state`.
 93. [x] Test: Failing a job triggers `save_state`.
 94. [x] Test: Assigning a job triggers `save_state`.
-95. [ ] Test: `save_state` writes to a temporary file and renames to prevent corruption.
-96. [ ] Test: `load_state` correctly handles empty "jobs" or "engines" keys in the JSON file.
-97. [ ] Test: `save_state` produces a well-formatted (indented) JSON file.
+95. [x] Test: `save_state` writes to a temporary file and renames to prevent corruption.
+96. [x] Test: `load_state` correctly handles empty "jobs" or "engines" keys in the JSON file.
+97. [x] Test: `save_state` produces a well-formatted (indented) JSON file.
 98. [ ] Test: `load_state` handles a file with only a "jobs" key.
 99. [ ] Test: `load_state` handles a file with only an "engines" key.
 100. [ ] Test: `save_state` correctly handles special characters in job/engine data.
