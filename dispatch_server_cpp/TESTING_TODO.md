@@ -130,7 +130,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 97. [x] Test: `save_state` produces a well-formatted (indented) JSON file.
 98. [x] Test: `load_state` handles a file with only a "jobs" key.
 99. [x] Test: `load_state` handles a file with only an "engines" key.
-100. [ ] Test: `save_state` correctly handles special characters in job/engine data.
+100. [x] Test: `save_state` correctly handles special characters in job/engine data.
 
 ## III. Core C++ & Miscellaneous (50 Tests)
 
