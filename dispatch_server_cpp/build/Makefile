@@ -550,6 +550,30 @@ tests/scheduling_logic_tests.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_tests.dir/build.make CMakeFiles/dispatch_server_tests.dir/tests/scheduling_logic_tests.cpp.s
 .PHONY : tests/scheduling_logic_tests.cpp.s
 
+tests/thread_safety_tests.o: tests/thread_safety_tests.cpp.o
+.PHONY : tests/thread_safety_tests.o
+
+# target to build an object file
+tests/thread_safety_tests.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_tests.dir/build.make CMakeFiles/dispatch_server_tests.dir/tests/thread_safety_tests.cpp.o
+.PHONY : tests/thread_safety_tests.cpp.o
+
+tests/thread_safety_tests.i: tests/thread_safety_tests.cpp.i
+.PHONY : tests/thread_safety_tests.i
+
+# target to preprocess a source file
+tests/thread_safety_tests.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_tests.dir/build.make CMakeFiles/dispatch_server_tests.dir/tests/thread_safety_tests.cpp.i
+.PHONY : tests/thread_safety_tests.cpp.i
+
+tests/thread_safety_tests.s: tests/thread_safety_tests.cpp.s
+.PHONY : tests/thread_safety_tests.s
+
+# target to generate assembly for a file
+tests/thread_safety_tests.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_tests.dir/build.make CMakeFiles/dispatch_server_tests.dir/tests/thread_safety_tests.cpp.s
+.PHONY : tests/thread_safety_tests.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -606,6 +630,9 @@ help:
 	@echo "... tests/scheduling_logic_tests.o"
 	@echo "... tests/scheduling_logic_tests.i"
 	@echo "... tests/scheduling_logic_tests.s"
+	@echo "... tests/thread_safety_tests.o"
+	@echo "... tests/thread_safety_tests.i"
+	@echo "... tests/thread_safety_tests.s"
 .PHONY : help
 
 

@@ -141,7 +141,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 104. [x] Test: Server handles `--api-key` without a value gracefully.
 
 ### B. Thread Safety
-105. [ ] Test: Submit multiple jobs concurrently from different threads. Verify all are added correctly.
+105. [x] Test: Submit multiple jobs concurrently from different threads. Verify all are added correctly.
 106. [ ] Test: Send multiple heartbeats concurrently from different threads. Verify all engines are updated correctly.
 107. [ ] Test: Concurrently submit jobs and send heartbeats. Verify data integrity.
 108. [ ] Test: Concurrently assign jobs and complete jobs. Verify state transitions are correct.

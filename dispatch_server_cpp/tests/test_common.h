@@ -24,6 +24,7 @@ protected:
     httplib::Client *client;
     int port = 8081; // Use a different port to avoid conflicts
     std::string api_key = "test_api_key";
+    httplib::Headers admin_headers;
     std::string persistent_storage_file;
 
     void SetUp() override {
@@ -40,6 +41,12 @@ protected:
         client = new httplib::Client("localhost", port);
         client->set_connection_timeout(10); // Increased timeout
         wait_for_server_ready();
+
+        // Initialize admin_headers here
+        admin_headers = {
+            {"Authorization", "some_token"},
+            {"X-API-Key", api_key}
+        };
     }
 
     void TearDown() override {

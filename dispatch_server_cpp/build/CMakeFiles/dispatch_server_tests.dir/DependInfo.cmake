@@ -18,6 +18,7 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/segin/distconv/dispatch_server_cpp/tests/main.cpp" "CMakeFiles/dispatch_server_tests.dir/tests/main.cpp.o" "gcc" "CMakeFiles/dispatch_server_tests.dir/tests/main.cpp.o.d"
   "/home/segin/distconv/dispatch_server_cpp/tests/persistent_storage_tests.cpp" "CMakeFiles/dispatch_server_tests.dir/tests/persistent_storage_tests.cpp.o" "gcc" "CMakeFiles/dispatch_server_tests.dir/tests/persistent_storage_tests.cpp.o.d"
   "/home/segin/distconv/dispatch_server_cpp/tests/scheduling_logic_tests.cpp" "CMakeFiles/dispatch_server_tests.dir/tests/scheduling_logic_tests.cpp.o" "gcc" "CMakeFiles/dispatch_server_tests.dir/tests/scheduling_logic_tests.cpp.o.d"
+  "/home/segin/distconv/dispatch_server_cpp/tests/thread_safety_tests.cpp" "CMakeFiles/dispatch_server_tests.dir/tests/thread_safety_tests.cpp.o" "gcc" "CMakeFiles/dispatch_server_tests.dir/tests/thread_safety_tests.cpp.o.d"
   )
 
 # Targets to which this target links which contain Fortran sources.
