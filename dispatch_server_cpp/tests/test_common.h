@@ -14,8 +14,6 @@
 inline void clear_db() {
     jobs_db = nlohmann::json::object();
     engines_db = nlohmann::json::object();
-    // Also clear the persistent storage file
-    std::remove(PERSISTENT_STORAGE_FILE.c_str());
 }
 
 // Test fixture for API tests
@@ -23,22 +21,29 @@ class ApiTest : public ::testing::Test {
 protected:
     DispatchServer *server;
     httplib::Client *client;
-    int port = 8080; // Default port for tests
+    int port = 8081; // Use a different port to avoid conflicts
     std::string api_key = "test_api_key";
+    std::string persistent_storage_file;
 
     void SetUp() override {
-        clear_db();
+        // Generate a unique filename for the persistent storage file for each test
+        persistent_storage_file = "dispatch_server_state_" + std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count()) + ".json";
+        PERSISTENT_STORAGE_FILE = persistent_storage_file;
+
+        clear_db(); 
+        
         server = new DispatchServer(api_key);
-        // Start the server in a non-blocking way
         server->start(port, false);
         client = new httplib::Client("localhost", port);
-        client->set_connection_timeout(5);
+        client->set_connection_timeout(10); // Increased timeout
     }
 
     void TearDown() override {
-        delete client;
         server->stop();
         delete server;
+        delete client;
+        // Clean up the unique persistent storage file
+        std::remove(persistent_storage_file.c_str());
     }
 };
 
