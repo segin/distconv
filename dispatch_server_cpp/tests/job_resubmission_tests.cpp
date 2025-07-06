@@ -148,3 +148,24 @@ TEST_F(ApiTest, FailedJobBecomesPermanentlyFailed) {
     nlohmann::json job_json = nlohmann::json::parse(res_get_job->body);
     ASSERT_EQ(job_json["status"], "failed_permanently");
 }
+
+TEST_F(ApiTest, MaxRetriesDefaultsToThree) {
+    // 1. Create a job without specifying max_retries
+    nlohmann::json job_payload = {
+        {"source_url", "http://example.com/video.mp4"},
+        {"target_codec", "h264"}
+    };
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
+    ASSERT_EQ(res_submit->status, 200);
+    std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
+
+    // 2. Check the job's max_retries
+    auto res_get_job = client->Get(("/jobs/" + job_id).c_str(), admin_headers);
+    ASSERT_EQ(res_get_job->status, 200);
+    nlohmann::json job_json = nlohmann::json::parse(res_get_job->body);
+    ASSERT_EQ(job_json["max_retries"], 3);
+}
