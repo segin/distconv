@@ -116,7 +116,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 83. [x] Test: `save_state` correctly writes the current jobs and engines to the JSON file.
 84. [x] Test: `load_state` correctly loads jobs from the JSON file on startup.
 85. [x] Test: `load_state` correctly loads engines from the JSON file on startup.
-86. [ ] Test: `load_state` handles a non-existent file gracefully (starts with empty state).
+86. [x] Test: `load_state` handles a non-existent file gracefully (starts with empty state).
 87. [ ] Test: `load_state` handles a corrupt/invalid JSON file gracefully.
 88. [ ] Test: `load_state` handles an empty JSON file gracefully.
 89. [ ] Test: State is preserved after a simulated server restart (call `save_state` then `load_state`).

@@ -121,3 +121,21 @@ TEST_F(ApiTest, LoadStateLoadsEngines) {
     // 5. Clean up the temporary file
     std::remove(temp_storage_file.c_str());
 }
+
+TEST_F(ApiTest, LoadStateHandlesNonExistentFile) {
+    // 1. Ensure the persistent storage file does not exist
+    std::remove(PERSISTENT_STORAGE_FILE.c_str());
+
+    // 2. Load the state
+    load_state();
+
+    // 3. Verify that the in-memory databases are empty
+    {
+        std::lock_guard<std::mutex> lock(jobs_mutex);
+        ASSERT_TRUE(jobs_db.empty());
+    }
+    {
+        std::lock_guard<std::mutex> lock(engines_mutex);
+        ASSERT_TRUE(engines_db.empty());
+    }
+}
