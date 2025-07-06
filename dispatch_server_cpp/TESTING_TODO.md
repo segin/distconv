@@ -92,7 +92,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 65. [x] Test: A `busy` engine is not assigned another job.
 
 ### C. Job Resubmission Logic
-66. [ ] Test: A failed job has its `retries` count incremented.
+66. [x] Test: A failed job has its `retries` count incremented.
 67. [ ] Test: A failed job with `retries` < `max_retries` is re-queued (status `pending`).
 68. [ ] Test: A failed job with `retries` == `max_retries` becomes `failed_permanently`.
 69. [ ] Test: `max_retries` defaults to 3 if not provided in the submission.
