@@ -402,7 +402,7 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
 
         nlohmann::json pending_job = nullptr;
         for (auto const& [job_key, job_val] : jobs_db.items()) {
-            if (job_val["status"] == "pending") {
+            if (job_val["status"] == "pending" && job_val["assigned_engine"].is_null()) {
                 pending_job = job_val;
                 break;
             }
