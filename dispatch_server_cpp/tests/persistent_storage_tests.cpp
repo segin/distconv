@@ -139,3 +139,24 @@ TEST_F(ApiTest, LoadStateHandlesNonExistentFile) {
         ASSERT_TRUE(engines_db.empty());
     }
 }
+
+TEST_F(ApiTest, LoadStateHandlesCorruptFile) {
+    // 1. Create a corrupt persistent storage file
+    std::ofstream ofs(PERSISTENT_STORAGE_FILE);
+    ASSERT_TRUE(ofs.is_open());
+    ofs << "{'invalid_json': }";
+    ofs.close();
+
+    // 2. Load the state
+    load_state();
+
+    // 3. Verify that the in-memory databases are empty
+    {
+        std::lock_guard<std::mutex> lock(jobs_mutex);
+        ASSERT_TRUE(jobs_db.empty());
+    }
+    {
+        std::lock_guard<std::mutex> lock(engines_mutex);
+        ASSERT_TRUE(engines_db.empty());
+    }
+}
