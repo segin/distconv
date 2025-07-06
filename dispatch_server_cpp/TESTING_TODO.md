@@ -113,7 +113,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 82. [x] Test: Scheduler correctly records the `assigned_engine` ID in the job data.
 
 ### E. Persistent Storage (`load_state`/`save_state`)
-83. [ ] Test: `save_state` correctly writes the current jobs and engines to the JSON file.
+83. [x] Test: `save_state` correctly writes the current jobs and engines to the JSON file.
 84. [ ] Test: `load_state` correctly loads jobs from the JSON file on startup.
 85. [ ] Test: `load_state` correctly loads engines from the JSON file on startup.
 86. [ ] Test: `load_state` handles a non-existent file gracefully (starts with empty state).

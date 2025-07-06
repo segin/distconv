@@ -30,7 +30,7 @@ target_include_directories(dispatch_server_app PRIVATE
 )
 
 # Unit Tests
-add_executable(dispatch_server_tests tests/main.cpp tests/jobs_post_api_tests.cpp tests/jobs_get_api_tests.cpp tests/engines_api_tests.cpp tests/jobs_status_update_tests.cpp tests/job_resubmission_tests.cpp tests/scheduling_logic_tests.cpp)
+add_executable(dispatch_server_tests tests/main.cpp tests/jobs_post_api_tests.cpp tests/jobs_get_api_tests.cpp tests/engines_api_tests.cpp tests/jobs_status_update_tests.cpp tests/job_resubmission_tests.cpp tests/scheduling_logic_tests.cpp tests/persistent_storage_tests.cpp)
 target_link_libraries(dispatch_server_tests dispatch_server_core gtest_main)
 target_include_directories(dispatch_server_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
