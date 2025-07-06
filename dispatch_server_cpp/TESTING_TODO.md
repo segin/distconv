@@ -124,7 +124,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 91. [x] Test: A heartbeat triggers `save_state`.
 92. [x] Test: Completing a job triggers `save_state`.
 93. [x] Test: Failing a job triggers `save_state`.
-94. [ ] Test: Assigning a job triggers `save_state`.
+94. [x] Test: Assigning a job triggers `save_state`.
 95. [ ] Test: `save_state` writes to a temporary file and renames to prevent corruption.
 96. [ ] Test: `load_state` correctly handles empty "jobs" or "engines" keys in the JSON file.
 97. [ ] Test: `save_state` produces a well-formatted (indented) JSON file.
