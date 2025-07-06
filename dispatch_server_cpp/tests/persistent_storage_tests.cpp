@@ -541,3 +541,29 @@ TEST_F(ApiTest, SaveStateProducesWellFormattedJson) {
     ASSERT_TRUE(file_content.find("    \"jobs\"") != std::string::npos || file_content.find("  \"jobs\"") != std::string::npos); // Check for 2 or 4 space indentation
     ASSERT_TRUE(file_content.find("    \"engine_id\"") != std::string::npos || file_content.find("  \"engine_id\"") != std::string::npos); // Check for 2 or 4 space indentation
 }
+
+TEST_F(ApiTest, LoadStateHandlesOnlyEnginesKey) {
+    // 1. Create a state file with only an "engines" key
+    std::string temp_storage_file = "temp_state.json";
+    PERSISTENT_STORAGE_FILE = temp_storage_file;
+    nlohmann::json state_with_only_engines = {
+        {"engines", {{"engine1", {{"status", "idle"}}}}}
+    };
+    std::ofstream ofs(temp_storage_file);
+    ofs << state_with_only_engines.dump(4);
+    ofs.close();
+
+    // 2. Load the state
+    load_state();
+
+    // 3. Verify that engines are loaded and jobs are empty
+    {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        ASSERT_TRUE(engines_db.contains("engine1"));
+        ASSERT_EQ(engines_db["engine1"]["status"], "idle");
+        ASSERT_TRUE(jobs_db.empty());
+    }
+
+    // 4. Clean up the temporary file
+    std::remove(temp_storage_file.c_str());
+}
