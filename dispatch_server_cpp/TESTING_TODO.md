@@ -85,7 +85,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 60. [x] Test: An `assigned` job is not returned by `POST /assign_job/`.
 
 ### B. Engine State Transitions
-61. [ ] Test: Engine status is `idle` after a heartbeat.
+61. [x] Test: Engine status is `idle` after a heartbeat.
 62. [ ] Test: Engine status becomes `busy` after being assigned a job.
 63. [ ] Test: Engine status becomes `idle` again after the job it was assigned is marked `completed`.
 64. [x] Test: Engine status becomes `idle` again after the job it was assigned is marked `failed`.
