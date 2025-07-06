@@ -4,6 +4,9 @@ project(DispatchServerCpp CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# Set debug flags for no optimization and debug symbols
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb3")
+
 # Google Test
 include(FetchContent)
 FetchContent_Declare(

@@ -61,7 +61,13 @@ void save_state() {
 
 void setup_endpoints(httplib::Server &svr, const std::string& api_key); // Forward declaration
 
-DispatchServer::DispatchServer(const std::string& api_key) : api_key_(api_key) {
+DispatchServer::DispatchServer() {
+    // Endpoints will be set up when set_api_key is called
+}
+
+void DispatchServer::set_api_key(const std::string& key) {
+    api_key_ = key;
+    // Re-setup endpoints with the new API key
     setup_endpoints(svr, api_key_);
 }
 
@@ -478,7 +484,7 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
     });
 }
 
-int run_dispatch_server(int argc, char* argv[]) {
+DispatchServer* run_dispatch_server(int argc, char* argv[], DispatchServer* server_instance) {
     std::string api_key = "";
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
@@ -487,9 +493,11 @@ int run_dispatch_server(int argc, char* argv[]) {
         }
     }
 
-    DispatchServer server(api_key);
-    std::cout << "Dispatch Server listening on port 8080" << std::endl;
-    server.start(8080);
+    if (server_instance) {
+        server_instance->set_api_key(api_key);
+        std::cout << "Dispatch Server listening on port 8080" << std::endl;
+        server_instance->start(8080, false); // Start in non-blocking mode
+    }
 
-    return 0;
+    return server_instance;
 }

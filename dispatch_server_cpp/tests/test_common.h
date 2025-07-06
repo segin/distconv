@@ -33,7 +33,8 @@ protected:
 
         clear_db(); 
         
-        server = new DispatchServer(api_key);
+        server = new DispatchServer();
+        server->set_api_key(api_key);
         server->start(port, false);
         std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Give the server a moment to start
         client = new httplib::Client("localhost", port);

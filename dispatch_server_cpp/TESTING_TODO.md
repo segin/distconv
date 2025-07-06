@@ -137,8 +137,8 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 ### A. Command-Line Arguments
 101. [x] Test: Server starts with no arguments.
 102. [ ] Test: Server correctly parses the `--api-key` argument.
-103. [ ] Test: Server ignores unknown command-line arguments.
-104. [ ] Test: Server handles `--api-key` without a value gracefully.
+103. [x] Test: Server ignores unknown command-line arguments.
+104. [x] Test: Server handles `--api-key` without a value gracefully.
 
 ### B. Thread Safety
 105. [ ] Test: Submit multiple jobs concurrently from different threads. Verify all are added correctly.

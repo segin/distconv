@@ -16,10 +16,11 @@ extern std::string PERSISTENT_STORAGE_FILE;
 
 class DispatchServer {
 public:
-    DispatchServer(const std::string& api_key = "");
+    DispatchServer();
     void start(int port, bool block = true);
     void stop();
     httplib::Server* getServer();
+    void set_api_key(const std::string& key);
 private:
     httplib::Server svr;
     std::thread server_thread;
@@ -30,6 +31,6 @@ private:
 void load_state();
 void save_state();
 void setup_endpoints(httplib::Server &svr, const std::string& api_key);
-int run_dispatch_server(int argc, char* argv[]);
+DispatchServer* run_dispatch_server(int argc, char* argv[], DispatchServer* server_instance);
 
 #endif // DISPATCH_SERVER_CORE_H
