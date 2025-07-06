@@ -85,3 +85,39 @@ TEST_F(ApiTest, LoadStateLoadsJobs) {
     // 5. Clean up the temporary file
     std::remove(temp_storage_file.c_str());
 }
+
+TEST_F(ApiTest, LoadStateLoadsEngines) {
+    // 1. Register an engine and save the state to a temporary file
+    std::string temp_storage_file = "temp_state.json";
+    PERSISTENT_STORAGE_FILE = temp_storage_file;
+    nlohmann::json engine_payload = {
+        {"engine_id", "engine-123"},
+        {"engine_type", "transcoder"},
+        {"supported_codecs", {"h264", "vp9"}},
+        {"status", "idle"},
+        {"benchmark_time", 100.0}
+    };
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res_heartbeat = client->Post("/engines/heartbeat", admin_headers, engine_payload.dump(), "application/json");
+    ASSERT_EQ(res_heartbeat->status, 200);
+    save_state();
+
+    // 2. Clear the in-memory database
+    clear_db();
+
+    // 3. Load the state from the temporary file
+    load_state();
+
+    // 4. Verify that the engine is loaded into the in-memory database
+    {
+        std::lock_guard<std::mutex> lock(engines_mutex);
+        ASSERT_TRUE(engines_db.contains("engine-123"));
+        ASSERT_EQ(engines_db["engine-123"]["status"], "idle");
+    }
+
+    // 5. Clean up the temporary file
+    std::remove(temp_storage_file.c_str());
+}
