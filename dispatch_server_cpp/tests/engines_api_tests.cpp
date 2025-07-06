@@ -26,7 +26,7 @@ TEST_F(ApiTest, RegisterEngineValid) {
 
     // Verify the engine is in the database
     {
-        std::lock_guard<std::mutex> lock(engines_mutex);
+        std::lock_guard<std::mutex> lock(state_mutex);
         ASSERT_TRUE(engines_db.contains("test_engine"));
     }
 }

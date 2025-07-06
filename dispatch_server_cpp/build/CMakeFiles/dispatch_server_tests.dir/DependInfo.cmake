@@ -9,10 +9,13 @@ set(CMAKE_DEPENDS_LANGUAGES
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/segin/distconv/dispatch_server_cpp/tests/engines_api_tests.cpp" "CMakeFiles/dispatch_server_tests.dir/tests/engines_api_tests.cpp.o" "gcc" "CMakeFiles/dispatch_server_tests.dir/tests/engines_api_tests.cpp.o.d"
+  "/home/segin/distconv/dispatch_server_cpp/tests/job_resubmission_tests.cpp" "CMakeFiles/dispatch_server_tests.dir/tests/job_resubmission_tests.cpp.o" "gcc" "CMakeFiles/dispatch_server_tests.dir/tests/job_resubmission_tests.cpp.o.d"
   "/home/segin/distconv/dispatch_server_cpp/tests/jobs_get_api_tests.cpp" "CMakeFiles/dispatch_server_tests.dir/tests/jobs_get_api_tests.cpp.o" "gcc" "CMakeFiles/dispatch_server_tests.dir/tests/jobs_get_api_tests.cpp.o.d"
   "/home/segin/distconv/dispatch_server_cpp/tests/jobs_post_api_tests.cpp" "CMakeFiles/dispatch_server_tests.dir/tests/jobs_post_api_tests.cpp.o" "gcc" "CMakeFiles/dispatch_server_tests.dir/tests/jobs_post_api_tests.cpp.o.d"
   "/home/segin/distconv/dispatch_server_cpp/tests/jobs_status_update_tests.cpp" "CMakeFiles/dispatch_server_tests.dir/tests/jobs_status_update_tests.cpp.o" "gcc" "CMakeFiles/dispatch_server_tests.dir/tests/jobs_status_update_tests.cpp.o.d"
   "/home/segin/distconv/dispatch_server_cpp/tests/main.cpp" "CMakeFiles/dispatch_server_tests.dir/tests/main.cpp.o" "gcc" "CMakeFiles/dispatch_server_tests.dir/tests/main.cpp.o.d"
+  "/home/segin/distconv/dispatch_server_cpp/tests/persistent_storage_tests.cpp" "CMakeFiles/dispatch_server_tests.dir/tests/persistent_storage_tests.cpp.o" "gcc" "CMakeFiles/dispatch_server_tests.dir/tests/persistent_storage_tests.cpp.o.d"
+  "/home/segin/distconv/dispatch_server_cpp/tests/scheduling_logic_tests.cpp" "CMakeFiles/dispatch_server_tests.dir/tests/scheduling_logic_tests.cpp.o" "gcc" "CMakeFiles/dispatch_server_tests.dir/tests/scheduling_logic_tests.cpp.o.d"
   )
 
 # Targets to which this target links which contain Fortran sources.

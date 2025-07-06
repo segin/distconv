@@ -334,6 +334,30 @@ tests/engines_api_tests.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_tests.dir/build.make CMakeFiles/dispatch_server_tests.dir/tests/engines_api_tests.cpp.s
 .PHONY : tests/engines_api_tests.cpp.s
 
+tests/job_resubmission_tests.o: tests/job_resubmission_tests.cpp.o
+.PHONY : tests/job_resubmission_tests.o
+
+# target to build an object file
+tests/job_resubmission_tests.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_tests.dir/build.make CMakeFiles/dispatch_server_tests.dir/tests/job_resubmission_tests.cpp.o
+.PHONY : tests/job_resubmission_tests.cpp.o
+
+tests/job_resubmission_tests.i: tests/job_resubmission_tests.cpp.i
+.PHONY : tests/job_resubmission_tests.i
+
+# target to preprocess a source file
+tests/job_resubmission_tests.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_tests.dir/build.make CMakeFiles/dispatch_server_tests.dir/tests/job_resubmission_tests.cpp.i
+.PHONY : tests/job_resubmission_tests.cpp.i
+
+tests/job_resubmission_tests.s: tests/job_resubmission_tests.cpp.s
+.PHONY : tests/job_resubmission_tests.s
+
+# target to generate assembly for a file
+tests/job_resubmission_tests.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_tests.dir/build.make CMakeFiles/dispatch_server_tests.dir/tests/job_resubmission_tests.cpp.s
+.PHONY : tests/job_resubmission_tests.cpp.s
+
 tests/jobs_get_api_tests.o: tests/jobs_get_api_tests.cpp.o
 .PHONY : tests/jobs_get_api_tests.o
 
@@ -430,6 +454,54 @@ tests/main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_tests.dir/build.make CMakeFiles/dispatch_server_tests.dir/tests/main.cpp.s
 .PHONY : tests/main.cpp.s
 
+tests/persistent_storage_tests.o: tests/persistent_storage_tests.cpp.o
+.PHONY : tests/persistent_storage_tests.o
+
+# target to build an object file
+tests/persistent_storage_tests.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_tests.dir/build.make CMakeFiles/dispatch_server_tests.dir/tests/persistent_storage_tests.cpp.o
+.PHONY : tests/persistent_storage_tests.cpp.o
+
+tests/persistent_storage_tests.i: tests/persistent_storage_tests.cpp.i
+.PHONY : tests/persistent_storage_tests.i
+
+# target to preprocess a source file
+tests/persistent_storage_tests.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_tests.dir/build.make CMakeFiles/dispatch_server_tests.dir/tests/persistent_storage_tests.cpp.i
+.PHONY : tests/persistent_storage_tests.cpp.i
+
+tests/persistent_storage_tests.s: tests/persistent_storage_tests.cpp.s
+.PHONY : tests/persistent_storage_tests.s
+
+# target to generate assembly for a file
+tests/persistent_storage_tests.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_tests.dir/build.make CMakeFiles/dispatch_server_tests.dir/tests/persistent_storage_tests.cpp.s
+.PHONY : tests/persistent_storage_tests.cpp.s
+
+tests/scheduling_logic_tests.o: tests/scheduling_logic_tests.cpp.o
+.PHONY : tests/scheduling_logic_tests.o
+
+# target to build an object file
+tests/scheduling_logic_tests.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_tests.dir/build.make CMakeFiles/dispatch_server_tests.dir/tests/scheduling_logic_tests.cpp.o
+.PHONY : tests/scheduling_logic_tests.cpp.o
+
+tests/scheduling_logic_tests.i: tests/scheduling_logic_tests.cpp.i
+.PHONY : tests/scheduling_logic_tests.i
+
+# target to preprocess a source file
+tests/scheduling_logic_tests.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_tests.dir/build.make CMakeFiles/dispatch_server_tests.dir/tests/scheduling_logic_tests.cpp.i
+.PHONY : tests/scheduling_logic_tests.cpp.i
+
+tests/scheduling_logic_tests.s: tests/scheduling_logic_tests.cpp.s
+.PHONY : tests/scheduling_logic_tests.s
+
+# target to generate assembly for a file
+tests/scheduling_logic_tests.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_tests.dir/build.make CMakeFiles/dispatch_server_tests.dir/tests/scheduling_logic_tests.cpp.s
+.PHONY : tests/scheduling_logic_tests.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -459,6 +531,9 @@ help:
 	@echo "... tests/engines_api_tests.o"
 	@echo "... tests/engines_api_tests.i"
 	@echo "... tests/engines_api_tests.s"
+	@echo "... tests/job_resubmission_tests.o"
+	@echo "... tests/job_resubmission_tests.i"
+	@echo "... tests/job_resubmission_tests.s"
 	@echo "... tests/jobs_get_api_tests.o"
 	@echo "... tests/jobs_get_api_tests.i"
 	@echo "... tests/jobs_get_api_tests.s"
@@ -471,6 +546,12 @@ help:
 	@echo "... tests/main.o"
 	@echo "... tests/main.i"
 	@echo "... tests/main.s"
+	@echo "... tests/persistent_storage_tests.o"
+	@echo "... tests/persistent_storage_tests.i"
+	@echo "... tests/persistent_storage_tests.s"
+	@echo "... tests/scheduling_logic_tests.o"
+	@echo "... tests/scheduling_logic_tests.i"
+	@echo "... tests/scheduling_logic_tests.s"
 .PHONY : help
 
 

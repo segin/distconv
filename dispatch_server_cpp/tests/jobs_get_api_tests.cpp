@@ -136,6 +136,7 @@ TEST_F(ApiTest, ListAllJobsWithJobs) {
         auto res_post = client->Post("/jobs/", headers, request_body.dump(), "application/json");
         ASSERT_TRUE(res_post != nullptr);
         ASSERT_EQ(res_post->status, 200);
+        std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Add a small delay
     }
 
     auto res = client->Get("/jobs/", headers);

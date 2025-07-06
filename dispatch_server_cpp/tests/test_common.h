@@ -12,6 +12,7 @@
 
 // Helper function to clear the database before each test
 inline void clear_db() {
+    std::lock_guard<std::mutex> lock(state_mutex);
     jobs_db = nlohmann::json::object();
     engines_db = nlohmann::json::object();
 }
@@ -34,8 +35,10 @@ protected:
         
         server = new DispatchServer(api_key);
         server->start(port, false);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Give the server a moment to start
         client = new httplib::Client("localhost", port);
         client->set_connection_timeout(10); // Increased timeout
+        wait_for_server_ready();
     }
 
     void TearDown() override {
@@ -44,6 +47,19 @@ protected:
         delete client;
         // Clean up the unique persistent storage file
         std::remove(persistent_storage_file.c_str());
+        PERSISTENT_STORAGE_FILE = "dispatch_server_state.json"; // Reset to default
+    }
+
+    void wait_for_server_ready() {
+        int retries = 10;
+        while (retries-- > 0) {
+            auto res = client->Get("/");
+            if (res && res->status == 200) {
+                return; // Server is ready
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+        FAIL() << "Server did not become ready in time.";
     }
 };
 

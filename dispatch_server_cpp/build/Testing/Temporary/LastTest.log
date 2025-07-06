@@ -1,10 +1,10 @@
-Start testing: Jul 05 15:19 CDT
+Start testing: Jul 06 00:19 CDT
 ----------------------------------------------------------
-1/37 Testing: ApiTest.SubmitValidJob
-1/37 Test: ApiTest.SubmitValidJob
+1/43 Testing: ApiTest.SubmitValidJob
+1/43 Test: ApiTest.SubmitValidJob
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.SubmitValidJob" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.SubmitValidJob" start time: Jul 05 15:19 CDT
+"ApiTest.SubmitValidJob" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.SubmitValidJob
@@ -14,25 +14,25 @@ Note: Google Test filter = ApiTest.SubmitValidJob
 [ RUN      ] ApiTest.SubmitValidJob
 Saved state.
 Saved state.
-[       OK ] ApiTest.SubmitValidJob (4 ms)
-[----------] 1 test from ApiTest (4 ms total)
+[       OK ] ApiTest.SubmitValidJob (8 ms)
+[----------] 1 test from ApiTest (8 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (4 ms total)
+[==========] 1 test from 1 test suite ran. (8 ms total)
 [  PASSED  ] 1 test.
 <end of output>
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.SubmitValidJob" end time: Jul 05 15:19 CDT
+"ApiTest.SubmitValidJob" end time: Jul 06 00:19 CDT
 "ApiTest.SubmitValidJob" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-2/37 Testing: ApiTest.SubmitJobMissingSourceUrl
-2/37 Test: ApiTest.SubmitJobMissingSourceUrl
+2/43 Testing: ApiTest.SubmitJobMissingSourceUrl
+2/43 Test: ApiTest.SubmitJobMissingSourceUrl
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.SubmitJobMissingSourceUrl" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.SubmitJobMissingSourceUrl" start time: Jul 05 15:19 CDT
+"ApiTest.SubmitJobMissingSourceUrl" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.SubmitJobMissingSourceUrl
@@ -41,25 +41,25 @@ Note: Google Test filter = ApiTest.SubmitJobMissingSourceUrl
 [----------] 1 test from ApiTest
 [ RUN      ] ApiTest.SubmitJobMissingSourceUrl
 Saved state.
-[       OK ] ApiTest.SubmitJobMissingSourceUrl (2 ms)
-[----------] 1 test from ApiTest (2 ms total)
+[       OK ] ApiTest.SubmitJobMissingSourceUrl (3 ms)
+[----------] 1 test from ApiTest (3 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (2 ms total)
+[==========] 1 test from 1 test suite ran. (4 ms total)
 [  PASSED  ] 1 test.
 <end of output>
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.SubmitJobMissingSourceUrl" end time: Jul 05 15:19 CDT
+"ApiTest.SubmitJobMissingSourceUrl" end time: Jul 06 00:19 CDT
 "ApiTest.SubmitJobMissingSourceUrl" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-3/37 Testing: ApiTest.SubmitJobMissingTargetCodec
-3/37 Test: ApiTest.SubmitJobMissingTargetCodec
+3/43 Testing: ApiTest.SubmitJobMissingTargetCodec
+3/43 Test: ApiTest.SubmitJobMissingTargetCodec
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.SubmitJobMissingTargetCodec" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.SubmitJobMissingTargetCodec" start time: Jul 05 15:19 CDT
+"ApiTest.SubmitJobMissingTargetCodec" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.SubmitJobMissingTargetCodec
@@ -68,61 +68,7 @@ Note: Google Test filter = ApiTest.SubmitJobMissingTargetCodec
 [----------] 1 test from ApiTest
 [ RUN      ] ApiTest.SubmitJobMissingTargetCodec
 Saved state.
-[       OK ] ApiTest.SubmitJobMissingTargetCodec (3 ms)
-[----------] 1 test from ApiTest (3 ms total)
-
-[----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (3 ms total)
-[  PASSED  ] 1 test.
-<end of output>
-Test time =   0.01 sec
-----------------------------------------------------------
-Test Passed.
-"ApiTest.SubmitJobMissingTargetCodec" end time: Jul 05 15:19 CDT
-"ApiTest.SubmitJobMissingTargetCodec" time elapsed: 00:00:00
-----------------------------------------------------------
-
-4/37 Testing: ApiTest.SubmitJobInvalidJson
-4/37 Test: ApiTest.SubmitJobInvalidJson
-Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.SubmitJobInvalidJson" "--gtest_also_run_disabled_tests"
-Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.SubmitJobInvalidJson" start time: Jul 05 15:19 CDT
-Output:
-----------------------------------------------------------
-Note: Google Test filter = ApiTest.SubmitJobInvalidJson
-[==========] Running 1 test from 1 test suite.
-[----------] Global test environment set-up.
-[----------] 1 test from ApiTest
-[ RUN      ] ApiTest.SubmitJobInvalidJson
-Saved state.
-[       OK ] ApiTest.SubmitJobInvalidJson (3 ms)
-[----------] 1 test from ApiTest (3 ms total)
-
-[----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (3 ms total)
-[  PASSED  ] 1 test.
-<end of output>
-Test time =   0.01 sec
-----------------------------------------------------------
-Test Passed.
-"ApiTest.SubmitJobInvalidJson" end time: Jul 05 15:19 CDT
-"ApiTest.SubmitJobInvalidJson" time elapsed: 00:00:00
-----------------------------------------------------------
-
-5/37 Testing: ApiTest.SubmitJobEmptyJson
-5/37 Test: ApiTest.SubmitJobEmptyJson
-Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.SubmitJobEmptyJson" "--gtest_also_run_disabled_tests"
-Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.SubmitJobEmptyJson" start time: Jul 05 15:19 CDT
-Output:
-----------------------------------------------------------
-Note: Google Test filter = ApiTest.SubmitJobEmptyJson
-[==========] Running 1 test from 1 test suite.
-[----------] Global test environment set-up.
-[----------] 1 test from ApiTest
-[ RUN      ] ApiTest.SubmitJobEmptyJson
-Saved state.
-[       OK ] ApiTest.SubmitJobEmptyJson (5 ms)
+[       OK ] ApiTest.SubmitJobMissingTargetCodec (5 ms)
 [----------] 1 test from ApiTest (5 ms total)
 
 [----------] Global test environment tear-down
@@ -132,15 +78,69 @@ Saved state.
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.SubmitJobEmptyJson" end time: Jul 05 15:19 CDT
+"ApiTest.SubmitJobMissingTargetCodec" end time: Jul 06 00:19 CDT
+"ApiTest.SubmitJobMissingTargetCodec" time elapsed: 00:00:00
+----------------------------------------------------------
+
+4/43 Testing: ApiTest.SubmitJobInvalidJson
+4/43 Test: ApiTest.SubmitJobInvalidJson
+Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.SubmitJobInvalidJson" "--gtest_also_run_disabled_tests"
+Directory: /home/segin/distconv/dispatch_server_cpp/build
+"ApiTest.SubmitJobInvalidJson" start time: Jul 06 00:19 CDT
+Output:
+----------------------------------------------------------
+Note: Google Test filter = ApiTest.SubmitJobInvalidJson
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from ApiTest
+[ RUN      ] ApiTest.SubmitJobInvalidJson
+Saved state.
+[       OK ] ApiTest.SubmitJobInvalidJson (5 ms)
+[----------] 1 test from ApiTest (5 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (5 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"ApiTest.SubmitJobInvalidJson" end time: Jul 06 00:19 CDT
+"ApiTest.SubmitJobInvalidJson" time elapsed: 00:00:00
+----------------------------------------------------------
+
+5/43 Testing: ApiTest.SubmitJobEmptyJson
+5/43 Test: ApiTest.SubmitJobEmptyJson
+Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.SubmitJobEmptyJson" "--gtest_also_run_disabled_tests"
+Directory: /home/segin/distconv/dispatch_server_cpp/build
+"ApiTest.SubmitJobEmptyJson" start time: Jul 06 00:19 CDT
+Output:
+----------------------------------------------------------
+Note: Google Test filter = ApiTest.SubmitJobEmptyJson
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from ApiTest
+[ RUN      ] ApiTest.SubmitJobEmptyJson
+Saved state.
+[       OK ] ApiTest.SubmitJobEmptyJson (3 ms)
+[----------] 1 test from ApiTest (3 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (4 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"ApiTest.SubmitJobEmptyJson" end time: Jul 06 00:19 CDT
 "ApiTest.SubmitJobEmptyJson" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-6/37 Testing: ApiTest.SubmitJobWithExtraFields
-6/37 Test: ApiTest.SubmitJobWithExtraFields
+6/43 Testing: ApiTest.SubmitJobWithExtraFields
+6/43 Test: ApiTest.SubmitJobWithExtraFields
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.SubmitJobWithExtraFields" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.SubmitJobWithExtraFields" start time: Jul 05 15:19 CDT
+"ApiTest.SubmitJobWithExtraFields" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.SubmitJobWithExtraFields
@@ -150,7 +150,34 @@ Note: Google Test filter = ApiTest.SubmitJobWithExtraFields
 [ RUN      ] ApiTest.SubmitJobWithExtraFields
 Saved state.
 Saved state.
-[       OK ] ApiTest.SubmitJobWithExtraFields (3 ms)
+[       OK ] ApiTest.SubmitJobWithExtraFields (8 ms)
+[----------] 1 test from ApiTest (8 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (8 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"ApiTest.SubmitJobWithExtraFields" end time: Jul 06 00:19 CDT
+"ApiTest.SubmitJobWithExtraFields" time elapsed: 00:00:00
+----------------------------------------------------------
+
+7/43 Testing: ApiTest.SubmitJobNoAuthHeader
+7/43 Test: ApiTest.SubmitJobNoAuthHeader
+Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.SubmitJobNoAuthHeader" "--gtest_also_run_disabled_tests"
+Directory: /home/segin/distconv/dispatch_server_cpp/build
+"ApiTest.SubmitJobNoAuthHeader" start time: Jul 06 00:19 CDT
+Output:
+----------------------------------------------------------
+Note: Google Test filter = ApiTest.SubmitJobNoAuthHeader
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from ApiTest
+[ RUN      ] ApiTest.SubmitJobNoAuthHeader
+Saved state.
+[       OK ] ApiTest.SubmitJobNoAuthHeader (3 ms)
 [----------] 1 test from ApiTest (3 ms total)
 
 [----------] Global test environment tear-down
@@ -160,42 +187,15 @@ Saved state.
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.SubmitJobWithExtraFields" end time: Jul 05 15:19 CDT
-"ApiTest.SubmitJobWithExtraFields" time elapsed: 00:00:00
-----------------------------------------------------------
-
-7/37 Testing: ApiTest.SubmitJobNoAuthHeader
-7/37 Test: ApiTest.SubmitJobNoAuthHeader
-Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.SubmitJobNoAuthHeader" "--gtest_also_run_disabled_tests"
-Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.SubmitJobNoAuthHeader" start time: Jul 05 15:19 CDT
-Output:
-----------------------------------------------------------
-Note: Google Test filter = ApiTest.SubmitJobNoAuthHeader
-[==========] Running 1 test from 1 test suite.
-[----------] Global test environment set-up.
-[----------] 1 test from ApiTest
-[ RUN      ] ApiTest.SubmitJobNoAuthHeader
-Saved state.
-[       OK ] ApiTest.SubmitJobNoAuthHeader (5 ms)
-[----------] 1 test from ApiTest (5 ms total)
-
-[----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (5 ms total)
-[  PASSED  ] 1 test.
-<end of output>
-Test time =   0.01 sec
-----------------------------------------------------------
-Test Passed.
-"ApiTest.SubmitJobNoAuthHeader" end time: Jul 05 15:19 CDT
+"ApiTest.SubmitJobNoAuthHeader" end time: Jul 06 00:19 CDT
 "ApiTest.SubmitJobNoAuthHeader" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-8/37 Testing: ApiTest.SubmitJobNoApiKey
-8/37 Test: ApiTest.SubmitJobNoApiKey
+8/43 Testing: ApiTest.SubmitJobNoApiKey
+8/43 Test: ApiTest.SubmitJobNoApiKey
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.SubmitJobNoApiKey" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.SubmitJobNoApiKey" start time: Jul 05 15:19 CDT
+"ApiTest.SubmitJobNoApiKey" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.SubmitJobNoApiKey
@@ -204,25 +204,25 @@ Note: Google Test filter = ApiTest.SubmitJobNoApiKey
 [----------] 1 test from ApiTest
 [ RUN      ] ApiTest.SubmitJobNoApiKey
 Saved state.
-[       OK ] ApiTest.SubmitJobNoApiKey (4 ms)
-[----------] 1 test from ApiTest (4 ms total)
+[       OK ] ApiTest.SubmitJobNoApiKey (3 ms)
+[----------] 1 test from ApiTest (3 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (4 ms total)
+[==========] 1 test from 1 test suite ran. (3 ms total)
 [  PASSED  ] 1 test.
 <end of output>
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.SubmitJobNoApiKey" end time: Jul 05 15:19 CDT
+"ApiTest.SubmitJobNoApiKey" end time: Jul 06 00:19 CDT
 "ApiTest.SubmitJobNoApiKey" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-9/37 Testing: ApiTest.SubmitJobIncorrectApiKey
-9/37 Test: ApiTest.SubmitJobIncorrectApiKey
+9/43 Testing: ApiTest.SubmitJobIncorrectApiKey
+9/43 Test: ApiTest.SubmitJobIncorrectApiKey
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.SubmitJobIncorrectApiKey" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.SubmitJobIncorrectApiKey" start time: Jul 05 15:19 CDT
+"ApiTest.SubmitJobIncorrectApiKey" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.SubmitJobIncorrectApiKey
@@ -231,25 +231,25 @@ Note: Google Test filter = ApiTest.SubmitJobIncorrectApiKey
 [----------] 1 test from ApiTest
 [ RUN      ] ApiTest.SubmitJobIncorrectApiKey
 Saved state.
-[       OK ] ApiTest.SubmitJobIncorrectApiKey (2 ms)
-[----------] 1 test from ApiTest (2 ms total)
+[       OK ] ApiTest.SubmitJobIncorrectApiKey (7 ms)
+[----------] 1 test from ApiTest (7 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (2 ms total)
+[==========] 1 test from 1 test suite ran. (7 ms total)
 [  PASSED  ] 1 test.
 <end of output>
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.SubmitJobIncorrectApiKey" end time: Jul 05 15:19 CDT
+"ApiTest.SubmitJobIncorrectApiKey" end time: Jul 06 00:19 CDT
 "ApiTest.SubmitJobIncorrectApiKey" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-10/37 Testing: ApiTest.JobIdIsUnique
-10/37 Test: ApiTest.JobIdIsUnique
+10/43 Testing: ApiTest.JobIdIsUnique
+10/43 Test: ApiTest.JobIdIsUnique
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.JobIdIsUnique" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.JobIdIsUnique" start time: Jul 05 15:19 CDT
+"ApiTest.JobIdIsUnique" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.JobIdIsUnique
@@ -260,25 +260,25 @@ Note: Google Test filter = ApiTest.JobIdIsUnique
 Saved state.
 Saved state.
 Saved state.
-[       OK ] ApiTest.JobIdIsUnique (14 ms)
-[----------] 1 test from ApiTest (14 ms total)
+[       OK ] ApiTest.JobIdIsUnique (18 ms)
+[----------] 1 test from ApiTest (18 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (14 ms total)
+[==========] 1 test from 1 test suite ran. (18 ms total)
 [  PASSED  ] 1 test.
 <end of output>
 Test time =   0.02 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.JobIdIsUnique" end time: Jul 05 15:19 CDT
+"ApiTest.JobIdIsUnique" end time: Jul 06 00:19 CDT
 "ApiTest.JobIdIsUnique" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-11/37 Testing: ApiTest.SubmitJobNonStringSourceUrl
-11/37 Test: ApiTest.SubmitJobNonStringSourceUrl
+11/43 Testing: ApiTest.SubmitJobNonStringSourceUrl
+11/43 Test: ApiTest.SubmitJobNonStringSourceUrl
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.SubmitJobNonStringSourceUrl" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.SubmitJobNonStringSourceUrl" start time: Jul 05 15:19 CDT
+"ApiTest.SubmitJobNonStringSourceUrl" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.SubmitJobNonStringSourceUrl
@@ -287,8 +287,8 @@ Note: Google Test filter = ApiTest.SubmitJobNonStringSourceUrl
 [----------] 1 test from ApiTest
 [ RUN      ] ApiTest.SubmitJobNonStringSourceUrl
 Saved state.
-[       OK ] ApiTest.SubmitJobNonStringSourceUrl (3 ms)
-[----------] 1 test from ApiTest (3 ms total)
+[       OK ] ApiTest.SubmitJobNonStringSourceUrl (4 ms)
+[----------] 1 test from ApiTest (4 ms total)
 
 [----------] Global test environment tear-down
 [==========] 1 test from 1 test suite ran. (4 ms total)
@@ -297,15 +297,15 @@ Saved state.
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.SubmitJobNonStringSourceUrl" end time: Jul 05 15:19 CDT
+"ApiTest.SubmitJobNonStringSourceUrl" end time: Jul 06 00:19 CDT
 "ApiTest.SubmitJobNonStringSourceUrl" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-12/37 Testing: ApiTest.SubmitJobNonStringTargetCodec
-12/37 Test: ApiTest.SubmitJobNonStringTargetCodec
+12/43 Testing: ApiTest.SubmitJobNonStringTargetCodec
+12/43 Test: ApiTest.SubmitJobNonStringTargetCodec
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.SubmitJobNonStringTargetCodec" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.SubmitJobNonStringTargetCodec" start time: Jul 05 15:19 CDT
+"ApiTest.SubmitJobNonStringTargetCodec" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.SubmitJobNonStringTargetCodec
@@ -324,15 +324,15 @@ Saved state.
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.SubmitJobNonStringTargetCodec" end time: Jul 05 15:19 CDT
+"ApiTest.SubmitJobNonStringTargetCodec" end time: Jul 06 00:19 CDT
 "ApiTest.SubmitJobNonStringTargetCodec" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-13/37 Testing: ApiTest.SubmitJobNonNumericJobSize
-13/37 Test: ApiTest.SubmitJobNonNumericJobSize
+13/43 Testing: ApiTest.SubmitJobNonNumericJobSize
+13/43 Test: ApiTest.SubmitJobNonNumericJobSize
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.SubmitJobNonNumericJobSize" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.SubmitJobNonNumericJobSize" start time: Jul 05 15:19 CDT
+"ApiTest.SubmitJobNonNumericJobSize" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.SubmitJobNonNumericJobSize
@@ -341,25 +341,25 @@ Note: Google Test filter = ApiTest.SubmitJobNonNumericJobSize
 [----------] 1 test from ApiTest
 [ RUN      ] ApiTest.SubmitJobNonNumericJobSize
 Saved state.
-[       OK ] ApiTest.SubmitJobNonNumericJobSize (5 ms)
-[----------] 1 test from ApiTest (5 ms total)
+[       OK ] ApiTest.SubmitJobNonNumericJobSize (3 ms)
+[----------] 1 test from ApiTest (3 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (5 ms total)
+[==========] 1 test from 1 test suite ran. (3 ms total)
 [  PASSED  ] 1 test.
 <end of output>
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.SubmitJobNonNumericJobSize" end time: Jul 05 15:19 CDT
+"ApiTest.SubmitJobNonNumericJobSize" end time: Jul 06 00:19 CDT
 "ApiTest.SubmitJobNonNumericJobSize" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-14/37 Testing: ApiTest.SubmitJobNonIntegerMaxRetries
-14/37 Test: ApiTest.SubmitJobNonIntegerMaxRetries
+14/43 Testing: ApiTest.SubmitJobNonIntegerMaxRetries
+14/43 Test: ApiTest.SubmitJobNonIntegerMaxRetries
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.SubmitJobNonIntegerMaxRetries" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.SubmitJobNonIntegerMaxRetries" start time: Jul 05 15:19 CDT
+"ApiTest.SubmitJobNonIntegerMaxRetries" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.SubmitJobNonIntegerMaxRetries
@@ -368,25 +368,25 @@ Note: Google Test filter = ApiTest.SubmitJobNonIntegerMaxRetries
 [----------] 1 test from ApiTest
 [ RUN      ] ApiTest.SubmitJobNonIntegerMaxRetries
 Saved state.
-[       OK ] ApiTest.SubmitJobNonIntegerMaxRetries (4 ms)
-[----------] 1 test from ApiTest (4 ms total)
+[       OK ] ApiTest.SubmitJobNonIntegerMaxRetries (3 ms)
+[----------] 1 test from ApiTest (3 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (4 ms total)
+[==========] 1 test from 1 test suite ran. (3 ms total)
 [  PASSED  ] 1 test.
 <end of output>
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.SubmitJobNonIntegerMaxRetries" end time: Jul 05 15:19 CDT
+"ApiTest.SubmitJobNonIntegerMaxRetries" end time: Jul 06 00:19 CDT
 "ApiTest.SubmitJobNonIntegerMaxRetries" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-15/37 Testing: ApiTest.CompletedJobIsNotReassigned
-15/37 Test: ApiTest.CompletedJobIsNotReassigned
+15/43 Testing: ApiTest.CompletedJobIsNotReassigned
+15/43 Test: ApiTest.CompletedJobIsNotReassigned
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.CompletedJobIsNotReassigned" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.CompletedJobIsNotReassigned" start time: Jul 05 15:19 CDT
+"ApiTest.CompletedJobIsNotReassigned" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.CompletedJobIsNotReassigned
@@ -407,15 +407,15 @@ Saved state.
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.CompletedJobIsNotReassigned" end time: Jul 05 15:19 CDT
+"ApiTest.CompletedJobIsNotReassigned" end time: Jul 06 00:19 CDT
 "ApiTest.CompletedJobIsNotReassigned" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-16/37 Testing: ApiTest.PermanentlyFailedJobIsNotReassigned
-16/37 Test: ApiTest.PermanentlyFailedJobIsNotReassigned
+16/43 Testing: ApiTest.PermanentlyFailedJobIsNotReassigned
+16/43 Test: ApiTest.PermanentlyFailedJobIsNotReassigned
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.PermanentlyFailedJobIsNotReassigned" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.PermanentlyFailedJobIsNotReassigned" start time: Jul 05 15:19 CDT
+"ApiTest.PermanentlyFailedJobIsNotReassigned" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.PermanentlyFailedJobIsNotReassigned
@@ -426,25 +426,54 @@ Note: Google Test filter = ApiTest.PermanentlyFailedJobIsNotReassigned
 Saved state.
 Saved state.
 Saved state.
-[       OK ] ApiTest.PermanentlyFailedJobIsNotReassigned (5 ms)
-[----------] 1 test from ApiTest (5 ms total)
+[       OK ] ApiTest.PermanentlyFailedJobIsNotReassigned (6 ms)
+[----------] 1 test from ApiTest (6 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (5 ms total)
+[==========] 1 test from 1 test suite ran. (6 ms total)
 [  PASSED  ] 1 test.
 <end of output>
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.PermanentlyFailedJobIsNotReassigned" end time: Jul 05 15:19 CDT
+"ApiTest.PermanentlyFailedJobIsNotReassigned" end time: Jul 06 00:19 CDT
 "ApiTest.PermanentlyFailedJobIsNotReassigned" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-17/37 Testing: ApiTest.GetJobStatusValid
-17/37 Test: ApiTest.GetJobStatusValid
+17/43 Testing: ApiTest.AssignedJobIsNotReassigned
+17/43 Test: ApiTest.AssignedJobIsNotReassigned
+Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.AssignedJobIsNotReassigned" "--gtest_also_run_disabled_tests"
+Directory: /home/segin/distconv/dispatch_server_cpp/build
+"ApiTest.AssignedJobIsNotReassigned" start time: Jul 06 00:19 CDT
+Output:
+----------------------------------------------------------
+Note: Google Test filter = ApiTest.AssignedJobIsNotReassigned
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from ApiTest
+[ RUN      ] ApiTest.AssignedJobIsNotReassigned
+Saved state.
+Saved state.
+Saved state.
+[       OK ] ApiTest.AssignedJobIsNotReassigned (5 ms)
+[----------] 1 test from ApiTest (6 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (6 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"ApiTest.AssignedJobIsNotReassigned" end time: Jul 06 00:19 CDT
+"ApiTest.AssignedJobIsNotReassigned" time elapsed: 00:00:00
+----------------------------------------------------------
+
+18/43 Testing: ApiTest.GetJobStatusValid
+18/43 Test: ApiTest.GetJobStatusValid
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.GetJobStatusValid" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.GetJobStatusValid" start time: Jul 05 15:19 CDT
+"ApiTest.GetJobStatusValid" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.GetJobStatusValid
@@ -454,25 +483,25 @@ Note: Google Test filter = ApiTest.GetJobStatusValid
 [ RUN      ] ApiTest.GetJobStatusValid
 Saved state.
 Saved state.
-[       OK ] ApiTest.GetJobStatusValid (6 ms)
-[----------] 1 test from ApiTest (6 ms total)
+[       OK ] ApiTest.GetJobStatusValid (4 ms)
+[----------] 1 test from ApiTest (4 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (6 ms total)
+[==========] 1 test from 1 test suite ran. (4 ms total)
 [  PASSED  ] 1 test.
 <end of output>
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.GetJobStatusValid" end time: Jul 05 15:19 CDT
+"ApiTest.GetJobStatusValid" end time: Jul 06 00:19 CDT
 "ApiTest.GetJobStatusValid" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-18/37 Testing: ApiTest.GetJobStatusInvalid
-18/37 Test: ApiTest.GetJobStatusInvalid
+19/43 Testing: ApiTest.GetJobStatusInvalid
+19/43 Test: ApiTest.GetJobStatusInvalid
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.GetJobStatusInvalid" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.GetJobStatusInvalid" start time: Jul 05 15:19 CDT
+"ApiTest.GetJobStatusInvalid" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.GetJobStatusInvalid
@@ -481,25 +510,25 @@ Note: Google Test filter = ApiTest.GetJobStatusInvalid
 [----------] 1 test from ApiTest
 [ RUN      ] ApiTest.GetJobStatusInvalid
 Saved state.
-[       OK ] ApiTest.GetJobStatusInvalid (7 ms)
-[----------] 1 test from ApiTest (7 ms total)
+[       OK ] ApiTest.GetJobStatusInvalid (3 ms)
+[----------] 1 test from ApiTest (3 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (7 ms total)
+[==========] 1 test from 1 test suite ran. (3 ms total)
 [  PASSED  ] 1 test.
 <end of output>
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.GetJobStatusInvalid" end time: Jul 05 15:19 CDT
+"ApiTest.GetJobStatusInvalid" end time: Jul 06 00:19 CDT
 "ApiTest.GetJobStatusInvalid" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-19/37 Testing: ApiTest.GetJobStatusMalformedId
-19/37 Test: ApiTest.GetJobStatusMalformedId
+20/43 Testing: ApiTest.GetJobStatusMalformedId
+20/43 Test: ApiTest.GetJobStatusMalformedId
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.GetJobStatusMalformedId" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.GetJobStatusMalformedId" start time: Jul 05 15:19 CDT
+"ApiTest.GetJobStatusMalformedId" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.GetJobStatusMalformedId
@@ -508,25 +537,25 @@ Note: Google Test filter = ApiTest.GetJobStatusMalformedId
 [----------] 1 test from ApiTest
 [ RUN      ] ApiTest.GetJobStatusMalformedId
 Saved state.
-[       OK ] ApiTest.GetJobStatusMalformedId (5 ms)
-[----------] 1 test from ApiTest (5 ms total)
+[       OK ] ApiTest.GetJobStatusMalformedId (2 ms)
+[----------] 1 test from ApiTest (3 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (5 ms total)
+[==========] 1 test from 1 test suite ran. (3 ms total)
 [  PASSED  ] 1 test.
 <end of output>
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.GetJobStatusMalformedId" end time: Jul 05 15:19 CDT
+"ApiTest.GetJobStatusMalformedId" end time: Jul 06 00:19 CDT
 "ApiTest.GetJobStatusMalformedId" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-20/37 Testing: ApiTest.GetJobStatusNoApiKey
-20/37 Test: ApiTest.GetJobStatusNoApiKey
+21/43 Testing: ApiTest.GetJobStatusNoApiKey
+21/43 Test: ApiTest.GetJobStatusNoApiKey
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.GetJobStatusNoApiKey" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.GetJobStatusNoApiKey" start time: Jul 05 15:19 CDT
+"ApiTest.GetJobStatusNoApiKey" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.GetJobStatusNoApiKey
@@ -536,25 +565,25 @@ Note: Google Test filter = ApiTest.GetJobStatusNoApiKey
 [ RUN      ] ApiTest.GetJobStatusNoApiKey
 Saved state.
 Saved state.
-[       OK ] ApiTest.GetJobStatusNoApiKey (5 ms)
-[----------] 1 test from ApiTest (5 ms total)
+[       OK ] ApiTest.GetJobStatusNoApiKey (4 ms)
+[----------] 1 test from ApiTest (4 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (5 ms total)
+[==========] 1 test from 1 test suite ran. (4 ms total)
 [  PASSED  ] 1 test.
 <end of output>
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.GetJobStatusNoApiKey" end time: Jul 05 15:19 CDT
+"ApiTest.GetJobStatusNoApiKey" end time: Jul 06 00:19 CDT
 "ApiTest.GetJobStatusNoApiKey" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-21/37 Testing: ApiTest.GetJobStatusIncorrectApiKey
-21/37 Test: ApiTest.GetJobStatusIncorrectApiKey
+22/43 Testing: ApiTest.GetJobStatusIncorrectApiKey
+22/43 Test: ApiTest.GetJobStatusIncorrectApiKey
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.GetJobStatusIncorrectApiKey" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.GetJobStatusIncorrectApiKey" start time: Jul 05 15:19 CDT
+"ApiTest.GetJobStatusIncorrectApiKey" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.GetJobStatusIncorrectApiKey
@@ -564,25 +593,25 @@ Note: Google Test filter = ApiTest.GetJobStatusIncorrectApiKey
 [ RUN      ] ApiTest.GetJobStatusIncorrectApiKey
 Saved state.
 Saved state.
-[       OK ] ApiTest.GetJobStatusIncorrectApiKey (6 ms)
-[----------] 1 test from ApiTest (6 ms total)
+[       OK ] ApiTest.GetJobStatusIncorrectApiKey (4 ms)
+[----------] 1 test from ApiTest (4 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (6 ms total)
+[==========] 1 test from 1 test suite ran. (4 ms total)
 [  PASSED  ] 1 test.
 <end of output>
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.GetJobStatusIncorrectApiKey" end time: Jul 05 15:19 CDT
+"ApiTest.GetJobStatusIncorrectApiKey" end time: Jul 06 00:19 CDT
 "ApiTest.GetJobStatusIncorrectApiKey" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-22/37 Testing: ApiTest.ListAllJobsEmpty
-22/37 Test: ApiTest.ListAllJobsEmpty
+23/43 Testing: ApiTest.ListAllJobsEmpty
+23/43 Test: ApiTest.ListAllJobsEmpty
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.ListAllJobsEmpty" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.ListAllJobsEmpty" start time: Jul 05 15:19 CDT
+"ApiTest.ListAllJobsEmpty" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.ListAllJobsEmpty
@@ -591,25 +620,25 @@ Note: Google Test filter = ApiTest.ListAllJobsEmpty
 [----------] 1 test from ApiTest
 [ RUN      ] ApiTest.ListAllJobsEmpty
 Saved state.
-[       OK ] ApiTest.ListAllJobsEmpty (6 ms)
-[----------] 1 test from ApiTest (6 ms total)
+[       OK ] ApiTest.ListAllJobsEmpty (5 ms)
+[----------] 1 test from ApiTest (5 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (7 ms total)
+[==========] 1 test from 1 test suite ran. (5 ms total)
 [  PASSED  ] 1 test.
 <end of output>
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.ListAllJobsEmpty" end time: Jul 05 15:19 CDT
+"ApiTest.ListAllJobsEmpty" end time: Jul 06 00:19 CDT
 "ApiTest.ListAllJobsEmpty" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-23/37 Testing: ApiTest.ListAllJobsWithJobs
-23/37 Test: ApiTest.ListAllJobsWithJobs
+24/43 Testing: ApiTest.ListAllJobsWithJobs
+24/43 Test: ApiTest.ListAllJobsWithJobs
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.ListAllJobsWithJobs" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.ListAllJobsWithJobs" start time: Jul 05 15:19 CDT
+"ApiTest.ListAllJobsWithJobs" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.ListAllJobsWithJobs
@@ -621,25 +650,25 @@ Saved state.
 Saved state.
 Saved state.
 Saved state.
-[       OK ] ApiTest.ListAllJobsWithJobs (11 ms)
-[----------] 1 test from ApiTest (11 ms total)
+[       OK ] ApiTest.ListAllJobsWithJobs (9 ms)
+[----------] 1 test from ApiTest (9 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (11 ms total)
+[==========] 1 test from 1 test suite ran. (9 ms total)
 [  PASSED  ] 1 test.
 <end of output>
-Test time =   0.02 sec
+Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.ListAllJobsWithJobs" end time: Jul 05 15:19 CDT
+"ApiTest.ListAllJobsWithJobs" end time: Jul 06 00:19 CDT
 "ApiTest.ListAllJobsWithJobs" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-24/37 Testing: ApiTest.ListAllJobsWithOneJob
-24/37 Test: ApiTest.ListAllJobsWithOneJob
+25/43 Testing: ApiTest.ListAllJobsWithOneJob
+25/43 Test: ApiTest.ListAllJobsWithOneJob
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.ListAllJobsWithOneJob" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.ListAllJobsWithOneJob" start time: Jul 05 15:19 CDT
+"ApiTest.ListAllJobsWithOneJob" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.ListAllJobsWithOneJob
@@ -653,21 +682,21 @@ Saved state.
 [----------] 1 test from ApiTest (6 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (6 ms total)
+[==========] 1 test from 1 test suite ran. (7 ms total)
 [  PASSED  ] 1 test.
 <end of output>
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.ListAllJobsWithOneJob" end time: Jul 05 15:19 CDT
+"ApiTest.ListAllJobsWithOneJob" end time: Jul 06 00:19 CDT
 "ApiTest.ListAllJobsWithOneJob" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-25/37 Testing: ApiTest.RegisterEngineValid
-25/37 Test: ApiTest.RegisterEngineValid
+26/43 Testing: ApiTest.RegisterEngineValid
+26/43 Test: ApiTest.RegisterEngineValid
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.RegisterEngineValid" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.RegisterEngineValid" start time: Jul 05 15:19 CDT
+"ApiTest.RegisterEngineValid" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.RegisterEngineValid
@@ -677,25 +706,25 @@ Note: Google Test filter = ApiTest.RegisterEngineValid
 [ RUN      ] ApiTest.RegisterEngineValid
 Saved state.
 Saved state.
-[       OK ] ApiTest.RegisterEngineValid (4 ms)
-[----------] 1 test from ApiTest (4 ms total)
+[       OK ] ApiTest.RegisterEngineValid (5 ms)
+[----------] 1 test from ApiTest (6 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (4 ms total)
+[==========] 1 test from 1 test suite ran. (6 ms total)
 [  PASSED  ] 1 test.
 <end of output>
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.RegisterEngineValid" end time: Jul 05 15:19 CDT
+"ApiTest.RegisterEngineValid" end time: Jul 06 00:19 CDT
 "ApiTest.RegisterEngineValid" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-26/37 Testing: ApiTest.RegisterEngineDuplicate
-26/37 Test: ApiTest.RegisterEngineDuplicate
+27/43 Testing: ApiTest.RegisterEngineDuplicate
+27/43 Test: ApiTest.RegisterEngineDuplicate
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.RegisterEngineDuplicate" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.RegisterEngineDuplicate" start time: Jul 05 15:19 CDT
+"ApiTest.RegisterEngineDuplicate" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.RegisterEngineDuplicate
@@ -706,25 +735,25 @@ Note: Google Test filter = ApiTest.RegisterEngineDuplicate
 Saved state.
 Saved state.
 Saved state.
-[       OK ] ApiTest.RegisterEngineDuplicate (7 ms)
-[----------] 1 test from ApiTest (7 ms total)
+[       OK ] ApiTest.RegisterEngineDuplicate (6 ms)
+[----------] 1 test from ApiTest (6 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (7 ms total)
+[==========] 1 test from 1 test suite ran. (6 ms total)
 [  PASSED  ] 1 test.
 <end of output>
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.RegisterEngineDuplicate" end time: Jul 05 15:19 CDT
+"ApiTest.RegisterEngineDuplicate" end time: Jul 06 00:19 CDT
 "ApiTest.RegisterEngineDuplicate" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-27/37 Testing: ApiTest.RegisterEngineNoApiKey
-27/37 Test: ApiTest.RegisterEngineNoApiKey
+28/43 Testing: ApiTest.RegisterEngineNoApiKey
+28/43 Test: ApiTest.RegisterEngineNoApiKey
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.RegisterEngineNoApiKey" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.RegisterEngineNoApiKey" start time: Jul 05 15:19 CDT
+"ApiTest.RegisterEngineNoApiKey" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.RegisterEngineNoApiKey
@@ -733,25 +762,25 @@ Note: Google Test filter = ApiTest.RegisterEngineNoApiKey
 [----------] 1 test from ApiTest
 [ RUN      ] ApiTest.RegisterEngineNoApiKey
 Saved state.
-[       OK ] ApiTest.RegisterEngineNoApiKey (5 ms)
-[----------] 1 test from ApiTest (5 ms total)
+[       OK ] ApiTest.RegisterEngineNoApiKey (3 ms)
+[----------] 1 test from ApiTest (4 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (6 ms total)
+[==========] 1 test from 1 test suite ran. (4 ms total)
 [  PASSED  ] 1 test.
 <end of output>
-Test time =   0.02 sec
+Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.RegisterEngineNoApiKey" end time: Jul 05 15:19 CDT
+"ApiTest.RegisterEngineNoApiKey" end time: Jul 06 00:19 CDT
 "ApiTest.RegisterEngineNoApiKey" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-28/37 Testing: ApiTest.RegisterEngineIncorrectApiKey
-28/37 Test: ApiTest.RegisterEngineIncorrectApiKey
+29/43 Testing: ApiTest.RegisterEngineIncorrectApiKey
+29/43 Test: ApiTest.RegisterEngineIncorrectApiKey
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.RegisterEngineIncorrectApiKey" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.RegisterEngineIncorrectApiKey" start time: Jul 05 15:19 CDT
+"ApiTest.RegisterEngineIncorrectApiKey" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.RegisterEngineIncorrectApiKey
@@ -760,25 +789,25 @@ Note: Google Test filter = ApiTest.RegisterEngineIncorrectApiKey
 [----------] 1 test from ApiTest
 [ RUN      ] ApiTest.RegisterEngineIncorrectApiKey
 Saved state.
-[       OK ] ApiTest.RegisterEngineIncorrectApiKey (5 ms)
-[----------] 1 test from ApiTest (5 ms total)
+[       OK ] ApiTest.RegisterEngineIncorrectApiKey (4 ms)
+[----------] 1 test from ApiTest (4 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (5 ms total)
+[==========] 1 test from 1 test suite ran. (4 ms total)
 [  PASSED  ] 1 test.
 <end of output>
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.RegisterEngineIncorrectApiKey" end time: Jul 05 15:19 CDT
+"ApiTest.RegisterEngineIncorrectApiKey" end time: Jul 06 00:19 CDT
 "ApiTest.RegisterEngineIncorrectApiKey" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-29/37 Testing: ApiTest.ListEnginesEmpty
-29/37 Test: ApiTest.ListEnginesEmpty
+30/43 Testing: ApiTest.ListEnginesEmpty
+30/43 Test: ApiTest.ListEnginesEmpty
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.ListEnginesEmpty" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.ListEnginesEmpty" start time: Jul 05 15:19 CDT
+"ApiTest.ListEnginesEmpty" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.ListEnginesEmpty
@@ -787,25 +816,25 @@ Note: Google Test filter = ApiTest.ListEnginesEmpty
 [----------] 1 test from ApiTest
 [ RUN      ] ApiTest.ListEnginesEmpty
 Saved state.
-[       OK ] ApiTest.ListEnginesEmpty (4 ms)
-[----------] 1 test from ApiTest (4 ms total)
+[       OK ] ApiTest.ListEnginesEmpty (3 ms)
+[----------] 1 test from ApiTest (3 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (5 ms total)
+[==========] 1 test from 1 test suite ran. (3 ms total)
 [  PASSED  ] 1 test.
 <end of output>
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.ListEnginesEmpty" end time: Jul 05 15:19 CDT
+"ApiTest.ListEnginesEmpty" end time: Jul 06 00:19 CDT
 "ApiTest.ListEnginesEmpty" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-30/37 Testing: ApiTest.ListEnginesWithEngines
-30/37 Test: ApiTest.ListEnginesWithEngines
+31/43 Testing: ApiTest.ListEnginesWithEngines
+31/43 Test: ApiTest.ListEnginesWithEngines
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.ListEnginesWithEngines" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.ListEnginesWithEngines" start time: Jul 05 15:19 CDT
+"ApiTest.ListEnginesWithEngines" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.ListEnginesWithEngines
@@ -817,25 +846,25 @@ Saved state.
 Saved state.
 Saved state.
 Saved state.
-[       OK ] ApiTest.ListEnginesWithEngines (12 ms)
-[----------] 1 test from ApiTest (12 ms total)
+[       OK ] ApiTest.ListEnginesWithEngines (7 ms)
+[----------] 1 test from ApiTest (7 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (12 ms total)
+[==========] 1 test from 1 test suite ran. (7 ms total)
 [  PASSED  ] 1 test.
 <end of output>
-Test time =   0.02 sec
+Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.ListEnginesWithEngines" end time: Jul 05 15:19 CDT
+"ApiTest.ListEnginesWithEngines" end time: Jul 06 00:19 CDT
 "ApiTest.ListEnginesWithEngines" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-31/37 Testing: ApiTest.ListEnginesWithOneEngine
-31/37 Test: ApiTest.ListEnginesWithOneEngine
+32/43 Testing: ApiTest.ListEnginesWithOneEngine
+32/43 Test: ApiTest.ListEnginesWithOneEngine
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.ListEnginesWithOneEngine" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.ListEnginesWithOneEngine" start time: Jul 05 15:19 CDT
+"ApiTest.ListEnginesWithOneEngine" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.ListEnginesWithOneEngine
@@ -845,8 +874,36 @@ Note: Google Test filter = ApiTest.ListEnginesWithOneEngine
 [ RUN      ] ApiTest.ListEnginesWithOneEngine
 Saved state.
 Saved state.
-[       OK ] ApiTest.ListEnginesWithOneEngine (6 ms)
-[----------] 1 test from ApiTest (6 ms total)
+[       OK ] ApiTest.ListEnginesWithOneEngine (5 ms)
+[----------] 1 test from ApiTest (5 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (5 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"ApiTest.ListEnginesWithOneEngine" end time: Jul 06 00:19 CDT
+"ApiTest.ListEnginesWithOneEngine" time elapsed: 00:00:00
+----------------------------------------------------------
+
+33/43 Testing: ApiTest.EngineStatusIsIdleAfterHeartbeat
+33/43 Test: ApiTest.EngineStatusIsIdleAfterHeartbeat
+Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.EngineStatusIsIdleAfterHeartbeat" "--gtest_also_run_disabled_tests"
+Directory: /home/segin/distconv/dispatch_server_cpp/build
+"ApiTest.EngineStatusIsIdleAfterHeartbeat" start time: Jul 06 00:19 CDT
+Output:
+----------------------------------------------------------
+Note: Google Test filter = ApiTest.EngineStatusIsIdleAfterHeartbeat
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from ApiTest
+[ RUN      ] ApiTest.EngineStatusIsIdleAfterHeartbeat
+Saved state.
+Saved state.
+[       OK ] ApiTest.EngineStatusIsIdleAfterHeartbeat (7 ms)
+[----------] 1 test from ApiTest (7 ms total)
 
 [----------] Global test environment tear-down
 [==========] 1 test from 1 test suite ran. (7 ms total)
@@ -855,15 +912,137 @@ Saved state.
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.ListEnginesWithOneEngine" end time: Jul 05 15:19 CDT
-"ApiTest.ListEnginesWithOneEngine" time elapsed: 00:00:00
+"ApiTest.EngineStatusIsIdleAfterHeartbeat" end time: Jul 06 00:19 CDT
+"ApiTest.EngineStatusIsIdleAfterHeartbeat" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-32/37 Testing: ApiTest.UpdateJobStatusValid
-32/37 Test: ApiTest.UpdateJobStatusValid
+34/43 Testing: ApiTest.EngineStatusIsBusyAfterJobAssign
+34/43 Test: ApiTest.EngineStatusIsBusyAfterJobAssign
+Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.EngineStatusIsBusyAfterJobAssign" "--gtest_also_run_disabled_tests"
+Directory: /home/segin/distconv/dispatch_server_cpp/build
+"ApiTest.EngineStatusIsBusyAfterJobAssign" start time: Jul 06 00:19 CDT
+Output:
+----------------------------------------------------------
+Note: Google Test filter = ApiTest.EngineStatusIsBusyAfterJobAssign
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from ApiTest
+[ RUN      ] ApiTest.EngineStatusIsBusyAfterJobAssign
+Saved state.
+Saved state.
+Saved state.
+Saved state.
+[       OK ] ApiTest.EngineStatusIsBusyAfterJobAssign (13 ms)
+[----------] 1 test from ApiTest (13 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (14 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"ApiTest.EngineStatusIsBusyAfterJobAssign" end time: Jul 06 00:19 CDT
+"ApiTest.EngineStatusIsBusyAfterJobAssign" time elapsed: 00:00:00
+----------------------------------------------------------
+
+35/43 Testing: ApiTest.EngineStatusBecomesBusyAfterJobAssignment
+35/43 Test: ApiTest.EngineStatusBecomesBusyAfterJobAssignment
+Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.EngineStatusBecomesBusyAfterJobAssignment" "--gtest_also_run_disabled_tests"
+Directory: /home/segin/distconv/dispatch_server_cpp/build
+"ApiTest.EngineStatusBecomesBusyAfterJobAssignment" start time: Jul 06 00:19 CDT
+Output:
+----------------------------------------------------------
+Note: Google Test filter = ApiTest.EngineStatusBecomesBusyAfterJobAssignment
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from ApiTest
+[ RUN      ] ApiTest.EngineStatusBecomesBusyAfterJobAssignment
+Saved state.
+Saved state.
+Saved state.
+Saved state.
+[       OK ] ApiTest.EngineStatusBecomesBusyAfterJobAssignment (16 ms)
+[----------] 1 test from ApiTest (16 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (16 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"ApiTest.EngineStatusBecomesBusyAfterJobAssignment" end time: Jul 06 00:19 CDT
+"ApiTest.EngineStatusBecomesBusyAfterJobAssignment" time elapsed: 00:00:00
+----------------------------------------------------------
+
+36/43 Testing: ApiTest.EngineStatusBecomesIdleAfterJobCompletion
+36/43 Test: ApiTest.EngineStatusBecomesIdleAfterJobCompletion
+Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.EngineStatusBecomesIdleAfterJobCompletion" "--gtest_also_run_disabled_tests"
+Directory: /home/segin/distconv/dispatch_server_cpp/build
+"ApiTest.EngineStatusBecomesIdleAfterJobCompletion" start time: Jul 06 00:19 CDT
+Output:
+----------------------------------------------------------
+Note: Google Test filter = ApiTest.EngineStatusBecomesIdleAfterJobCompletion
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from ApiTest
+[ RUN      ] ApiTest.EngineStatusBecomesIdleAfterJobCompletion
+Saved state.
+Saved state.
+Saved state.
+Saved state.
+Saved state.
+[       OK ] ApiTest.EngineStatusBecomesIdleAfterJobCompletion (11 ms)
+[----------] 1 test from ApiTest (11 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (11 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"ApiTest.EngineStatusBecomesIdleAfterJobCompletion" end time: Jul 06 00:19 CDT
+"ApiTest.EngineStatusBecomesIdleAfterJobCompletion" time elapsed: 00:00:00
+----------------------------------------------------------
+
+37/43 Testing: ApiTest.BusyEngineIsNotAssignedAnotherJob
+37/43 Test: ApiTest.BusyEngineIsNotAssignedAnotherJob
+Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.BusyEngineIsNotAssignedAnotherJob" "--gtest_also_run_disabled_tests"
+Directory: /home/segin/distconv/dispatch_server_cpp/build
+"ApiTest.BusyEngineIsNotAssignedAnotherJob" start time: Jul 06 00:19 CDT
+Output:
+----------------------------------------------------------
+Note: Google Test filter = ApiTest.BusyEngineIsNotAssignedAnotherJob
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from ApiTest
+[ RUN      ] ApiTest.BusyEngineIsNotAssignedAnotherJob
+Saved state.
+Saved state.
+Saved state.
+Saved state.
+Saved state.
+[       OK ] ApiTest.BusyEngineIsNotAssignedAnotherJob (12 ms)
+[----------] 1 test from ApiTest (12 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (12 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"ApiTest.BusyEngineIsNotAssignedAnotherJob" end time: Jul 06 00:19 CDT
+"ApiTest.BusyEngineIsNotAssignedAnotherJob" time elapsed: 00:00:00
+----------------------------------------------------------
+
+38/43 Testing: ApiTest.UpdateJobStatusValid
+38/43 Test: ApiTest.UpdateJobStatusValid
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.UpdateJobStatusValid" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.UpdateJobStatusValid" start time: Jul 05 15:19 CDT
+"ApiTest.UpdateJobStatusValid" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.UpdateJobStatusValid
@@ -874,62 +1053,8 @@ Note: Google Test filter = ApiTest.UpdateJobStatusValid
 Saved state.
 Saved state.
 Saved state.
-[       OK ] ApiTest.UpdateJobStatusValid (11 ms)
-[----------] 1 test from ApiTest (11 ms total)
-
-[----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (14 ms total)
-[  PASSED  ] 1 test.
-<end of output>
-Test time =   0.02 sec
-----------------------------------------------------------
-Test Passed.
-"ApiTest.UpdateJobStatusValid" end time: Jul 05 15:19 CDT
-"ApiTest.UpdateJobStatusValid" time elapsed: 00:00:00
-----------------------------------------------------------
-
-33/37 Testing: ApiTest.UpdateJobStatusInvalidJobId
-33/37 Test: ApiTest.UpdateJobStatusInvalidJobId
-Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.UpdateJobStatusInvalidJobId" "--gtest_also_run_disabled_tests"
-Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.UpdateJobStatusInvalidJobId" start time: Jul 05 15:19 CDT
-Output:
-----------------------------------------------------------
-Note: Google Test filter = ApiTest.UpdateJobStatusInvalidJobId
-[==========] Running 1 test from 1 test suite.
-[----------] Global test environment set-up.
-[----------] 1 test from ApiTest
-[ RUN      ] ApiTest.UpdateJobStatusInvalidJobId
-Saved state.
-[       OK ] ApiTest.UpdateJobStatusInvalidJobId (8 ms)
-[----------] 1 test from ApiTest (9 ms total)
-
-[----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (9 ms total)
-[  PASSED  ] 1 test.
-<end of output>
-Test time =   0.02 sec
-----------------------------------------------------------
-Test Passed.
-"ApiTest.UpdateJobStatusInvalidJobId" end time: Jul 05 15:19 CDT
-"ApiTest.UpdateJobStatusInvalidJobId" time elapsed: 00:00:00
-----------------------------------------------------------
-
-34/37 Testing: ApiTest.UpdateJobStatusMalformedId
-34/37 Test: ApiTest.UpdateJobStatusMalformedId
-Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.UpdateJobStatusMalformedId" "--gtest_also_run_disabled_tests"
-Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.UpdateJobStatusMalformedId" start time: Jul 05 15:19 CDT
-Output:
-----------------------------------------------------------
-Note: Google Test filter = ApiTest.UpdateJobStatusMalformedId
-[==========] Running 1 test from 1 test suite.
-[----------] Global test environment set-up.
-[----------] 1 test from ApiTest
-[ RUN      ] ApiTest.UpdateJobStatusMalformedId
-Saved state.
-[       OK ] ApiTest.UpdateJobStatusMalformedId (6 ms)
-[----------] 1 test from ApiTest (6 ms total)
+[       OK ] ApiTest.UpdateJobStatusValid (7 ms)
+[----------] 1 test from ApiTest (7 ms total)
 
 [----------] Global test environment tear-down
 [==========] 1 test from 1 test suite ran. (7 ms total)
@@ -938,15 +1063,69 @@ Saved state.
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.UpdateJobStatusMalformedId" end time: Jul 05 15:19 CDT
+"ApiTest.UpdateJobStatusValid" end time: Jul 06 00:19 CDT
+"ApiTest.UpdateJobStatusValid" time elapsed: 00:00:00
+----------------------------------------------------------
+
+39/43 Testing: ApiTest.UpdateJobStatusInvalidJobId
+39/43 Test: ApiTest.UpdateJobStatusInvalidJobId
+Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.UpdateJobStatusInvalidJobId" "--gtest_also_run_disabled_tests"
+Directory: /home/segin/distconv/dispatch_server_cpp/build
+"ApiTest.UpdateJobStatusInvalidJobId" start time: Jul 06 00:19 CDT
+Output:
+----------------------------------------------------------
+Note: Google Test filter = ApiTest.UpdateJobStatusInvalidJobId
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from ApiTest
+[ RUN      ] ApiTest.UpdateJobStatusInvalidJobId
+Saved state.
+[       OK ] ApiTest.UpdateJobStatusInvalidJobId (5 ms)
+[----------] 1 test from ApiTest (5 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (5 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"ApiTest.UpdateJobStatusInvalidJobId" end time: Jul 06 00:19 CDT
+"ApiTest.UpdateJobStatusInvalidJobId" time elapsed: 00:00:00
+----------------------------------------------------------
+
+40/43 Testing: ApiTest.UpdateJobStatusMalformedId
+40/43 Test: ApiTest.UpdateJobStatusMalformedId
+Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.UpdateJobStatusMalformedId" "--gtest_also_run_disabled_tests"
+Directory: /home/segin/distconv/dispatch_server_cpp/build
+"ApiTest.UpdateJobStatusMalformedId" start time: Jul 06 00:19 CDT
+Output:
+----------------------------------------------------------
+Note: Google Test filter = ApiTest.UpdateJobStatusMalformedId
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from ApiTest
+[ RUN      ] ApiTest.UpdateJobStatusMalformedId
+Saved state.
+[       OK ] ApiTest.UpdateJobStatusMalformedId (4 ms)
+[----------] 1 test from ApiTest (4 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (4 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"ApiTest.UpdateJobStatusMalformedId" end time: Jul 06 00:19 CDT
 "ApiTest.UpdateJobStatusMalformedId" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-35/37 Testing: ApiTest.UpdateJobStatusNoApiKey
-35/37 Test: ApiTest.UpdateJobStatusNoApiKey
+41/43 Testing: ApiTest.UpdateJobStatusNoApiKey
+41/43 Test: ApiTest.UpdateJobStatusNoApiKey
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.UpdateJobStatusNoApiKey" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.UpdateJobStatusNoApiKey" start time: Jul 05 15:19 CDT
+"ApiTest.UpdateJobStatusNoApiKey" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.UpdateJobStatusNoApiKey
@@ -956,25 +1135,25 @@ Note: Google Test filter = ApiTest.UpdateJobStatusNoApiKey
 [ RUN      ] ApiTest.UpdateJobStatusNoApiKey
 Saved state.
 Saved state.
-[       OK ] ApiTest.UpdateJobStatusNoApiKey (17 ms)
-[----------] 1 test from ApiTest (17 ms total)
+[       OK ] ApiTest.UpdateJobStatusNoApiKey (5 ms)
+[----------] 1 test from ApiTest (5 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (17 ms total)
+[==========] 1 test from 1 test suite ran. (6 ms total)
 [  PASSED  ] 1 test.
 <end of output>
-Test time =   0.02 sec
+Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.UpdateJobStatusNoApiKey" end time: Jul 05 15:19 CDT
+"ApiTest.UpdateJobStatusNoApiKey" end time: Jul 06 00:19 CDT
 "ApiTest.UpdateJobStatusNoApiKey" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-36/37 Testing: ApiTest.UpdateJobStatusIncorrectApiKey
-36/37 Test: ApiTest.UpdateJobStatusIncorrectApiKey
+42/43 Testing: ApiTest.UpdateJobStatusIncorrectApiKey
+42/43 Test: ApiTest.UpdateJobStatusIncorrectApiKey
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.UpdateJobStatusIncorrectApiKey" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.UpdateJobStatusIncorrectApiKey" start time: Jul 05 15:19 CDT
+"ApiTest.UpdateJobStatusIncorrectApiKey" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.UpdateJobStatusIncorrectApiKey
@@ -994,15 +1173,15 @@ Saved state.
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.UpdateJobStatusIncorrectApiKey" end time: Jul 05 15:19 CDT
+"ApiTest.UpdateJobStatusIncorrectApiKey" end time: Jul 06 00:19 CDT
 "ApiTest.UpdateJobStatusIncorrectApiKey" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-37/37 Testing: ApiTest.UpdateJobStatusInvalidStatus
-37/37 Test: ApiTest.UpdateJobStatusInvalidStatus
+43/43 Testing: ApiTest.UpdateJobStatusInvalidStatus
+43/43 Test: ApiTest.UpdateJobStatusInvalidStatus
 Command: "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests" "--gtest_filter=ApiTest.UpdateJobStatusInvalidStatus" "--gtest_also_run_disabled_tests"
 Directory: /home/segin/distconv/dispatch_server_cpp/build
-"ApiTest.UpdateJobStatusInvalidStatus" start time: Jul 05 15:19 CDT
+"ApiTest.UpdateJobStatusInvalidStatus" start time: Jul 06 00:19 CDT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiTest.UpdateJobStatusInvalidStatus
@@ -1012,18 +1191,18 @@ Note: Google Test filter = ApiTest.UpdateJobStatusInvalidStatus
 [ RUN      ] ApiTest.UpdateJobStatusInvalidStatus
 Saved state.
 Saved state.
-[       OK ] ApiTest.UpdateJobStatusInvalidStatus (13 ms)
-[----------] 1 test from ApiTest (13 ms total)
+[       OK ] ApiTest.UpdateJobStatusInvalidStatus (6 ms)
+[----------] 1 test from ApiTest (6 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (13 ms total)
+[==========] 1 test from 1 test suite ran. (6 ms total)
 [  PASSED  ] 1 test.
 <end of output>
-Test time =   0.02 sec
+Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiTest.UpdateJobStatusInvalidStatus" end time: Jul 05 15:19 CDT
+"ApiTest.UpdateJobStatusInvalidStatus" end time: Jul 06 00:19 CDT
 "ApiTest.UpdateJobStatusInvalidStatus" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-End testing: Jul 05 15:19 CDT
+End testing: Jul 06 00:19 CDT

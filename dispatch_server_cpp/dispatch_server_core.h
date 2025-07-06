@@ -9,11 +9,10 @@
 // In-memory storage for jobs and engines
 extern nlohmann::json jobs_db;
 extern nlohmann::json engines_db;
-extern std::mutex jobs_mutex;
-extern std::mutex engines_mutex;
+extern std::mutex state_mutex;
 
 // Persistent storage file
-extern const std::string PERSISTENT_STORAGE_FILE;
+extern std::string PERSISTENT_STORAGE_FILE;
 
 class DispatchServer {
 public:
