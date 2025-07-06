@@ -227,3 +227,27 @@ TEST_F(ApiTest, StateIsPreservedAfterRestart) {
         ASSERT_EQ(engines_db["engine-123"]["status"], "idle");
     }
 }
+
+TEST_F(ApiTest, SubmitJobTriggersSaveState) {
+    // 1. Submit a job
+    nlohmann::json job_payload = {
+        {"source_url", "http://example.com/video.mp4"},
+        {"target_codec", "h264"}
+    };
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
+    ASSERT_EQ(res_submit->status, 200);
+    std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
+
+    // 2. Verify that the state file was written to
+    std::ifstream ifs(PERSISTENT_STORAGE_FILE);
+    ASSERT_TRUE(ifs.is_open());
+    nlohmann::json state = nlohmann::json::parse(ifs);
+    ifs.close();
+
+    ASSERT_TRUE(state.contains("jobs"));
+    ASSERT_TRUE(state["jobs"].contains(job_id));
+}
