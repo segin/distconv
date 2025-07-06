@@ -97,7 +97,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 68. [x] Test: A failed job with `retries` == `max_retries` becomes `failed_permanently`.
 69. [x] Test: `max_retries` defaults to 3 if not provided in the submission.
 70. [x] Test: `max_retries` can be set to 0.
-71. [ ] Test: A job with `max_retries`=0 that fails goes to `failed_permanently` immediately.
+71. [x] Test: A job with `max_retries`=0 that fails goes to `failed_permanently` immediately.
 
 ### D. Scheduling Logic
 72. [ ] Test: Scheduler assigns a pending job to an idle engine.
