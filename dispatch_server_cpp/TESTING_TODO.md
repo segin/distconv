@@ -106,7 +106,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 75. [x] Test: Scheduler correctly assigns a large job to a streaming-capable engine if available.
 76. [x] Test: Scheduler assigns a large job to the fastest non-streaming engine if no streaming engines are available.
 77. [x] Test: Scheduler assigns a small job to the slowest engine.
-78. [ ] Test: Scheduler assigns a medium job to the fastest engine.
+78. [x] Test: Scheduler assigns a medium job to the fastest engine.
 79. [ ] Test: Scheduler handles engines without benchmark data correctly (e.g., ignores them or uses a default).
 80. [ ] Test: Scheduler correctly updates engine status to `busy` upon assignment.
 81. [ ] Test: Scheduler correctly updates job status to `assigned` upon assignment.
