@@ -135,7 +135,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 ## III. Core C++ & Miscellaneous (50 Tests)
 
 ### A. Command-Line Arguments
-101. [ ] Test: Server starts with no arguments.
+101. [x] Test: Server starts with no arguments.
 102. [ ] Test: Server correctly parses the `--api-key` argument.
 103. [ ] Test: Server ignores unknown command-line arguments.
 104. [ ] Test: Server handles `--api-key` without a value gracefully.

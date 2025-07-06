@@ -310,6 +310,30 @@ dispatch_server_core.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_core.dir/build.make CMakeFiles/dispatch_server_core.dir/dispatch_server_core.cpp.s
 .PHONY : dispatch_server_core.cpp.s
 
+tests/command_line_tests.o: tests/command_line_tests.cpp.o
+.PHONY : tests/command_line_tests.o
+
+# target to build an object file
+tests/command_line_tests.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_tests.dir/build.make CMakeFiles/dispatch_server_tests.dir/tests/command_line_tests.cpp.o
+.PHONY : tests/command_line_tests.cpp.o
+
+tests/command_line_tests.i: tests/command_line_tests.cpp.i
+.PHONY : tests/command_line_tests.i
+
+# target to preprocess a source file
+tests/command_line_tests.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_tests.dir/build.make CMakeFiles/dispatch_server_tests.dir/tests/command_line_tests.cpp.i
+.PHONY : tests/command_line_tests.cpp.i
+
+tests/command_line_tests.s: tests/command_line_tests.cpp.s
+.PHONY : tests/command_line_tests.s
+
+# target to generate assembly for a file
+tests/command_line_tests.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_tests.dir/build.make CMakeFiles/dispatch_server_tests.dir/tests/command_line_tests.cpp.s
+.PHONY : tests/command_line_tests.cpp.s
+
 tests/engines_api_tests.o: tests/engines_api_tests.cpp.o
 .PHONY : tests/engines_api_tests.o
 
@@ -552,6 +576,9 @@ help:
 	@echo "... dispatch_server_core.o"
 	@echo "... dispatch_server_core.i"
 	@echo "... dispatch_server_core.s"
+	@echo "... tests/command_line_tests.o"
+	@echo "... tests/command_line_tests.i"
+	@echo "... tests/command_line_tests.s"
 	@echo "... tests/engines_api_tests.o"
 	@echo "... tests/engines_api_tests.i"
 	@echo "... tests/engines_api_tests.s"

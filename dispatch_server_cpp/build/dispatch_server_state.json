@@ -1,15 +1,27 @@
 {
-    "engines": {},
+    "engines": {
+        "engine-123": {
+            "benchmark_time": 100.0,
+            "engine_id": "engine-123",
+            "engine_type": "transcoder",
+            "status": "busy",
+            "supported_codecs": [
+                "h264",
+                "vp9"
+            ]
+        }
+    },
     "jobs": {
-        "1751746781235": {
-            "assigned_engine": null,
-            "job_id": "1751746781235",
+        "1751834793113": {
+            "assigned_engine": "engine-123",
+            "error_message": "Transcoding failed",
+            "job_id": "1751834793113",
             "job_size": 0.0,
-            "max_retries": 3,
+            "max_retries": 0,
             "output_url": null,
-            "retries": 0,
+            "retries": 1,
             "source_url": "http://example.com/video.mp4",
-            "status": "pending",
+            "status": "failed_permanently",
             "target_codec": "h264"
         }
     }

@@ -1,4 +1,6 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/dispatch_server_tests.dir/tests/command_line_tests.cpp.o"
+  "CMakeFiles/dispatch_server_tests.dir/tests/command_line_tests.cpp.o.d"
   "CMakeFiles/dispatch_server_tests.dir/tests/engines_api_tests.cpp.o"
   "CMakeFiles/dispatch_server_tests.dir/tests/engines_api_tests.cpp.o.d"
   "CMakeFiles/dispatch_server_tests.dir/tests/job_resubmission_tests.cpp.o"

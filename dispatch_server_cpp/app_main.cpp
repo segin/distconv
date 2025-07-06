@@ -3,7 +3,5 @@
 
 int main(int argc, char* argv[]) {
     std::cout << "Dispatch Server Application Starting..." << std::endl;
-    DispatchServer server;
-    server.start(8080);
-    return 0;
+    return run_dispatch_server(argc, argv, true);
 }
