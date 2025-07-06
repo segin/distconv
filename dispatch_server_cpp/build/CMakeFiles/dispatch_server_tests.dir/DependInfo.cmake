@@ -10,6 +10,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/segin/distconv/dispatch_server_cpp/tests/engines_api_tests.cpp" "CMakeFiles/dispatch_server_tests.dir/tests/engines_api_tests.cpp.o" "gcc" "CMakeFiles/dispatch_server_tests.dir/tests/engines_api_tests.cpp.o.d"
   "/home/segin/distconv/dispatch_server_cpp/tests/job_resubmission_tests.cpp" "CMakeFiles/dispatch_server_tests.dir/tests/job_resubmission_tests.cpp.o" "gcc" "CMakeFiles/dispatch_server_tests.dir/tests/job_resubmission_tests.cpp.o.d"
+  "/home/segin/distconv/dispatch_server_cpp/tests/jobs_assign_api_tests.cpp" "CMakeFiles/dispatch_server_tests.dir/tests/jobs_assign_api_tests.cpp.o" "gcc" "CMakeFiles/dispatch_server_tests.dir/tests/jobs_assign_api_tests.cpp.o.d"
   "/home/segin/distconv/dispatch_server_cpp/tests/jobs_get_api_tests.cpp" "CMakeFiles/dispatch_server_tests.dir/tests/jobs_get_api_tests.cpp.o" "gcc" "CMakeFiles/dispatch_server_tests.dir/tests/jobs_get_api_tests.cpp.o.d"
   "/home/segin/distconv/dispatch_server_cpp/tests/jobs_post_api_tests.cpp" "CMakeFiles/dispatch_server_tests.dir/tests/jobs_post_api_tests.cpp.o" "gcc" "CMakeFiles/dispatch_server_tests.dir/tests/jobs_post_api_tests.cpp.o.d"
   "/home/segin/distconv/dispatch_server_cpp/tests/jobs_status_update_tests.cpp" "CMakeFiles/dispatch_server_tests.dir/tests/jobs_status_update_tests.cpp.o" "gcc" "CMakeFiles/dispatch_server_tests.dir/tests/jobs_status_update_tests.cpp.o.d"

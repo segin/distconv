@@ -3,6 +3,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/dispatch_server_tests.dir/tests/engines_api_tests.cpp.o.d"
   "CMakeFiles/dispatch_server_tests.dir/tests/job_resubmission_tests.cpp.o"
   "CMakeFiles/dispatch_server_tests.dir/tests/job_resubmission_tests.cpp.o.d"
+  "CMakeFiles/dispatch_server_tests.dir/tests/jobs_assign_api_tests.cpp.o"
+  "CMakeFiles/dispatch_server_tests.dir/tests/jobs_assign_api_tests.cpp.o.d"
   "CMakeFiles/dispatch_server_tests.dir/tests/jobs_get_api_tests.cpp.o"
   "CMakeFiles/dispatch_server_tests.dir/tests/jobs_get_api_tests.cpp.o.d"
   "CMakeFiles/dispatch_server_tests.dir/tests/jobs_post_api_tests.cpp.o"

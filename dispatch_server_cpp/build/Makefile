@@ -358,6 +358,30 @@ tests/job_resubmission_tests.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_tests.dir/build.make CMakeFiles/dispatch_server_tests.dir/tests/job_resubmission_tests.cpp.s
 .PHONY : tests/job_resubmission_tests.cpp.s
 
+tests/jobs_assign_api_tests.o: tests/jobs_assign_api_tests.cpp.o
+.PHONY : tests/jobs_assign_api_tests.o
+
+# target to build an object file
+tests/jobs_assign_api_tests.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_tests.dir/build.make CMakeFiles/dispatch_server_tests.dir/tests/jobs_assign_api_tests.cpp.o
+.PHONY : tests/jobs_assign_api_tests.cpp.o
+
+tests/jobs_assign_api_tests.i: tests/jobs_assign_api_tests.cpp.i
+.PHONY : tests/jobs_assign_api_tests.i
+
+# target to preprocess a source file
+tests/jobs_assign_api_tests.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_tests.dir/build.make CMakeFiles/dispatch_server_tests.dir/tests/jobs_assign_api_tests.cpp.i
+.PHONY : tests/jobs_assign_api_tests.cpp.i
+
+tests/jobs_assign_api_tests.s: tests/jobs_assign_api_tests.cpp.s
+.PHONY : tests/jobs_assign_api_tests.s
+
+# target to generate assembly for a file
+tests/jobs_assign_api_tests.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dispatch_server_tests.dir/build.make CMakeFiles/dispatch_server_tests.dir/tests/jobs_assign_api_tests.cpp.s
+.PHONY : tests/jobs_assign_api_tests.cpp.s
+
 tests/jobs_get_api_tests.o: tests/jobs_get_api_tests.cpp.o
 .PHONY : tests/jobs_get_api_tests.o
 
@@ -534,6 +558,9 @@ help:
 	@echo "... tests/job_resubmission_tests.o"
 	@echo "... tests/job_resubmission_tests.i"
 	@echo "... tests/job_resubmission_tests.s"
+	@echo "... tests/jobs_assign_api_tests.o"
+	@echo "... tests/jobs_assign_api_tests.i"
+	@echo "... tests/jobs_assign_api_tests.s"
 	@echo "... tests/jobs_get_api_tests.o"
 	@echo "... tests/jobs_get_api_tests.i"
 	@echo "... tests/jobs_get_api_tests.s"

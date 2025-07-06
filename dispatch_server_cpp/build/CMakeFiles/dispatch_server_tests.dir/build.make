@@ -181,6 +181,20 @@ CMakeFiles/dispatch_server_tests.dir/tests/persistent_storage_tests.cpp.s: cmake
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/dispatch_server_tests.dir/tests/persistent_storage_tests.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/segin/distconv/dispatch_server_cpp/tests/persistent_storage_tests.cpp -o CMakeFiles/dispatch_server_tests.dir/tests/persistent_storage_tests.cpp.s
 
+CMakeFiles/dispatch_server_tests.dir/tests/jobs_assign_api_tests.cpp.o: CMakeFiles/dispatch_server_tests.dir/flags.make
+CMakeFiles/dispatch_server_tests.dir/tests/jobs_assign_api_tests.cpp.o: /home/segin/distconv/dispatch_server_cpp/tests/jobs_assign_api_tests.cpp
+CMakeFiles/dispatch_server_tests.dir/tests/jobs_assign_api_tests.cpp.o: CMakeFiles/dispatch_server_tests.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/segin/distconv/dispatch_server_cpp/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/dispatch_server_tests.dir/tests/jobs_assign_api_tests.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/dispatch_server_tests.dir/tests/jobs_assign_api_tests.cpp.o -MF CMakeFiles/dispatch_server_tests.dir/tests/jobs_assign_api_tests.cpp.o.d -o CMakeFiles/dispatch_server_tests.dir/tests/jobs_assign_api_tests.cpp.o -c /home/segin/distconv/dispatch_server_cpp/tests/jobs_assign_api_tests.cpp
+
+CMakeFiles/dispatch_server_tests.dir/tests/jobs_assign_api_tests.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/dispatch_server_tests.dir/tests/jobs_assign_api_tests.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/segin/distconv/dispatch_server_cpp/tests/jobs_assign_api_tests.cpp > CMakeFiles/dispatch_server_tests.dir/tests/jobs_assign_api_tests.cpp.i
+
+CMakeFiles/dispatch_server_tests.dir/tests/jobs_assign_api_tests.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/dispatch_server_tests.dir/tests/jobs_assign_api_tests.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/segin/distconv/dispatch_server_cpp/tests/jobs_assign_api_tests.cpp -o CMakeFiles/dispatch_server_tests.dir/tests/jobs_assign_api_tests.cpp.s
+
 # Object files for target dispatch_server_tests
 dispatch_server_tests_OBJECTS = \
 "CMakeFiles/dispatch_server_tests.dir/tests/main.cpp.o" \
@@ -190,7 +204,8 @@ dispatch_server_tests_OBJECTS = \
 "CMakeFiles/dispatch_server_tests.dir/tests/jobs_status_update_tests.cpp.o" \
 "CMakeFiles/dispatch_server_tests.dir/tests/job_resubmission_tests.cpp.o" \
 "CMakeFiles/dispatch_server_tests.dir/tests/scheduling_logic_tests.cpp.o" \
-"CMakeFiles/dispatch_server_tests.dir/tests/persistent_storage_tests.cpp.o"
+"CMakeFiles/dispatch_server_tests.dir/tests/persistent_storage_tests.cpp.o" \
+"CMakeFiles/dispatch_server_tests.dir/tests/jobs_assign_api_tests.cpp.o"
 
 # External object files for target dispatch_server_tests
 dispatch_server_tests_EXTERNAL_OBJECTS =
@@ -203,12 +218,13 @@ dispatch_server_tests: CMakeFiles/dispatch_server_tests.dir/tests/jobs_status_up
 dispatch_server_tests: CMakeFiles/dispatch_server_tests.dir/tests/job_resubmission_tests.cpp.o
 dispatch_server_tests: CMakeFiles/dispatch_server_tests.dir/tests/scheduling_logic_tests.cpp.o
 dispatch_server_tests: CMakeFiles/dispatch_server_tests.dir/tests/persistent_storage_tests.cpp.o
+dispatch_server_tests: CMakeFiles/dispatch_server_tests.dir/tests/jobs_assign_api_tests.cpp.o
 dispatch_server_tests: CMakeFiles/dispatch_server_tests.dir/build.make
 dispatch_server_tests: libdispatch_server_core.a
 dispatch_server_tests: lib/libgtest_main.a
 dispatch_server_tests: lib/libgtest.a
 dispatch_server_tests: CMakeFiles/dispatch_server_tests.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/segin/distconv/dispatch_server_cpp/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Linking CXX executable dispatch_server_tests"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/segin/distconv/dispatch_server_cpp/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Linking CXX executable dispatch_server_tests"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/dispatch_server_tests.dir/link.txt --verbose=$(VERBOSE)
 	/usr/bin/cmake -D TEST_TARGET=dispatch_server_tests -D TEST_EXECUTABLE=/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests -D TEST_EXECUTOR= -D TEST_WORKING_DIR=/home/segin/distconv/dispatch_server_cpp/build -D TEST_EXTRA_ARGS= -D TEST_PROPERTIES= -D TEST_PREFIX= -D TEST_SUFFIX= -D TEST_FILTER= -D NO_PRETTY_TYPES=FALSE -D NO_PRETTY_VALUES=FALSE -D TEST_LIST=dispatch_server_tests_TESTS -D CTEST_FILE=/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests[1]_tests.cmake -D TEST_DISCOVERY_TIMEOUT=5 -D TEST_XML_OUTPUT_DIR= -P /usr/share/cmake-3.28/Modules/GoogleTestAddTests.cmake
 

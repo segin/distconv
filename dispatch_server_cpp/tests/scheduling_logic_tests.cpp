@@ -546,3 +546,5 @@ TEST_F(ApiTest, PermanentlyFailedJobIsNotReassigned) {
     auto res_assign_again = client->Post("/assign_job/", admin_headers, nlohmann::json({}).dump(), "application/json");
     ASSERT_EQ(res_assign_again->status, 204); // No Content, because the only job is permanently failed
 }
+
+
