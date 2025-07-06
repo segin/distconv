@@ -100,7 +100,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 71. [x] Test: A job with `max_retries`=0 that fails goes to `failed_permanently` immediately.
 
 ### D. Scheduling Logic
-72. [ ] Test: Scheduler assigns a pending job to an idle engine.
+72. [x] Test: Scheduler assigns a pending job to an idle engine.
 73. [ ] Test: Scheduler does not assign a job if no engines are registered.
 74. [ ] Test: Scheduler does not assign a job if all registered engines are busy.
 75. [ ] Test: Scheduler correctly assigns a large job to a streaming-capable engine if available.
