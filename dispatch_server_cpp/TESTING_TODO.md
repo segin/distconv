@@ -80,7 +80,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 55. [x] Test: Job becomes `failed_permanently` after `POST /jobs/{job_id}/fail` if retries are exhausted.
 56. [x] Test: A `completed` job cannot be marked as failed.
 57. [x] Test: A `failed_permanently` job cannot be marked as failed again.
-58. [ ] Test: A `completed` job is not returned by `POST /assign_job/`.
+58. [x] Test: A `completed` job is not returned by `POST /assign_job/`.
 59. [ ] Test: A `failed_permanently` job is not returned by `POST /assign_job/`.
 60. [ ] Test: An `assigned` job is not returned by `POST /assign_job/`.
 
