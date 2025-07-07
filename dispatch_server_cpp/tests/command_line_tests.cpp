@@ -205,3 +205,30 @@ TEST_F(CommandLineTest, ApiKeyCanBeSetProgrammatically) {
     ASSERT_TRUE(res_no_api_key != nullptr);
     ASSERT_EQ(res_no_api_key->status, 401);
 }
+
+TEST_F(CommandLineTest, MainServerLoopCanBeStartedAndStoppedProgrammatically) {
+    server_instance = new DispatchServer();
+    server_instance->set_api_key("test_key"); // Set an API key for this test
+    server_instance->start(port, false); // Start in non-blocking mode
+
+    // Give the server a moment to start its thread
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    client = new httplib::Client("localhost", port);
+    client->set_connection_timeout(10);
+
+    // Verify server is running
+    auto res_running = client->Get("/");
+    ASSERT_TRUE(res_running != nullptr);
+    ASSERT_EQ(res_running->status, 200);
+
+    // Stop the server
+    server_instance->stop();
+
+    // Give the server a moment to shut down
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    // Verify server has stopped (expect connection error)
+    auto res_stopped = client->Get("/");
+    ASSERT_TRUE(res_stopped == nullptr); // Expect no response due to connection error
+}
