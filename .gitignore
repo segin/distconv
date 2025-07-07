@@ -1,3 +1,11 @@
 dispatch_server_state.json
 temp_state_single_engine.json
 temp_state_single_job.json
+
+# Build directories
+build/
+*/build/
+**/build/
+
+# Test state files
+dispatch_server_state_*.json

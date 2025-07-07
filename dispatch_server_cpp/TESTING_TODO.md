@@ -10,7 +10,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 3.  [x] Test: Submit a job with a missing `target_codec`. Expect HTTP 400.
 4.  [x] Test: Submit a job with an invalid JSON body. Expect HTTP 400.
 5.  [x] Test: Submit a job with an empty JSON body. Expect HTTP 400.
-6.  [ ] Test: Submit a job with extra, unexpected fields. Expect HTTP 200 and the extra fields to be ignored.
+6.  [x] Test: Submit a job with extra, unexpected fields. Expect HTTP 200 and the extra fields to be ignored.
 7.  [ ] Test: Submit a job with a non-string `source_url`. Expect HTTP 400 or for the server to handle type coercion gracefully.
 8.  [ ] Test: Submit a job with a non-string `target_codec`. Expect HTTP 400.
 9.  [ ] Test: Submit a job with a non-numeric `job_size`. Expect HTTP 400.
