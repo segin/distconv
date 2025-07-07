@@ -1,0 +1,5 @@
+if(EXISTS "/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests[1]_tests.cmake")
+  include("/home/segin/distconv/dispatch_server_cpp/build/dispatch_server_tests[1]_tests.cmake")
+else()
+  add_test(dispatch_server_tests_NOT_BUILT dispatch_server_tests_NOT_BUILT)
+endif()

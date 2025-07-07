@@ -1,0 +1,2 @@
+/usr/bin/ar qc libdispatch_server_core.a CMakeFiles/dispatch_server_core.dir/dispatch_server_core.cpp.o
+/usr/bin/ranlib libdispatch_server_core.a
