@@ -35,3 +35,20 @@ TEST_F(ApiTest, JsonParsingValidJobSubmissionRequest) {
     ASSERT_EQ(res->status, 200);
     ASSERT_TRUE(nlohmann::json::parse(res->body).contains("job_id"));
 }
+
+TEST_F(ApiTest, JsonParsingValidHeartbeatRequest) {
+    nlohmann::json engine_payload = {
+        {"engine_id", "engine-123"},
+        {"engine_type", "transcoder"},
+        {"supported_codecs", {"h264", "vp9"}},
+        {"status", "idle"},
+        {"benchmark_time", 100.0}
+    };
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res = client->Post("/engines/heartbeat", admin_headers, engine_payload.dump(), "application/json");
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 200);
+}
