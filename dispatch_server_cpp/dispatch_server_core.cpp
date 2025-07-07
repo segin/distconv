@@ -296,6 +296,11 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
                     return;
                 }
             }
+            if (request_json.contains("streaming_support") && !request_json["streaming_support"].is_boolean()) {
+                res.status = 400;
+                res.set_content("Bad Request: 'streaming_support' must be a boolean.", "text/plain");
+                return;
+            }
             {
                 std::lock_guard<std::mutex> lock(state_mutex);
                 engines_db[engine_id] = request_json;

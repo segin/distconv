@@ -485,3 +485,22 @@ TEST_F(ApiTest, ServerHandlesHeartbeatWithNegativeStorageCapacityGb) {
     ASSERT_EQ(res->status, 400); // Expect Bad Request
     ASSERT_EQ(res->body, "Bad Request: 'storage_capacity_gb' must be a non-negative number.");
 }
+
+TEST_F(ApiTest, ServerHandlesHeartbeatWithNonBooleanStreamingSupport) {
+    nlohmann::json engine_payload = {
+        {"engine_id", "engine-non-boolean-streaming"},
+        {"engine_type", "transcoder"},
+        {"supported_codecs", {"h264", "vp9"}},
+        {"status", "idle"},
+        {"benchmark_time", 100.0},
+        {"streaming_support", "true"} // Non-boolean value
+    };
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res = client->Post("/engines/heartbeat", admin_headers, engine_payload.dump(), "application/json");
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 400); // Expect Bad Request
+    ASSERT_EQ(res->body, "Bad Request: 'streaming_support' must be a boolean.");
+}
