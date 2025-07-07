@@ -400,3 +400,20 @@ TEST_F(ApiTest, ServerHandlesHeartbeatForNonExistentAssignedJob) {
         ASSERT_EQ(engines_db["engine-non-existent-job"]["status"], "busy"); // Status should be updated from the heartbeat
     }
 }
+
+TEST_F(ApiTest, ServerHandlesCompleteJobNeverAssigned) {
+    // Attempt to complete a job that was never assigned (i.e., doesn't exist)
+    std::string non_existent_job_id = "non_existent_job_123";
+    nlohmann::json complete_payload = {
+        {"output_url", "http://example.com/output.mp4"}
+    };
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+
+    auto res = client->Post("/jobs/" + non_existent_job_id + "/complete", admin_headers, complete_payload.dump(), "application/json");
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 404);
+    ASSERT_EQ(res->body, "Job not found");
+}
