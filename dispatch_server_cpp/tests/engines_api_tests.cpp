@@ -300,3 +300,21 @@ TEST_F(ApiTest, HeartbeatNonStringEngineId) {
     ASSERT_EQ(res->body, "Bad Request: 'engine_id' must be a string.");
 }
 
+TEST_F(ApiTest, ListEnginesNoApiKey) {
+    httplib::Headers headers;
+    auto res = client->Get("/engines/", headers);
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 401);
+    ASSERT_EQ(res->body, "Unauthorized: Missing 'X-API-Key' header.");
+}
+
+TEST_F(ApiTest, ListEnginesIncorrectApiKey) {
+    httplib::Headers headers = {
+        {"X-API-Key", "wrong_api_key"}
+    };
+    auto res = client->Get("/engines/", headers);
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 401);
+    ASSERT_EQ(res->body, "Unauthorized");
+}
+

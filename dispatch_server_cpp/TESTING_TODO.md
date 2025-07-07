@@ -48,7 +48,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 33. [x] Test: List all engines when no engines exist. Expect HTTP 200 and an empty JSON array.
 34. [x] Test: List all engines when one engine exists. Expect HTTP 200 and a JSON array with one engine object.
 35. [x] Test: List all engines when multiple engines exist. Expect HTTP 200 and a JSON array with all engine objects.
-36. [ ] Test: List engines without an API key when one is required. Expect HTTP 401.
+36. [x] Test: List engines without an API key when one is required. Expect HTTP 401.
 37. [ ] Test: List engines with an incorrect API key. Expect HTTP 401.
 
 ### F. `POST /jobs/{job_id}/complete`
