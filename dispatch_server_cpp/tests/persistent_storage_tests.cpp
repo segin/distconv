@@ -867,3 +867,44 @@ TEST_F(ApiTest, SaveStateCanBeMocked) {
     // Disable mocking after the test
     mock_save_state_enabled = false;
 }
+
+TEST_F(ApiTest, LoadStateCanBeMocked) {
+    // 1. Prepare mocked data
+    nlohmann::json mocked_jobs = {
+        {"mock_job_1", {{"job_id", "mock_job_1"}, {"source_url", "http://mock.com/video1.mp4"}, {"status", "pending"}}},
+        {"mock_job_2", {{"job_id", "mock_job_2"}, {"source_url", "http://mock.com/video2.mp4"}, {"status", "assigned"}}}
+    };
+    nlohmann::json mocked_engines = {
+        {"mock_engine_1", {{"engine_id", "mock_engine_1"}, {"engine_type", "transcoder"}, {"status", "idle"}}},
+        {"mock_engine_2", {{"engine_id", "mock_engine_2"}, {"engine_type", "transcoder"}, {"status", "busy"}}}
+    };
+    mock_load_state_data["jobs"] = mocked_jobs;
+    mock_load_state_data["engines"] = mocked_engines;
+
+    // 2. Enable mocking of load_state
+    mock_load_state_enabled = true;
+
+    // 3. Clear current in-memory state and call load_state
+    clear_db();
+    load_state();
+
+    // 4. Verify that the mocked data was loaded into the in-memory databases
+    {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        ASSERT_EQ(jobs_db.size(), 2);
+        ASSERT_TRUE(jobs_db.contains("mock_job_1"));
+        ASSERT_TRUE(jobs_db.contains("mock_job_2"));
+        ASSERT_EQ(jobs_db["mock_job_1"]["source_url"], "http://mock.com/video1.mp4");
+        ASSERT_EQ(jobs_db["mock_job_2"]["status"], "assigned");
+
+        ASSERT_EQ(engines_db.size(), 2);
+        ASSERT_TRUE(engines_db.contains("mock_engine_1"));
+        ASSERT_TRUE(engines_db.contains("mock_engine_2"));
+        ASSERT_EQ(engines_db["mock_engine_1"]["status"], "idle");
+        ASSERT_EQ(engines_db["mock_engine_2"]["engine_type"], "transcoder");
+    }
+
+    // 5. Disable mocking after the test
+    mock_load_state_enabled = false;
+    mock_load_state_data.clear();
+}
