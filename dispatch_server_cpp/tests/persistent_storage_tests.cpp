@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <thread>
 #include <chrono>
+#include <set> // For checking uniqueness of job IDs
 
 #include "test_common.h"
 
@@ -681,4 +682,30 @@ TEST_F(ApiTest, LoadStateFromZeroJobsAndZeroEnginesFile) {
         ASSERT_TRUE(jobs_db.empty());
         ASSERT_TRUE(engines_db.empty());
     }
+}
+
+TEST_F(ApiTest, JobIdGenerationIsUnique) {
+    // 1. Generate a large number of job IDs and check for uniqueness
+    const int num_jobs = 10000; // Generate 10,000 job IDs
+    std::set<std::string> job_ids;
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+
+    for (int i = 0; i < num_jobs; ++i) {
+        nlohmann::json job_payload = {
+            {"source_url", "http://example.com/video_" + std::to_string(i) + ".mp4"},
+            {"target_codec", "h264"}
+        };
+        auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
+        ASSERT_EQ(res_submit->status, 200);
+        std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
+        
+        // Check if the job ID already exists in the set
+        ASSERT_TRUE(job_ids.find(job_id) == job_ids.end()) << "Duplicate job ID found: " << job_id;
+        job_ids.insert(job_id);
+    }
+    // Verify that the number of unique job IDs matches the number of jobs generated
+    ASSERT_EQ(job_ids.size(), num_jobs);
 }
