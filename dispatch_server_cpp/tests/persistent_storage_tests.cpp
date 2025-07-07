@@ -500,5 +500,142 @@ TEST_F(ApiTest, LoadStateHandlesOnlyJobsKey) {
     std::remove(temp_storage_file.c_str());
 }
 
+TEST_F(ApiTest, LoadStateWithSingleJob) {
+    // 1. Create a temporary state file with a single job
+    std::string temp_storage_file = "temp_state_single_job.json";
+    PERSISTENT_STORAGE_FILE = temp_storage_file;
+    nlohmann::json single_job_state = {
+        {"jobs", {
+            {"job_id_1", {
+                {"job_id", "job_id_1"},
+                {"source_url", "http://example.com/video_single.mp4"},
+                {"target_codec", "h264"},
+                {"status", "pending"}
+            }}
+        }},
+        {"engines", nlohmann::json::object()} // Ensure engines is an empty object
+    };
+    std::ofstream ofs(temp_storage_file);
+    ofs << single_job_state.dump(4);
+    ofs.close();
 
+    // 2. Clear the in-memory database to ensure a clean load
+    clear_db();
 
+    // 3. Load the state from the temporary file
+    load_state();
+
+    // 4. Verify that the job is loaded correctly and engines_db is empty
+    {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        ASSERT_EQ(jobs_db.size(), 1);
+        ASSERT_TRUE(jobs_db.contains("job_id_1"));
+        ASSERT_EQ(jobs_db["job_id_1"]["source_url"], "http://example.com/video_single.mp4");
+        ASSERT_EQ(jobs_db["job_id_1"]["status"], "pending");
+        ASSERT_TRUE(engines_db.empty());
+    }
+
+    // 5. Clean up the temporary file
+    std::remove(temp_storage_file.c_str());
+}
+
+TEST_F(ApiTest, LoadStateWithSingleEngine) {
+    // 1. Create a temporary state file with a single engine
+    std::string temp_storage_file = "temp_state_single_engine.json";
+    PERSISTENT_STORAGE_FILE = temp_storage_file;
+    nlohmann::json single_engine_state = {
+        {"jobs", nlohmann::json::object()}, // Ensure jobs is an empty object
+        {"engines", {
+            {"engine_id_1", {
+                {"engine_id", "engine_id_1"},
+                {"engine_type", "transcoder"},
+                {"supported_codecs", {"h264", "vp9"}},
+                {"status", "idle"},
+                {"benchmark_time", 100.0}
+            }}
+        }}
+    };
+    std::ofstream ofs(temp_storage_file);
+    ofs << single_engine_state.dump(4);
+    ofs.close();
+
+    // 2. Clear the in-memory database to ensure a clean load
+    clear_db();
+
+    // 3. Load the state from the temporary file
+    load_state();
+
+    // 4. Verify that the engine is loaded correctly and jobs_db is empty
+    {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        ASSERT_TRUE(jobs_db.empty());
+        ASSERT_EQ(engines_db.size(), 1);
+        ASSERT_TRUE(engines_db.contains("engine_id_1"));
+        ASSERT_EQ(engines_db["engine_id_1"]["engine_type"], "transcoder");
+        ASSERT_EQ(engines_db["engine_id_1"]["status"], "idle");
+    }
+
+    // 5. Clean up the temporary file
+    std::remove(temp_storage_file.c_str());
+}
+
+TEST_F(ApiTest, SaveStateWithSingleJob) {
+    // 1. Create a job
+    nlohmann::json job_payload = {
+        {"source_url", "http://example.com/video_single_save.mp4"},
+        {"target_codec", "h264"}
+    };
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
+    ASSERT_EQ(res_submit->status, 200);
+    std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
+
+    // 2. Save the state
+    save_state();
+
+    // 3. Read the state file and verify its contents
+    std::ifstream ifs(PERSISTENT_STORAGE_FILE);
+    ASSERT_TRUE(ifs.is_open());
+    nlohmann::json state = nlohmann::json::parse(ifs);
+    ifs.close();
+
+    ASSERT_TRUE(state.contains("jobs"));
+    ASSERT_TRUE(state["jobs"].contains(job_id));
+    ASSERT_EQ(state["jobs"][job_id]["source_url"], "http://example.com/video_single_save.mp4");
+    ASSERT_EQ(state["jobs"][job_id]["status"], "pending");
+}
+
+TEST_F(ApiTest, SaveStateWithSingleEngine) {
+    // 1. Register an engine
+    nlohmann::json engine_payload = {
+        {"engine_id", "engine_single_save"},
+        {"engine_type", "transcoder"},
+        {"supported_codecs", {"h264", "vp9"}},
+        {"status", "idle"},
+        {"benchmark_time", 100.0}
+    };
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res_heartbeat = client->Post("/engines/heartbeat", admin_headers, engine_payload.dump(), "application/json");
+    ASSERT_EQ(res_heartbeat->status, 200);
+    std::string engine_id = "engine_single_save";
+
+    // 2. Save the state
+    save_state();
+
+    // 3. Read the state file and verify its contents
+    std::ifstream ifs(PERSISTENT_STORAGE_FILE);
+    ASSERT_TRUE(ifs.is_open());
+    nlohmann::json state = nlohmann::json::parse(ifs);
+    ifs.close();
+
+    ASSERT_TRUE(state.contains("engines"));
+    ASSERT_TRUE(state["engines"].contains(engine_id));
+    ASSERT_EQ(state["engines"][engine_id]["engine_type"], "transcoder");
+    ASSERT_EQ(state["engines"][engine_id]["status"], "idle");
+}

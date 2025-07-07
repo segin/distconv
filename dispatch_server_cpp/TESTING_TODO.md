@@ -149,10 +149,10 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 110. [x] Test: Access the main engines database (`engines_db`) from multiple threads with proper locking.
 
 ### C. Helper Functions & Utilities
-111. [ ] Test: `load_state` with a file containing a single job.
-112. [ ] Test: `load_state` with a file containing a single engine.
-113. [ ] Test: `save_state` with a single job.
-114. [ ] Test: `save_state` with a single engine.
+111. [x] Test: `load_state` with a file containing a single job.
+112. [x] Test: `load_state` with a file containing a single engine.
+113. [x] Test: `save_state` with a single job.
+114. [x] Test: `save_state` with a single engine.
 115. [ ] Test: `save_state` with zero jobs and zero engines.
 116. [ ] Test: `load_state` from a file created by `save_state` with zero jobs/engines.
 117. [ ] Test: Job ID generation is sufficiently random to avoid collisions in a tight loop.
