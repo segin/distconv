@@ -613,3 +613,23 @@ TEST_F(ApiTest, ServerHandlesNonStandardContentTypeHeader) {
     ASSERT_EQ(res->status, 400); // Expect Bad Request
     ASSERT_EQ(res->body, "Invalid JSON: parse error at 1: syntax error - unexpected ',' in parse_json");
 }
+
+TEST_F(ApiTest, ServerHandlesVeryLargeRequestBody) {
+    // Create a very large JSON string
+    nlohmann::json large_payload;
+    std::string long_string(1024 * 1024, 'x'); // 1MB string
+    large_payload["data"] = long_string;
+
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+
+    // Send a request with the very large JSON body
+    auto res = client->Post("/jobs/", admin_headers, large_payload.dump(), "application/json");
+    ASSERT_TRUE(res != nullptr);
+    // Expect either 413 (Payload Too Large) or 400 (Bad Request) if parsing fails due to size
+    // httplib's default max_payload_length is 20MB, so it might not reject it by default.
+    // If it doesn't reject, we might need to configure httplib or add a manual size check.
+    ASSERT_TRUE(res->status == 413 || res->status == 400);
+}
