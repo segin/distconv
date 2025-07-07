@@ -277,3 +277,37 @@ TEST_F(ApiTest, ServerHandlesLargeNumberOfJobs) {
     nlohmann::json listed_jobs = nlohmann::json::parse(res_list->body);
     ASSERT_EQ(listed_jobs.size(), num_jobs);
 }
+
+TEST_F(ApiTest, ServerHandlesLargeNumberOfEngines) {
+    const int num_engines = 1000; // Number of engines to create
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+
+    for (int i = 0; i < num_engines; ++i) {
+        nlohmann::json engine_payload = {
+            {"engine_id", "engine-" + std::to_string(i)},
+            {"engine_type", "transcoder"},
+            {"supported_codecs", {"h264", "vp9"}},
+            {"status", "idle"},
+            {"benchmark_time", 100.0}
+        };
+        auto res = client->Post("/engines/heartbeat", admin_headers, engine_payload.dump(), "application/json");
+        ASSERT_TRUE(res != nullptr);
+        ASSERT_EQ(res->status, 200);
+    }
+
+    // Verify that all engines are present in the database
+    {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        ASSERT_EQ(engines_db.size(), num_engines);
+    }
+
+    // Optionally, try to retrieve all engines to ensure the server can handle listing them
+    auto res_list = client->Get("/engines/", admin_headers);
+    ASSERT_TRUE(res_list != nullptr);
+    ASSERT_EQ(res_list->status, 200);
+    nlohmann::json listed_engines = nlohmann::json::parse(res_list->body);
+    ASSERT_EQ(listed_engines.size(), num_engines);
+}
