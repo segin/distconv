@@ -176,7 +176,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 133. [x] Test: Server handles a heartbeat with a negative `storage_capacity_gb`.
 134. [x] Test: Server handles a heartbeat with a non-boolean `streaming_support`.
 135. [x] Test: Server handles a benchmark result for a non-existent engine.
-136. [ ] Test: Server handles a benchmark result with a negative `benchmark_time`.
+136. [x] Test: Server handles a benchmark result with a negative `benchmark_time`.
 137. [ ] Test: Server handles a request to `/jobs/` with a trailing slash.
 138. [ ] Test: Server handles a request to `/engines/` with a trailing slash.
 139. [ ] Test: Server handles a request with a non-standard `Content-Type` header.

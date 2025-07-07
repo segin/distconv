@@ -332,6 +332,18 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
         try {
             nlohmann::json request_json = nlohmann::json::parse(req.body);
             std::string engine_id = request_json["engine_id"];
+            if (request_json.contains("benchmark_time")) {
+                if (!request_json["benchmark_time"].is_number()) {
+                    res.status = 400;
+                    res.set_content("Bad Request: 'benchmark_time' must be a number.", "text/plain");
+                    return;
+                }
+                if (request_json["benchmark_time"].is_number() && request_json["benchmark_time"].get<double>() < 0) {
+                    res.status = 400;
+                    res.set_content("Bad Request: 'benchmark_time' must be a non-negative number.", "text/plain");
+                    return;
+                }
+            }
             {
                 std::lock_guard<std::mutex> lock(state_mutex);
                 if (engines_db.contains(engine_id)) {
