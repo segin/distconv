@@ -42,7 +42,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 29. [x] Test: Send a heartbeat with a missing `engine_id`. Expect HTTP 400 or server-side error.
 30. [x] Test: Send a heartbeat with a non-string `engine_id`. Expect HTTP 400.
 31. [x] Test: Send a heartbeat without an API key when one is required. Expect HTTP 401.
-32. [ ] Test: Send a heartbeat with an incorrect API key. Expect HTTP 401.
+32. [x] Test: Send a heartbeat with an incorrect API key. Expect HTTP 401.
 
 ### E. `GET /engines/` (List All Engines)
 33. [ ] Test: List all engines when no engines exist. Expect HTTP 200 and an empty JSON array.
