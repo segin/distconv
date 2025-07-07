@@ -801,3 +801,41 @@ TEST_F(ApiTest, EnginesDbCanBeClearedAndPrePopulated) {
         ASSERT_FALSE(engines_db.contains("engine_initial_1"));
     }
 }
+
+TEST_F(ApiTest, PersistentStorageFileCanBePointedToTemporaryFile) {
+    // 1. Set a temporary file path for persistent storage
+    std::string original_persistent_storage_file = PERSISTENT_STORAGE_FILE;
+    std::string temp_storage_file = "temp_persistent_storage_test.json";
+    PERSISTENT_STORAGE_FILE = temp_storage_file;
+
+    // Ensure the temporary file does not exist initially
+    std::remove(temp_storage_file.c_str());
+
+    // 2. Create a job and save the state
+    nlohmann::json job_payload = {
+        {"source_url", "http://example.com/video_temp_file.mp4"},
+        {"target_codec", "h264"}
+    };
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
+    ASSERT_EQ(res_submit->status, 200);
+    std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
+    save_state();
+
+    // 3. Verify that the state was saved to the temporary file
+    std::ifstream ifs(temp_storage_file);
+    ASSERT_TRUE(ifs.is_open());
+    nlohmann::json state = nlohmann::json::parse(ifs);
+    ifs.close();
+
+    ASSERT_TRUE(state.contains("jobs"));
+    ASSERT_TRUE(state["jobs"].contains(job_id));
+    ASSERT_EQ(state["jobs"][job_id]["source_url"], "http://example.com/video_temp_file.mp4");
+
+    // 4. Clean up the temporary file and restore original path
+    std::remove(temp_storage_file.c_str());
+    PERSISTENT_STORAGE_FILE = original_persistent_storage_file;
+}
