@@ -246,3 +246,34 @@ TEST_F(ApiTest, ServerHandlesExtremelyLongEngineId) {
         ASSERT_EQ(engines_db[extremely_long_engine_id]["engine_type"], "transcoder");
     }
 }
+
+TEST_F(ApiTest, ServerHandlesLargeNumberOfJobs) {
+    const int num_jobs = 1000; // Number of jobs to create
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+
+    for (int i = 0; i < num_jobs; ++i) {
+        nlohmann::json job_payload = {
+            {"source_url", "http://example.com/video_large_job_test_" + std::to_string(i) + ".mp4"},
+            {"target_codec", "h264"}
+        };
+        auto res = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
+        ASSERT_TRUE(res != nullptr);
+        ASSERT_EQ(res->status, 200);
+    }
+
+    // Verify that all jobs are present in the database
+    {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        ASSERT_EQ(jobs_db.size(), num_jobs);
+    }
+
+    // Optionally, try to retrieve all jobs to ensure the server can handle listing them
+    auto res_list = client->Get("/jobs/", admin_headers);
+    ASSERT_TRUE(res_list != nullptr);
+    ASSERT_EQ(res_list->status, 200);
+    nlohmann::json listed_jobs = nlohmann::json::parse(res_list->body);
+    ASSERT_EQ(listed_jobs.size(), num_jobs);
+}
