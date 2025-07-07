@@ -596,3 +596,20 @@ TEST_F(ApiTest, ServerHandlesEnginesTrailingSlash) {
     ASSERT_FALSE(listed_engines.empty());
     ASSERT_EQ(listed_engines[0]["engine_id"], "engine-trailing-slash");
 }
+
+TEST_F(ApiTest, ServerHandlesNonStandardContentTypeHeader) {
+    nlohmann::json job_payload = {
+        {"source_url", "http://example.com/video.mp4"},
+        {"target_codec", "h264"}
+    };
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+
+    // Send a request with a non-standard Content-Type header
+    auto res = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/x-custom-json");
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 400); // Expect Bad Request
+    ASSERT_EQ(res->body, "Invalid JSON: parse error at 1: syntax error - unexpected ',' in parse_json");
+}

@@ -179,7 +179,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 136. [x] Test: Server handles a benchmark result with a negative `benchmark_time`.
 137. [x] Test: Server handles a request to `/jobs/` with a trailing slash.
 138. [x] Test: Server handles a request to `/engines/` with a trailing slash.
-139. [ ] Test: Server handles a request with a non-standard `Content-Type` header.
+139. [x] Test: Server handles a request with a non-standard `Content-Type` header.
 140. [ ] Test: Server handles a request with a very large request body (should be rejected).
 
 ### E. Refactoring-Specific Tests
