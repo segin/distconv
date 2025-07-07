@@ -755,3 +755,49 @@ TEST_F(ApiTest, JobsDbCanBeClearedAndPrePopulated) {
         ASSERT_FALSE(jobs_db.contains("job_initial_1"));
     }
 }
+
+TEST_F(ApiTest, EnginesDbCanBeClearedAndPrePopulated) {
+    // 1. Add some initial engines
+    nlohmann::json engine1 = {{"engine_id", "engine_initial_1"}, {"engine_type", "transcoder"}, {"status", "idle"}};
+    nlohmann::json engine2 = {{"engine_id", "engine_initial_2"}, {"engine_type", "transcoder"}, {"status", "busy"}};
+    {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        engines_db["engine_initial_1"] = engine1;
+        engines_db["engine_initial_2"] = engine2;
+    }
+
+    // Verify initial state
+    {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        ASSERT_EQ(engines_db.size(), 2);
+        ASSERT_TRUE(engines_db.contains("engine_initial_1"));
+        ASSERT_TRUE(engines_db.contains("engine_initial_2"));
+    }
+
+    // 2. Clear the database
+    clear_db();
+
+    // Verify database is empty
+    {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        ASSERT_TRUE(engines_db.empty());
+    }
+
+    // 3. Pre-populate with new engines
+    nlohmann::json engine_new_1 = {{"engine_id", "engine_new_1"}, {"engine_type", "transcoder"}, {"status", "idle"}};
+    nlohmann::json engine_new_2 = {{"engine_id", "engine_new_2"}, {"engine_type", "transcoder"}, {"status", "busy"}};
+    {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        engines_db["engine_new_1"] = engine_new_1;
+        engines_db["engine_new_2"] = engine_new_2;
+    }
+
+    // Verify new state
+    {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        ASSERT_EQ(engines_db.size(), 2);
+        ASSERT_TRUE(engines_db.contains("engine_new_1"));
+        ASSERT_TRUE(engines_db.contains("engine_new_2"));
+        ASSERT_FALSE(engines_db.contains("engine_initial_1"));
+    }
+}

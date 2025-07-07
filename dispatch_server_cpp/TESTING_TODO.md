@@ -187,7 +187,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 142. [x] Test: (Refactor) `API_KEY` can be set programmatically, not just from `argv`.
 143. [x] Test: (Refactor) The `httplib::Server` instance can be accessed from tests.
 144. [x] Test: (Refactor) `jobs_db` can be cleared and pre-populated for a test.
-145. [ ] Test: (Refactor) `engines_db` can be cleared and pre-populated for a test.
+145. [x] Test: (Refactor) `engines_db` can be cleared and pre-populated for a test.
 146. [ ] Test: (Refactor) `PERSISTENT_STORAGE_FILE` can be pointed to a temporary file for a test.
 147. [ ] Test: (Refactor) The main server loop can be started and stopped programmatically from a test.
 148. [ ] Test: (Refactor) The server can be started on a random available port to allow parallel test execution.
