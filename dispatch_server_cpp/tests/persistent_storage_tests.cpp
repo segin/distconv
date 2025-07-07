@@ -709,3 +709,49 @@ TEST_F(ApiTest, JobIdGenerationIsUnique) {
     // Verify that the number of unique job IDs matches the number of jobs generated
     ASSERT_EQ(job_ids.size(), num_jobs);
 }
+
+TEST_F(ApiTest, JobsDbCanBeClearedAndPrePopulated) {
+    // 1. Add some initial jobs
+    nlohmann::json job1 = {{"job_id", "job_initial_1"}, {"source_url", "url_initial_1"}, {"status", "pending"}};
+    nlohmann::json job2 = {{"job_id", "job_initial_2"}, {"source_url", "url_initial_2"}, {"status", "completed"}};
+    {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        jobs_db["job_initial_1"] = job1;
+        jobs_db["job_initial_2"] = job2;
+    }
+
+    // Verify initial state
+    {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        ASSERT_EQ(jobs_db.size(), 2);
+        ASSERT_TRUE(jobs_db.contains("job_initial_1"));
+        ASSERT_TRUE(jobs_db.contains("job_initial_2"));
+    }
+
+    // 2. Clear the database
+    clear_db();
+
+    // Verify database is empty
+    {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        ASSERT_TRUE(jobs_db.empty());
+    }
+
+    // 3. Pre-populate with new jobs
+    nlohmann::json job_new_1 = {{"job_id", "job_new_1"}, {"source_url", "url_new_1"}, {"status", "pending"}};
+    nlohmann::json job_new_2 = {{"job_id", "job_new_2"}, {"source_url", "url_new_2"}, {"status", "assigned"}};
+    {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        jobs_db["job_new_1"] = job_new_1;
+        jobs_db["job_new_2"] = job_new_2;
+    }
+
+    // Verify new state
+    {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        ASSERT_EQ(jobs_db.size(), 2);
+        ASSERT_TRUE(jobs_db.contains("job_new_1"));
+        ASSERT_TRUE(jobs_db.contains("job_new_2"));
+        ASSERT_FALSE(jobs_db.contains("job_initial_1"));
+    }
+}
