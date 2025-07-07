@@ -548,3 +548,26 @@ TEST_F(ApiTest, ServerHandlesBenchmarkResultWithNegativeBenchmarkTime) {
     ASSERT_EQ(res->status, 400); // Expect Bad Request
     ASSERT_EQ(res->body, "Bad Request: 'benchmark_time' must be a non-negative number.");
 }
+
+TEST_F(ApiTest, ServerHandlesJobsTrailingSlash) {
+    // Submit a job to /jobs/ with a trailing slash
+    nlohmann::json job_payload = {
+        {"source_url", "http://example.com/video_trailing_slash.mp4"},
+        {"target_codec", "h264"}
+    };
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 200);
+    ASSERT_TRUE(nlohmann::json::parse(res->body).contains("job_id"));
+
+    // Verify that the job was created
+    std::string job_id = nlohmann::json::parse(res->body)["job_id"];
+    {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        ASSERT_TRUE(jobs_db.contains(job_id));
+    }
+}
