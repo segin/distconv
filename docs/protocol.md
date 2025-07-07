@@ -251,12 +251,41 @@ Job {job_id} marked as completed
 - `400 Bad Request: 'output_url' must be a string.`
 - `400 Invalid JSON: {error_details}`
 
-## 2.4 Job Failure (Pending Documentation)
+## 2.4 Job Failure
 
 **Endpoint:** `POST /jobs/{job_id}/fail`  
 **Purpose:** Mark a job as failed by a transcoding engine
 
-*This endpoint is currently being implemented and documented as part of tests 43-47.*
+**Request Headers:**
+```http
+Content-Type: application/json
+X-API-Key: {api_key}
+```
+
+**Request Body:**
+```json
+{
+  "error_message": "Transcoding failed due to codec incompatibility"
+}
+```
+
+**Required Fields:**
+- `error_message` (string): Description of the failure reason
+
+**Success Response:** `200 OK`
+```
+Job {job_id} re-queued
+```
+or
+```
+Job {job_id} failed permanently
+```
+
+**Error Responses:**
+- `404 Job not found` - Job ID does not exist
+- `400 Bad Request: 'error_message' is missing.` - When error_message field is missing
+- `400 Bad Request: Job is already in a final state.` - When job is already completed or permanently failed
+- `400 Invalid JSON: {error_details}` - When request body is malformed JSON
 
 ## 2.5 Job Assignment (Pending Documentation)
 

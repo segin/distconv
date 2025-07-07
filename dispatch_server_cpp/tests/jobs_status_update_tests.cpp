@@ -242,3 +242,125 @@ TEST_F(ApiTest, CompleteJobNoApiKey) {
     ASSERT_EQ(res->status, 401);
     ASSERT_EQ(res->body, "Unauthorized: Missing 'X-API-Key' header.");
 }
+
+TEST_F(ApiTest, FailJobValid) {
+    // Create a dummy job for testing
+    nlohmann::json request_body;
+    request_body["source_url"] = "http://example.com/video.mp4";
+    request_body["target_codec"] = "h264";
+
+    httplib::Headers headers = {
+        {"X-API-Key", api_key}
+    };
+
+    auto res_post = client->Post("/jobs/", headers, request_body.dump(), "application/json");
+    ASSERT_TRUE(res_post != nullptr);
+    ASSERT_EQ(res_post->status, 200);
+
+    nlohmann::json response_json = nlohmann::json::parse(res_post->body);
+    std::string job_id = response_json["job_id"];
+
+    // Fail the job
+    nlohmann::json fail_body;
+    fail_body["error_message"] = "Transcoding failed due to codec incompatibility";
+
+    auto res_fail = client->Post(("/jobs/" + job_id + "/fail").c_str(), headers, fail_body.dump(), "application/json");
+    ASSERT_TRUE(res_fail != nullptr);
+    ASSERT_EQ(res_fail->status, 200);
+}
+
+TEST_F(ApiTest, FailJobInvalidJobId) {
+    nlohmann::json fail_body;
+    fail_body["error_message"] = "Transcoding failed";
+
+    httplib::Headers headers = {
+        {"X-API-Key", api_key}
+    };
+
+    auto res = client->Post("/jobs/invalid_job_id/fail", headers, fail_body.dump(), "application/json");
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 404);
+    ASSERT_EQ(res->body, "Job not found");
+}
+
+TEST_F(ApiTest, FailJobMissingErrorMessage) {
+    // Create a dummy job for testing
+    nlohmann::json request_body;
+    request_body["source_url"] = "http://example.com/video.mp4";
+    request_body["target_codec"] = "h264";
+
+    httplib::Headers headers = {
+        {"X-API-Key", api_key}
+    };
+
+    auto res_post = client->Post("/jobs/", headers, request_body.dump(), "application/json");
+    ASSERT_TRUE(res_post != nullptr);
+    ASSERT_EQ(res_post->status, 200);
+
+    nlohmann::json response_json = nlohmann::json::parse(res_post->body);
+    std::string job_id = response_json["job_id"];
+
+    // Try to fail job without error_message
+    nlohmann::json fail_body;
+    // Missing error_message
+
+    auto res = client->Post(("/jobs/" + job_id + "/fail").c_str(), headers, fail_body.dump(), "application/json");
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 400);
+    ASSERT_EQ(res->body, "Bad Request: 'error_message' is missing.");
+}
+
+TEST_F(ApiTest, FailJobInvalidJson) {
+    // Create a dummy job for testing
+    nlohmann::json request_body;
+    request_body["source_url"] = "http://example.com/video.mp4";
+    request_body["target_codec"] = "h264";
+
+    httplib::Headers headers = {
+        {"X-API-Key", api_key}
+    };
+
+    auto res_post = client->Post("/jobs/", headers, request_body.dump(), "application/json");
+    ASSERT_TRUE(res_post != nullptr);
+    ASSERT_EQ(res_post->status, 200);
+
+    nlohmann::json response_json = nlohmann::json::parse(res_post->body);
+    std::string job_id = response_json["job_id"];
+
+    // Try to fail job with invalid JSON
+    std::string invalid_json_payload = "{this is not json}";
+
+    auto res = client->Post(("/jobs/" + job_id + "/fail").c_str(), headers, invalid_json_payload, "application/json");
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 400);
+    ASSERT_TRUE(res->body.rfind("Invalid JSON:", 0) == 0);
+}
+
+TEST_F(ApiTest, FailJobNoApiKey) {
+    // Create a dummy job for testing
+    nlohmann::json request_body;
+    request_body["source_url"] = "http://example.com/video.mp4";
+    request_body["target_codec"] = "h264";
+
+    httplib::Headers headers = {
+        {"X-API-Key", api_key}
+    };
+
+    auto res_post = client->Post("/jobs/", headers, request_body.dump(), "application/json");
+    ASSERT_TRUE(res_post != nullptr);
+    ASSERT_EQ(res_post->status, 200);
+
+    nlohmann::json response_json = nlohmann::json::parse(res_post->body);
+    std::string job_id = response_json["job_id"];
+
+    // Try to fail job without API key
+    nlohmann::json fail_body;
+    fail_body["error_message"] = "Transcoding failed";
+
+    httplib::Headers no_api_key_headers;
+
+    auto res = client->Post(("/jobs/" + job_id + "/fail").c_str(), no_api_key_headers, fail_body.dump(), "application/json");
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 401);
+    ASSERT_EQ(res->body, "Unauthorized: Missing 'X-API-Key' header.");
+}
