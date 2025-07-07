@@ -26,7 +26,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 17. [x] Test: Request status for a non-existent job ID. Expect HTTP 404.
 18. [x] Test: Request status for a malformed job ID. Expect HTTP 404 or appropriate routing failure.
 19. [x] Test: Request status without an API key when one is required. Expect HTTP 401.
-20. [ ] Test: Request status with an incorrect API key. Expect HTTP 401.
+20. [x] Test: Request status with an incorrect API key. Expect HTTP 401.
 
 ### C. `GET /jobs/` (List All Jobs)
 21. [ ] Test: List all jobs when no jobs exist. Expect HTTP 200 and an empty JSON array.
