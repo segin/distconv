@@ -18,9 +18,9 @@ extern std::string PERSISTENT_STORAGE_FILE;
 extern bool mock_save_state_enabled;
 extern int save_state_call_count;
 
-// Global flag and counter for mocking save_state
-extern bool mock_save_state_enabled;
-extern int save_state_call_count;
+// Global flag and data for mocking load_state
+extern bool mock_load_state_enabled;
+extern nlohmann::json mock_load_state_data;
 
 class DispatchServer {
 public:

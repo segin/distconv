@@ -22,10 +22,25 @@ int save_state_call_count = 0;
 // Forward declaration for save_state_unlocked
 void save_state_unlocked();
 
+bool mock_load_state_enabled = false;
+nlohmann::json mock_load_state_data = nlohmann::json::object();
+
 void load_state() {
     std::lock_guard<std::mutex> lock(state_mutex);
     jobs_db.clear();
     engines_db.clear();
+
+    if (mock_load_state_enabled) {
+        if (mock_load_state_data.contains("jobs")) {
+            jobs_db = mock_load_state_data["jobs"];
+        }
+        if (mock_load_state_data.contains("engines")) {
+            engines_db = mock_load_state_data["engines"];
+        }
+        std::cout << "Loaded mocked state: jobs=" << jobs_db.size() << ", engines=" << engines_db.size() << std::endl;
+        return;
+    }
+
     std::ifstream ifs(PERSISTENT_STORAGE_FILE);
     if (ifs.is_open()) {
         try {
