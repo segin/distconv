@@ -167,3 +167,21 @@ TEST_F(ApiTest, ListAllJobsWithOneJob) {
     ASSERT_TRUE(response_json.is_array());
     ASSERT_EQ(response_json.size(), 1);
 }
+
+TEST_F(ApiTest, ListJobsNoApiKey) {
+    httplib::Headers headers;
+    auto res = client->Get("/jobs/", headers);
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 401);
+    ASSERT_EQ(res->body, "Unauthorized: Missing 'X-API-Key' header.");
+}
+
+TEST_F(ApiTest, ListJobsIncorrectApiKey) {
+    httplib::Headers headers = {
+        {"X-API-Key", "wrong_api_key"}
+    };
+    auto res = client->Get("/jobs/", headers);
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 401);
+    ASSERT_EQ(res->body, "Unauthorized");
+}

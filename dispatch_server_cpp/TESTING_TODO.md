@@ -32,7 +32,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 21. [x] Test: List all jobs when no jobs exist. Expect HTTP 200 and an empty JSON array.
 22. [x] Test: List all jobs when one job exists. Expect HTTP 200 and a JSON array with one job object.
 23. [x] Test: List all jobs when multiple jobs exist. Expect HTTP 200 and a JSON array with all job objects.
-24. [ ] Test: List jobs without an API key when one is required. Expect HTTP 401.
+24. [x] Test: List jobs without an API key when one is required. Expect HTTP 401.
 25. [ ] Test: List jobs with an incorrect API key. Expect HTTP 401.
 
 ### D. `POST /engines/heartbeat`
