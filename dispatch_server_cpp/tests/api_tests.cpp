@@ -190,3 +190,31 @@ TEST_F(ApiTest, ServerHandlesClientDisconnectingMidRequest) {
         server_thread.join();
     }
 }
+
+TEST_F(ApiTest, ServerHandlesExtremelyLongSourceUrl) {
+    // Create an extremely long source_url
+    std::string long_url_base = "http://example.com/long_video_path/";
+    std::string long_url_segment(3000, 'a'); // 3000 'a' characters
+    std::string extremely_long_source_url = long_url_base + long_url_segment + ".mp4";
+
+    nlohmann::json job_payload = {
+        {"source_url", extremely_long_source_url},
+        {"target_codec", "h264"}
+    };
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+
+    auto res = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 200); // Expect 200 OK if the server handles it gracefully
+
+    // Verify the job was stored with the correct long URL
+    std::string job_id = nlohmann::json::parse(res->body)["job_id"];
+    {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        ASSERT_TRUE(jobs_db.contains(job_id));
+        ASSERT_EQ(jobs_db[job_id]["source_url"], extremely_long_source_url);
+    }
+}
