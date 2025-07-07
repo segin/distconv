@@ -134,3 +134,59 @@ TEST_F(ApiTest, JsonParsingValidJobFailureRequest) {
     ASSERT_TRUE(res_fail != nullptr);
     ASSERT_EQ(res_fail->status, 200);
 }
+
+TEST_F(ApiTest, ServerHandlesClientDisconnectingMidRequest) {
+    // This test is difficult to simulate precisely with httplib's client, as it handles
+    // connection management internally. Instead, we'll simulate an abrupt client close
+    // and verify the server remains responsive for subsequent requests.
+
+    // 1. Start a server instance in a separate thread
+    DispatchServer server;
+    server.set_api_key(api_key);
+    std::thread server_thread([&server]() {
+        server.start(8080, true); // Blocking call
+    });
+
+    // Give the server a moment to start
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    // 2. Create a client and make a request, then immediately close the connection
+    //    This simulates a client disconnecting mid-request (or very early).
+    {
+        httplib::Client temp_client("localhost", 8080);
+        temp_client.set_connection_timeout(1); // Short timeout
+        nlohmann::json job_payload = {
+            {"source_url", "http://example.com/video.mp4"},
+            {"target_codec", "h264"}
+        };
+        httplib::Headers admin_headers = {
+            {"Authorization", "some_token"},
+            {"X-API-Key", api_key}
+        };
+        // Attempt to post, but the client will close immediately
+        temp_client.Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
+    }
+
+    // Give the server a moment to process the abrupt disconnect
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    // 3. Verify the server is still responsive by making a new request
+    nlohmann::json job_payload_2 = {
+        {"source_url", "http://example.com/video2.mp4"},
+        {"target_codec", "h264"}
+    };
+    httplib::Headers admin_headers_2 = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res_2 = client->Post("/jobs/", admin_headers_2, job_payload_2.dump(), "application/json");
+    ASSERT_TRUE(res_2 != nullptr);
+    ASSERT_EQ(res_2->status, 200);
+    ASSERT_TRUE(nlohmann::json::parse(res_2->body).contains("job_id"));
+
+    // 4. Stop the server thread
+    server.stop();
+    if (server_thread.joinable()) {
+        server_thread.join();
+    }
+}

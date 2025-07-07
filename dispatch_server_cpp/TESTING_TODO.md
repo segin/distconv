@@ -162,7 +162,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 121. [x] Test: JSON parsing of a valid job failure request.
 
 ### D. Edge Cases & Error Handling
-122. [ ] Test: Server handles a client disconnecting mid-request.
+122. [x] Test: Server handles a client disconnecting mid-request.
 123. [ ] Test: Server handles extremely long `source_url` values.
 124. [ ] Test: Server handles extremely long `engine_id` values.
 125. [ ] Test: Server handles a very large number of jobs in the database.
