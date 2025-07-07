@@ -639,3 +639,25 @@ TEST_F(ApiTest, SaveStateWithSingleEngine) {
     ASSERT_EQ(state["engines"][engine_id]["engine_type"], "transcoder");
     ASSERT_EQ(state["engines"][engine_id]["status"], "idle");
 }
+
+TEST_F(ApiTest, SaveStateWithZeroJobsAndZeroEngines) {
+    // 1. Clear the in-memory databases
+    clear_db();
+
+    // 2. Save the state
+    save_state();
+
+    // 3. Read the state file and verify its contents
+    std::ifstream ifs(PERSISTENT_STORAGE_FILE);
+    ASSERT_TRUE(ifs.is_open());
+    nlohmann::json state = nlohmann::json::parse(ifs);
+    ifs.close();
+
+    ASSERT_TRUE(state.contains("jobs"));
+    ASSERT_TRUE(state["jobs"].is_object());
+    ASSERT_TRUE(state["jobs"].empty());
+
+    ASSERT_TRUE(state.contains("engines"));
+    ASSERT_TRUE(state["engines"].is_object());
+    ASSERT_TRUE(state["engines"].empty());
+}
