@@ -18,7 +18,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 11. [x] Test: Submit a job without an API key when one is required. Expect HTTP 401.
 12. [x] Test: Submit a job with an incorrect API key. Expect HTTP 401.
 13. [x] Test: Submit a job with a valid API key. Expect HTTP 200.
-14. [ ] Test: Verify the `job_id` created is unique across multiple quick submissions.
+14. [x] Test: Verify the `job_id` created is unique across multiple quick submissions.
 15. [ ] Test: Verify the job status is correctly initialized to "pending".
 
 ### B. `GET /jobs/{job_id}` (Get Job Status)
