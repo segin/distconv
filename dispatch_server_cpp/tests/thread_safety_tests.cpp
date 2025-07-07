@@ -138,3 +138,80 @@ TEST_F(ApiTest, ConcurrentlySubmitJobsAndSendHeartbeats) {
     ASSERT_TRUE(all_engines.is_array());
     ASSERT_EQ(all_engines.size(), num_operations);
 }
+
+TEST_F(ApiTest, AccessJobsDbFromMultipleThreadsWithLocking) {
+    const int num_threads = 10;
+    const int operations_per_thread = 100;
+    std::vector<std::future<void>> futures;
+
+    for (int i = 0; i < num_threads; ++i) {
+        futures.push_back(std::async(std::launch::async, [this, i, operations_per_thread]() {
+            for (int j = 0; j < operations_per_thread; ++j) {
+                std::string job_id = "job_thread_" + std::to_string(i) + "_op_" + std::to_string(j);
+                nlohmann::json job_payload = {
+                    {"source_url", "http://example.com/video_" + job_id + ".mp4"},
+                    {"target_codec", "h264"}
+                };
+                httplib::Headers headers = {
+                    {"Authorization", "some_token"},
+                    {"X-API-Key", this->api_key}
+                };
+                auto res = this->client->Post("/jobs/", headers, job_payload.dump(), "application/json");
+                ASSERT_TRUE(res != nullptr);
+                ASSERT_EQ(res->status, 200);
+            }
+        }));
+    }
+
+    for (auto &f : futures) {
+        f.get(); // Wait for all threads to complete their operations
+    }
+
+    // Verify that all jobs are in the database
+    auto res_get_all_jobs = this->client->Get("/jobs/", this->admin_headers);
+    ASSERT_TRUE(res_get_all_jobs != nullptr);
+    ASSERT_EQ(res_get_all_jobs->status, 200);
+    nlohmann::json all_jobs = nlohmann::json::parse(res_get_all_jobs->body);
+    ASSERT_TRUE(all_jobs.is_array());
+    ASSERT_EQ(all_jobs.size(), num_threads * operations_per_thread);
+}
+
+TEST_F(ApiTest, AccessEnginesDbFromMultipleThreadsWithLocking) {
+    const int num_threads = 10;
+    const int operations_per_thread = 100;
+    std::vector<std::future<void>> futures;
+
+    for (int i = 0; i < num_threads; ++i) {
+        futures.push_back(std::async(std::launch::async, [this, i, operations_per_thread]() {
+            for (int j = 0; j < operations_per_thread; ++j) {
+                std::string engine_id = "engine_thread_" + std::to_string(i) + "_op_" + std::to_string(j);
+                nlohmann::json engine_payload = {
+                    {"engine_id", engine_id},
+                    {"engine_type", "transcoder"},
+                    {"supported_codecs", {"h264", "vp9"}},
+                    {"status", "idle"},
+                    {"benchmark_time", 100.0 + j}
+                };
+                httplib::Headers headers = {
+                    {"Authorization", "some_token"},
+                    {"X-API-Key", this->api_key}
+                };
+                auto res = this->client->Post("/engines/heartbeat", headers, engine_payload.dump(), "application/json");
+                ASSERT_TRUE(res != nullptr);
+                ASSERT_EQ(res->status, 200);
+            }
+        }));
+    }
+
+    for (auto &f : futures) {
+        f.get(); // Wait for all threads to complete their operations
+    }
+
+    // Verify that all engines are in the database
+    auto res_get_all_engines = this->client->Get("/engines/", this->admin_headers);
+    ASSERT_TRUE(res_get_all_engines != nullptr);
+    ASSERT_EQ(res_get_all_engines->status, 200);
+    nlohmann::json all_engines = nlohmann::json::parse(res_get_all_engines->body);
+    ASSERT_TRUE(all_engines.is_array());
+    ASSERT_EQ(all_engines.size(), num_threads * operations_per_thread);
+}

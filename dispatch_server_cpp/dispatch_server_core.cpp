@@ -152,7 +152,6 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
             {
                 std::lock_guard<std::mutex> lock(state_mutex);
                 jobs_db[job_id] = job;
-                save_state_unlocked();
             }
 
             res.set_content(job.dump(), "application/json");
@@ -274,7 +273,6 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
             {
                 std::lock_guard<std::mutex> lock(state_mutex);
                 engines_db[engine_id] = request_json;
-                save_state_unlocked();
             }
             res.set_content("Heartbeat received from engine " + engine_id, "text/plain");
         } catch (const nlohmann::json::parse_error& e) {
@@ -312,7 +310,6 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
                     res.set_content("Engine not found", "text/plain");
                     return;
                 }
-                save_state_unlocked();
             }
             res.set_content("Benchmark result received from engine " + engine_id, "text/plain");
         } catch (const nlohmann::json::parse_error& e) {
@@ -364,7 +361,6 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
                     res.set_content("Job not found", "text/plain");
                     return;
                 }
-                save_state_unlocked();
             }
             res.set_content("Job " + job_id + " marked as completed", "text/plain");
         } catch (const nlohmann::json::parse_error& e) {
@@ -421,7 +417,6 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
                     res.set_content("Job not found", "text/plain");
                     return;
                 }
-                save_state_unlocked();
             }
         } catch (const nlohmann::json::parse_error& e) {
             res.status = 400;

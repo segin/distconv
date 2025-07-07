@@ -146,7 +146,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 107. [x] Test: Concurrently submit jobs and send heartbeats. Verify data integrity.
 108. [x] Test: Concurrently assign jobs and complete jobs. Verify state transitions are correct.
 109. [x] Test: Access the main jobs database (`jobs_db`) from multiple threads with proper locking.
-110. [ ] Test: Access the main engines database (`engines_db`) from multiple threads with proper locking.
+110. [x] Test: Access the main engines database (`engines_db`) from multiple threads with proper locking.
 
 ### C. Helper Functions & Utilities
 111. [ ] Test: `load_state` with a file containing a single job.

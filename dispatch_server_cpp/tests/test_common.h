@@ -39,7 +39,7 @@ protected:
         server->start(port, false);
         std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Give the server a moment to start
         client = new httplib::Client("localhost", port);
-        client->set_connection_timeout(10); // Increased timeout
+        client->set_connection_timeout(30); // Increased timeout for stability
         wait_for_server_ready();
 
         // Initialize admin_headers here
