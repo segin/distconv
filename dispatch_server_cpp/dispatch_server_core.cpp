@@ -284,6 +284,18 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
                 return;
             }
             std::string engine_id = request_json["engine_id"];
+            if (request_json.contains("storage_capacity_gb")) {
+                if (!request_json["storage_capacity_gb"].is_number()) {
+                    res.status = 400;
+                    res.set_content("Bad Request: 'storage_capacity_gb' must be a number.", "text/plain");
+                    return;
+                }
+                if (request_json["storage_capacity_gb"].is_number() && request_json["storage_capacity_gb"].get<double>() < 0) {
+                    res.status = 400;
+                    res.set_content("Bad Request: 'storage_capacity_gb' must be a non-negative number.", "text/plain");
+                    return;
+                }
+            }
             {
                 std::lock_guard<std::mutex> lock(state_mutex);
                 engines_db[engine_id] = request_json;

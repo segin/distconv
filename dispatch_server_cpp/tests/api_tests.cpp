@@ -466,3 +466,22 @@ TEST_F(ApiTest, ServerHandlesJobSubmissionWithNegativeMaxRetries) {
     ASSERT_EQ(res->status, 400); // Expect Bad Request
     ASSERT_EQ(res->body, "Bad Request: 'max_retries' must be a non-negative integer.");
 }
+
+TEST_F(ApiTest, ServerHandlesHeartbeatWithNegativeStorageCapacityGb) {
+    nlohmann::json engine_payload = {
+        {"engine_id", "engine-negative-storage"},
+        {"engine_type", "transcoder"},
+        {"supported_codecs", {"h264", "vp9"}},
+        {"status", "idle"},
+        {"benchmark_time", 100.0},
+        {"storage_capacity_gb", -50.0} // Negative storage_capacity_gb
+    };
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res = client->Post("/engines/heartbeat", admin_headers, engine_payload.dump(), "application/json");
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 400); // Expect Bad Request
+    ASSERT_EQ(res->body, "Bad Request: 'storage_capacity_gb' must be a non-negative number.");
+}
