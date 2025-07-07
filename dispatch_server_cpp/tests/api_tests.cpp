@@ -434,3 +434,19 @@ TEST_F(ApiTest, ServerHandlesFailJobNeverAssigned) {
     ASSERT_EQ(res->status, 404);
     ASSERT_EQ(res->body, "Job not found");
 }
+
+TEST_F(ApiTest, ServerHandlesJobSubmissionWithNegativeJobSize) {
+    nlohmann::json job_payload = {
+        {"source_url", "http://example.com/video.mp4"},
+        {"target_codec", "h264"},
+        {"job_size", -10.0} // Negative job_size
+    };
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 400); // Expect Bad Request
+    ASSERT_EQ(res->body, "Bad Request: 'job_size' must be a non-negative number.");
+}

@@ -125,10 +125,17 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
                 res.set_content("Bad Request: 'target_codec' is missing or not a string.", "text/plain");
                 return;
             }
-            if (request_json.contains("job_size") && !request_json["job_size"].is_number()) {
-                res.status = 400;
-                res.set_content("Bad Request: 'job_size' must be a number.", "text/plain");
-                return;
+            if (request_json.contains("job_size")) {
+                if (!request_json["job_size"].is_number()) {
+                    res.status = 400;
+                    res.set_content("Bad Request: 'job_size' must be a number.", "text/plain");
+                    return;
+                }
+                if (request_json["job_size"].is_number() && request_json["job_size"].get<double>() < 0) {
+                    res.status = 400;
+                    res.set_content("Bad Request: 'job_size' must be a non-negative number.", "text/plain");
+                    return;
+                }
             }
             if (request_json.contains("max_retries") && !request_json["max_retries"].is_number_integer()) {
                 res.status = 400;
