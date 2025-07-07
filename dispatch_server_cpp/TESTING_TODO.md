@@ -22,7 +22,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 15. [x] Test: Verify the job status is correctly initialized to "pending".
 
 ### B. `GET /jobs/{job_id}` (Get Job Status)
-16. [ ] Test: Request status for a valid, existing job ID. Expect HTTP 200 and the correct job JSON.
+16. [x] Test: Request status for a valid, existing job ID. Expect HTTP 200 and the correct job JSON.
 17. [ ] Test: Request status for a non-existent job ID. Expect HTTP 404.
 18. [ ] Test: Request status for a malformed job ID. Expect HTTP 404 or appropriate routing failure.
 19. [ ] Test: Request status without an API key when one is required. Expect HTTP 401.
