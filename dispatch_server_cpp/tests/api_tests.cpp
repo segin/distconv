@@ -20,3 +20,18 @@ protected:
         clear_db();
     }
 };
+
+TEST_F(ApiTest, JsonParsingValidJobSubmissionRequest) {
+    nlohmann::json job_payload = {
+        {"source_url", "http://example.com/video.mp4"},
+        {"target_codec", "h264"}
+    };
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 200);
+    ASSERT_TRUE(nlohmann::json::parse(res->body).contains("job_id"));
+}
