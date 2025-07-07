@@ -256,3 +256,47 @@ TEST_F(ApiTest, BusyEngineIsNotAssignedAnotherJob) {
     ASSERT_EQ(res_assign_2->status, 204); // No Content, because the only engine is busy
 }
 
+TEST_F(ApiTest, HeartbeatInvalidJson) {
+    std::string invalid_json_payload = "{this is not json}";
+
+    httplib::Headers headers = {
+        {"X-API-Key", api_key}
+    };
+    auto res = client->Post("/engines/heartbeat", headers, invalid_json_payload, "application/json");
+
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 400);
+    ASSERT_TRUE(res->body.rfind("Invalid JSON:", 0) == 0);
+}
+
+TEST_F(ApiTest, HeartbeatMissingEngineId) {
+    nlohmann::json request_body;
+    request_body["engine_type"] = "transcoder";
+    request_body["supported_codecs"] = {"h264", "vp9"};
+
+    httplib::Headers headers = {
+        {"X-API-Key", api_key}
+    };
+    auto res = client->Post("/engines/heartbeat", headers, request_body.dump(), "application/json");
+
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 400);
+    ASSERT_EQ(res->body, "Bad Request: 'engine_id' is missing.");
+}
+
+TEST_F(ApiTest, HeartbeatNonStringEngineId) {
+    nlohmann::json request_body;
+    request_body["engine_id"] = 123; // Non-string engine_id
+    request_body["engine_type"] = "transcoder";
+    request_body["supported_codecs"] = {"h264", "vp9"};
+
+    httplib::Headers headers = {
+        {"X-API-Key", api_key}
+    };
+    auto res = client->Post("/engines/heartbeat", headers, request_body.dump(), "application/json");
+
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 400);
+    ASSERT_EQ(res->body, "Bad Request: 'engine_id' must be a string.");
+}
+
