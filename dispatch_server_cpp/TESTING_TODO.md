@@ -154,7 +154,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 113. [x] Test: `save_state` with a single job.
 114. [x] Test: `save_state` with a single engine.
 115. [x] Test: `save_state` with zero jobs and zero engines.
-116. [ ] Test: `load_state` from a file created by `save_state` with zero jobs/engines.
+116. [x] Test: `load_state` from a file created by `save_state` with zero jobs/engines.
 117. [ ] Test: Job ID generation is sufficiently random to avoid collisions in a tight loop.
 118. [ ] Test: JSON parsing of a valid job submission request.
 119. [ ] Test: JSON parsing of a valid heartbeat request.

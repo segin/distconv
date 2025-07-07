@@ -661,3 +661,24 @@ TEST_F(ApiTest, SaveStateWithZeroJobsAndZeroEngines) {
     ASSERT_TRUE(state["engines"].is_object());
     ASSERT_TRUE(state["engines"].empty());
 }
+
+TEST_F(ApiTest, LoadStateFromZeroJobsAndZeroEnginesFile) {
+    // 1. Clear the in-memory databases
+    clear_db();
+
+    // 2. Save the state (this will create a file with zero jobs and engines)
+    save_state();
+
+    // 3. Clear the in-memory databases again to simulate a fresh start
+    clear_db();
+
+    // 4. Load the state from the file
+    load_state();
+
+    // 5. Verify that the in-memory databases are empty
+    {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        ASSERT_TRUE(jobs_db.empty());
+        ASSERT_TRUE(engines_db.empty());
+    }
+}
