@@ -172,7 +172,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 129. [x] Test: Server handles a request to complete a job that was never assigned.
 130. [x] Test: Server handles a request to fail a a job that was never assigned.
 131. [x] Test: Server handles a job submission with a negative `job_size`.
-132. [ ] Test: Server handles a job submission with a negative `max_retries`.
+132. [x] Test: Server handles a job submission with a negative `max_retries`.
 133. [ ] Test: Server handles a heartbeat with a negative `storage_capacity_gb`.
 134. [ ] Test: Server handles a heartbeat with a non-boolean `streaming_support`.
 135. [ ] Test: Server handles a benchmark result for a non-existent engine.

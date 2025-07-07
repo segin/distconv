@@ -137,10 +137,17 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
                     return;
                 }
             }
-            if (request_json.contains("max_retries") && !request_json["max_retries"].is_number_integer()) {
-                res.status = 400;
-                res.set_content("Bad Request: 'max_retries' must be an integer.", "text/plain");
-                return;
+            if (request_json.contains("max_retries")) {
+                if (!request_json["max_retries"].is_number_integer()) {
+                    res.status = 400;
+                    res.set_content("Bad Request: 'max_retries' must be an integer.", "text/plain");
+                    return;
+                }
+                if (request_json["max_retries"].is_number_integer() && request_json["max_retries"].get<int>() < 0) {
+                    res.status = 400;
+                    res.set_content("Bad Request: 'max_retries' must be a non-negative integer.", "text/plain");
+                    return;
+                }
             }
 
             std::string job_id = std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
