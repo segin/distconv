@@ -16,6 +16,9 @@ std::mutex state_mutex; // Single mutex for all shared state
 // Persistent storage for jobs and engines
 std::string PERSISTENT_STORAGE_FILE = "dispatch_server_state.json";
 
+bool mock_save_state_enabled = false;
+int save_state_call_count = 0;
+
 // Forward declaration for save_state_unlocked
 void save_state_unlocked();
 
@@ -55,6 +58,10 @@ void save_state_unlocked() {
 }
 
 void save_state() {
+    if (mock_save_state_enabled) {
+        save_state_call_count++;
+        return;
+    }
     std::lock_guard<std::mutex> lock(state_mutex);
     save_state_unlocked();
 }

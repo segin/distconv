@@ -14,6 +14,14 @@ extern std::mutex state_mutex;
 // Persistent storage file
 extern std::string PERSISTENT_STORAGE_FILE;
 
+// Global flag and counter for mocking save_state
+extern bool mock_save_state_enabled;
+extern int save_state_call_count;
+
+// Global flag and counter for mocking save_state
+extern bool mock_save_state_enabled;
+extern int save_state_call_count;
+
 class DispatchServer {
 public:
     DispatchServer();

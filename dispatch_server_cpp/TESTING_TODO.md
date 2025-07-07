@@ -191,5 +191,5 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 146. [x] Test: (Refactor) `PERSISTENT_STORAGE_FILE` can be pointed to a temporary file for a test.
 147. [x] Test: (Refactor) The main server loop can be started and stopped programmatically from a test.
 148. [x] Test: (Refactor) The server can be started on a random available port to allow parallel test execution.
-149. [ ] Test: (Refactor) `save_state` can be mocked to prevent actual file I/O during tests.
+149. [x] Test: (Refactor) `save_state` can be mocked to prevent actual file I/O during tests.
 150. [ ] Test: (Refactor) `load_state` can be mocked to provide a specific state for a test.

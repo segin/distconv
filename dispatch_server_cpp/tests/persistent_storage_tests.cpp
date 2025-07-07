@@ -839,3 +839,31 @@ TEST_F(ApiTest, PersistentStorageFileCanBePointedToTemporaryFile) {
     std::remove(temp_storage_file.c_str());
     PERSISTENT_STORAGE_FILE = original_persistent_storage_file;
 }
+
+TEST_F(ApiTest, SaveStateCanBeMocked) {
+    // Enable mocking of save_state
+    mock_save_state_enabled = true;
+    save_state_call_count = 0; // Reset counter
+
+    // Perform an action that would normally trigger save_state
+    nlohmann::json job_payload = {
+        {"source_url", "http://example.com/video_mock.mp4"},
+        {"target_codec", "h264"}
+    };
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
+    ASSERT_EQ(res_submit->status, 200);
+
+    // Verify that save_state was called (mocked version)
+    ASSERT_EQ(save_state_call_count, 1);
+
+    // Verify that no file was actually written (by checking if the file exists)
+    std::ifstream ifs(PERSISTENT_STORAGE_FILE);
+    ASSERT_FALSE(ifs.is_open());
+
+    // Disable mocking after the test
+    mock_save_state_enabled = false;
+}
