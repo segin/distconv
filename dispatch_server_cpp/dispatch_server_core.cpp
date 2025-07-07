@@ -587,3 +587,12 @@ DispatchServer* run_dispatch_server(int argc, char* argv[], DispatchServer* serv
 
     return server_instance;
 }
+
+DispatchServer* run_dispatch_server(DispatchServer* server_instance) {
+    if (server_instance) {
+        server_instance->set_api_key(""); // No API key when called without args
+        std::cout << "Dispatch Server listening on port 8080" << std::endl;
+        server_instance->start(8080, false); // Start in non-blocking mode
+    }
+    return server_instance;
+}

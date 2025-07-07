@@ -162,3 +162,19 @@ TEST_F(CommandLineTest, ServerIgnoresUnknownArguments) {
     ASSERT_TRUE(res_with_api_key != nullptr);
     ASSERT_EQ(res_with_api_key->status, 200);
 }
+
+TEST_F(CommandLineTest, RunDispatchServerWithoutArgcArgv) {
+    server_instance = new DispatchServer();
+    run_dispatch_server(server_instance);
+
+    // Give the server a moment to start its thread
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    client = new httplib::Client("localhost", port);
+    client->set_connection_timeout(10);
+
+    // Verify server is running and accessible without API key
+    auto res = client->Get("/");
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 200);
+}

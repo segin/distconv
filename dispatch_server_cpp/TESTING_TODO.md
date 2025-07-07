@@ -183,7 +183,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 140. [x] Test: Server handles a request with a very large request body (should be rejected).
 
 ### E. Refactoring-Specific Tests
-141. [ ] Test: (Refactor) `run_dispatch_server` can be called without `argc`/`argv`.
+141. [x] Test: (Refactor) `run_dispatch_server` can be called without `argc`/`argv`.
 142. [ ] Test: (Refactor) `API_KEY` can be set programmatically, not just from `argv`.
 143. [ ] Test: (Refactor) The `httplib::Server` instance can be accessed from tests.
 144. [ ] Test: (Refactor) `jobs_db` can be cleared and pre-populated for a test.
