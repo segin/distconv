@@ -9,6 +9,7 @@
 #include <cstdio> // Required for std::remove
 #include <thread>
 #include <chrono>
+#include <random>
 
 // Helper function to clear the database before each test
 inline void clear_db() {
@@ -17,12 +18,28 @@ inline void clear_db() {
     engines_db = nlohmann::json::object();
 }
 
+// Helper function to find an available port
+inline int find_available_port() {
+    // Use a socket to find an available port
+    // This is a common trick to get a port that's likely free
+    httplib::Server temp_svr;
+    if (temp_svr.listen("127.0.0.1", 0)) { // Port 0 means bind to any available port
+        int available_port = temp_svr.bind_to_any_port("127.0.0.1");
+        temp_svr.stop(); // Stop the temporary server immediately
+        if (available_port > 0) {
+            return available_port;
+        }
+    }
+    // Fallback to a default or throw an error if no port is found
+    return 8081; // Fallback to default if dynamic port allocation fails
+}
+
 // Test fixture for API tests
 class ApiTest : public ::testing::Test {
 protected:
     DispatchServer *server;
     httplib::Client *client;
-    int port = 8081; // Use a different port to avoid conflicts
+    int port;
     std::string api_key = "test_api_key";
     httplib::Headers admin_headers;
     std::string persistent_storage_file;
@@ -34,6 +51,8 @@ protected:
 
         clear_db(); 
         
+        port = find_available_port(); // Dynamically find an available port
+
         server = new DispatchServer();
         server->set_api_key(api_key);
         server->start(port, false);
