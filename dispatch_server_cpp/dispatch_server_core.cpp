@@ -3,6 +3,8 @@
 #include <vector>
 #include <fstream>
 #include <algorithm>
+#include <chrono>
+#include <atomic>
 #include "httplib.h"
 #include "nlohmann/json.hpp"
 #include "dispatch_server_core.h" // Include the new header
@@ -27,22 +29,25 @@ nlohmann::json mock_load_state_data = nlohmann::json::object();
 
 void load_state() {
     std::lock_guard<std::mutex> lock(state_mutex);
+    std::cout << "[load_state] Attempting to load state." << std::endl;
     jobs_db.clear();
     engines_db.clear();
 
     if (mock_load_state_enabled) {
+        std::cout << "[load_state] Mocking enabled. Loading mocked data." << std::endl;
         if (mock_load_state_data.contains("jobs")) {
             jobs_db = mock_load_state_data["jobs"];
         }
         if (mock_load_state_data.contains("engines")) {
             engines_db = mock_load_state_data["engines"];
         }
-        std::cout << "Loaded mocked state: jobs=" << jobs_db.size() << ", engines=" << engines_db.size() << std::endl;
+        std::cout << "[load_state] Loaded mocked state: jobs=" << jobs_db.size() << ", engines=" << engines_db.size() << std::endl;
         return;
     }
 
     std::ifstream ifs(PERSISTENT_STORAGE_FILE);
     if (ifs.is_open()) {
+        std::cout << "[load_state] Persistent storage file opened: " << PERSISTENT_STORAGE_FILE << std::endl;
         try {
             nlohmann::json state = nlohmann::json::parse(ifs);
             if (state.contains("jobs")) {
@@ -51,11 +56,13 @@ void load_state() {
             if (state.contains("engines")) {
                 engines_db = state["engines"];
             }
-            std::cout << "Loaded state: jobs=" << jobs_db.size() << ", engines=" << engines_db.size() << std::endl;
+            std::cout << "[load_state] Successfully loaded state: jobs=" << jobs_db.size() << ", engines=" << engines_db.size() << std::endl;
         } catch (const nlohmann::json::parse_error& e) {
-            std::cerr << "Error parsing persistent state file: " << e.what() << std::endl;
+            std::cerr << "[load_state] Error parsing persistent state file: " << e.what() << std::endl;
         }
         ifs.close();
+    } else {
+        std::cout << "[load_state] Persistent storage file not found or could not be opened: " << PERSISTENT_STORAGE_FILE << ". Starting with empty state." << std::endl;
     }
 }
 
@@ -172,7 +179,10 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
                 }
             }
 
-            std::string job_id = std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+            static std::atomic<int> job_counter{0};
+            auto now = std::chrono::system_clock::now().time_since_epoch();
+            auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(now).count();
+            std::string job_id = std::to_string(microseconds) + "_" + std::to_string(job_counter.fetch_add(1));
             
             nlohmann::json job;
             job["job_id"] = job_id;
@@ -188,6 +198,7 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
             {
                 std::lock_guard<std::mutex> lock(state_mutex);
                 jobs_db[job_id] = job;
+                save_state_unlocked();
             }
 
             res.set_content(job.dump(), "application/json");
@@ -326,6 +337,7 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
             {
                 std::lock_guard<std::mutex> lock(state_mutex);
                 engines_db[engine_id] = request_json;
+                save_state_unlocked();
             }
             res.set_content("Heartbeat received from engine " + engine_id, "text/plain");
         } catch (const nlohmann::json::parse_error& e) {
@@ -421,6 +433,7 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
                             engines_db[engine_id]["status"] = "idle";
                         }
                     }
+                    save_state_unlocked();
                 } else {
                     res.status = 404;
                     res.set_content("Job not found", "text/plain");
@@ -477,6 +490,7 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
                         jobs_db[job_id]["error_message"] = request_json["error_message"];
                         res.set_content("Job " + job_id + " failed permanently", "text/plain");
                     }
+                    save_state_unlocked();
                 } else {
                     res.status = 404;
                     res.set_content("Job not found", "text/plain");

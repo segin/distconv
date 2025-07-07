@@ -23,11 +23,11 @@ This project will be developed in phases, starting with a minimal viable product
 **Phase 1: Core Functionality (MVP)**
 
 1.  **Transcoding Engine (C++):**
-    *   [x] Develop a simple daemon that can accept a transcoding job.
-    *   [x] The job will contain the source video location (URL) and transcoding parameters.
-    *   [x] The engine will download the source video, transcode it using `ffmpeg` (initially focusing on H.264 and H.265 codecs), and make the output available for download.
-    *   [x] The engine will report its status (idle, transcoding, error) to the dispatch server.
-    *   [x] Integrate cJSON for parsing job details.
+    *   [ ] Develop a simple daemon that can accept a transcoding job.
+    *   [ ] The job will contain the source video location (URL) and transcoding parameters.
+    *   [ ] The engine will download the source video, transcode it using `ffmpeg` (initially focusing on H.264 and H.265 codecs), and make the output available for download.
+    *   [ ] The engine will report its status (idle, transcoding, error) to the dispatch server.
+    *   [ ] Integrate cJSON for parsing job details.
 
 2.  **Transcoding Dispatch Server (C++ - NEW PRIMARY):**
     *   [x] Develop a server with a REST API.
@@ -38,40 +38,39 @@ This project will be developed in phases, starting with a minimal viable product
         *   A "heartbeat" endpoint for engines to report their status.
     *   [x] The server will maintain a queue of transcoding jobs.
     *   [x] The server will assign jobs to available engines.
-    *   [x] Implement configurable storage pools for transcoded content.
+    *   [ ] Implement configurable storage pools for transcoded content.
     *   [x] Implement persistent storage for tracking transcoding job states and submitted media.
     *   [x] Port the central server to C++.
 
 3.  **Submission Client (C++ - NEW PRIMARY):**
-    *   [x] Implement a C++ console client to submit jobs, retrieve status, list all jobs, list all engines, and retrieve locally submitted job results.
-    *   [x] Enhance the C++ console client for improved user experience (interactive menu, clearer output, input validation).
+    *   [ ] Implement a C++ console client to submit jobs, retrieve status, list all jobs, list all engines, and retrieve locally submitted job results.
+    *   [ ] Enhance the C++ console client for improved user experience (interactive menu, clearer output, input validation).
 
 **Phase 2: Advanced Features**
 
 1.  **Streaming:**
-    *   [x] Implement streaming of source video to the transcoding engine and streaming of the output back to the dispatch server. This will be used when the engine has limited local storage.
-    *   [x] The dispatch server will decide whether to use streaming or file transfer based on the engine's reported storage capacity.
+    *   [ ] Implement streaming of source video to the transcoding engine and streaming of the output back to the dispatch server. This will be used when the engine has limited local storage.
+    *   [ ] The dispatch server will decide whether to use streaming or file transfer based on the engine's reported storage capacity.
 
 2.  **Job Resubmission:**
-    *   [x] The dispatch server will monitor job progress.
+    *   [ ] The dispatch server will monitor job progress.
     *   [x] If a job fails, the server will automatically resubmit it to another available engine.
     *   [x] A maximum number of retries will be configured to prevent infinite loops.
 
 3.  **Improved Scheduling:**
-    *   [x] The dispatch server will use more sophisticated logic to assign jobs, taking into account engine performance and load.
-    *   [x] Implement benchmarking of transcoding endpoints. The dispatch server will trigger benchmarking tasks on engines, which will execute them and report completion speeds back to the server. This data will then be used for optimized job assignment (smaller jobs to slower systems, larger jobs to faster systems).
+    *   [ ] The dispatch server will use more sophisticated logic to assign jobs, taking into account engine performance and load.
+    *   [ ] Implement benchmarking of transcoding endpoints. The dispatch server will trigger benchmarking tasks on engines, which will execute them and report completion speeds back to the server. This data will then be used for optimized job assignment (smaller jobs to slower systems, larger jobs to faster systems).
 
 **Phase 3: Security and Scalability**
 
 1.  **Security:**
-    *   [x] Implement authentication and authorization for the dispatch server API.
-    *   [x] Implement API key authentication for the Dispatch Server.
+    *   [ ] Implement authentication and authorization for the dispatch server API.
     *   [x] Implement API key authentication for the Dispatch Server.
 
 2.  **Scalability:**
-    *   [x] Optimize the dispatch server to handle a large number of transcoding engines and jobs.
-    *   [x] Consider using a more robust job queueing system (e.g., RabbitMQ, Kafka).
-    *   [x] Report `ffmpeg` capabilities (encoders, decoders, hardware acceleration) from transcoding engines to the dispatch server.
+    *   [ ] Optimize the dispatch server to handle a large number of transcoding engines and jobs.
+    *   [ ] Consider using a more robust job queueing system (e.g., RabbitMQ, Kafka).
+    *   [ ] Report `ffmpeg` capabilities (encoders, decoders, hardware acceleration) from transcoding engines to the dispatch server.
 
 ## New Features (Post-MVP)
 

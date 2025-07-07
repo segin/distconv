@@ -5,6 +5,16 @@
 #include <condition_variable>
 #include <mutex>
 
+#include "test_common.h" // Include for ApiTest static members
+
+// Define static members outside the class
+DispatchServer* ApiTest::server = nullptr;
+httplib::Client* ApiTest::client = nullptr;
+int ApiTest::port = 0;
+std::string ApiTest::api_key = "test_api_key";
+httplib::Headers ApiTest::admin_headers;
+std::string ApiTest::persistent_storage_file;
+
 std::mutex m;
 std::condition_variable cv;
 bool tests_completed = false;

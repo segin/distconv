@@ -14,7 +14,6 @@ TEST_F(ApiTest, SubmitValidJob) {
     job_payload["max_retries"] = 5;
 
     httplib::Headers headers = {
-        {"Authorization", "some_token"},
         {"X-API-Key", api_key}
     };
     auto res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
@@ -44,7 +43,6 @@ TEST_F(ApiTest, SubmitJobMissingSourceUrl) {
     job_payload["max_retries"] = 5;
 
     httplib::Headers headers = {
-        {"Authorization", "some_token"},
         {"X-API-Key", api_key}
     };
     auto res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
@@ -61,7 +59,6 @@ TEST_F(ApiTest, SubmitJobMissingTargetCodec) {
     job_payload["max_retries"] = 5;
 
     httplib::Headers headers = {
-        {"Authorization", "some_token"},
         {"X-API-Key", api_key}
     };
     auto res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
@@ -75,7 +72,6 @@ TEST_F(ApiTest, SubmitJobInvalidJson) {
     std::string invalid_json_payload = "{this is not json}";
 
     httplib::Headers headers = {
-        {"Authorization", "some_token"},
         {"X-API-Key", api_key}
     };
     auto res = client->Post("/jobs/", headers, invalid_json_payload, "application/json");
@@ -89,7 +85,6 @@ TEST_F(ApiTest, SubmitJobEmptyJson) {
     std::string empty_json_payload = "";
 
     httplib::Headers headers = {
-        {"Authorization", "some_token"},
         {"X-API-Key", api_key}
     };
     auto res = client->Post("/jobs/", headers, empty_json_payload, "application/json");
@@ -108,7 +103,6 @@ TEST_F(ApiTest, SubmitJobWithExtraFields) {
     job_payload["another_extra"] = 123;
 
     httplib::Headers headers = {
-        {"Authorization", "some_token"},
         {"X-API-Key", api_key}
     };
     auto res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
@@ -144,7 +138,7 @@ TEST_F(ApiTest, SubmitJobNoAuthHeader) {
 
     ASSERT_TRUE(res != nullptr);
     ASSERT_EQ(res->status, 401);
-    ASSERT_EQ(res->body, "Unauthorized: Missing 'Authorization' header.");
+    ASSERT_EQ(res->body, "Unauthorized: Missing 'X-API-Key' header.");
 }
 
 TEST_F(ApiTest, SubmitJobNoApiKey) {
@@ -152,9 +146,7 @@ TEST_F(ApiTest, SubmitJobNoApiKey) {
     job_payload["source_url"] = "http://example.com/video.mp4";
     job_payload["target_codec"] = "h264";
 
-    httplib::Headers headers = {
-        {"Authorization", "some_token"}
-    };
+    httplib::Headers headers;
     auto res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
 
     ASSERT_TRUE(res != nullptr);
@@ -168,7 +160,6 @@ TEST_F(ApiTest, SubmitJobIncorrectApiKey) {
     job_payload["target_codec"] = "h264";
 
     httplib::Headers headers = {
-        {"Authorization", "some_token"},
         {"X-API-Key", "incorrect_api_key"}
     };
     auto res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
@@ -184,7 +175,6 @@ TEST_F(ApiTest, JobIdIsUnique) {
     job_payload["target_codec"] = "h264";
 
     httplib::Headers headers = {
-        {"Authorization", "some_token"},
         {"X-API-Key", api_key}
     };
     auto res1 = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
@@ -210,7 +200,6 @@ TEST_F(ApiTest, SubmitJobNonStringSourceUrl) {
     job_payload["max_retries"] = 5;
 
     httplib::Headers headers = {
-        {"Authorization", "some_token"},
         {"X-API-Key", api_key}
     };
     auto res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
@@ -228,7 +217,6 @@ TEST_F(ApiTest, SubmitJobNonStringTargetCodec) {
     job_payload["max_retries"] = 5;
 
     httplib::Headers headers = {
-        {"Authorization", "some_token"},
         {"X-API-Key", api_key}
     };
     auto res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
@@ -246,7 +234,6 @@ TEST_F(ApiTest, SubmitJobNonNumericJobSize) {
     job_payload["max_retries"] = 5;
 
     httplib::Headers headers = {
-        {"Authorization", "some_token"},
         {"X-API-Key", api_key}
     };
     auto res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
@@ -264,7 +251,6 @@ TEST_F(ApiTest, SubmitJobNonIntegerMaxRetries) {
     job_payload["max_retries"] = 3.5; // Non-integer max_retries
 
     httplib::Headers headers = {
-        {"Authorization", "some_token"},
         {"X-API-Key", api_key}
     };
     auto res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");

@@ -43,4 +43,7 @@ target_include_directories(dispatch_server_tests PRIVATE
 
 enable_testing()
 include(GoogleTest)
-gtest_discover_tests(dispatch_server_tests)
+gtest_discover_tests(dispatch_server_tests
+    PROPERTIES
+    TIMEOUT 10
+)
