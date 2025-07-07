@@ -163,8 +163,8 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 
 ### D. Edge Cases & Error Handling
 122. [x] Test: Server handles a client disconnecting mid-request.
-123. [ ] Test: Server handles extremely long `source_url` values.
-124. [ ] Test: Server handles extremely long `engine_id` values.
+123. [x] Test: Server handles extremely long `source_url` values.
+124. [x] Test: Server handles extremely long `engine_id` values.
 125. [ ] Test: Server handles a very large number of jobs in the database.
 126. [ ] Test: Server handles a very large number of engines in the database.
 127. [ ] Test: Server handles a job ID that looks like a number but is a string.

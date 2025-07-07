@@ -218,3 +218,31 @@ TEST_F(ApiTest, ServerHandlesExtremelyLongSourceUrl) {
         ASSERT_EQ(jobs_db[job_id]["source_url"], extremely_long_source_url);
     }
 }
+
+TEST_F(ApiTest, ServerHandlesExtremelyLongEngineId) {
+    // Create an extremely long engine_id
+    std::string extremely_long_engine_id(2000, 'b'); // 2000 'b' characters
+
+    nlohmann::json engine_payload = {
+        {"engine_id", extremely_long_engine_id},
+        {"engine_type", "transcoder"},
+        {"supported_codecs", {"h264", "vp9"}},
+        {"status", "idle"},
+        {"benchmark_time", 100.0}
+    };
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+
+    auto res = client->Post("/engines/heartbeat", admin_headers, engine_payload.dump(), "application/json");
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 200); // Expect 200 OK if the server handles it gracefully
+
+    // Verify the engine was stored with the correct long ID
+    {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        ASSERT_TRUE(engines_db.contains(extremely_long_engine_id));
+        ASSERT_EQ(engines_db[extremely_long_engine_id]["engine_type"], "transcoder");
+    }
+}
