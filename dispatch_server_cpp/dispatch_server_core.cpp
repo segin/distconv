@@ -100,20 +100,17 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
 
     // Endpoint to submit a new transcoding job
     svr.Post("/jobs/", [api_key](const httplib::Request& req, httplib::Response& res) {
-        if (req.get_header_value("Authorization") == "") {
-            res.status = 401;
-            res.set_content("Unauthorized: Missing 'Authorization' header.", "text/plain");
-            return;
-        }
-        if (api_key != "" && req.get_header_value("X-API-Key") == "") {
-            res.status = 401;
-            res.set_content("Unauthorized: Missing 'X-API-Key' header.", "text/plain");
-            return;
-        }
-        if (api_key != "" && req.get_header_value("X-API-Key") != api_key) {
-            res.status = 401;
-            res.set_content("Unauthorized", "text/plain");
-            return;
+        if (api_key != "") {
+            if (req.get_header_value("X-API-Key") == "") {
+                res.status = 401;
+                res.set_content("Unauthorized: Missing 'X-API-Key' header.", "text/plain");
+                return;
+            }
+            if (req.get_header_value("X-API-Key") != api_key) {
+                res.status = 401;
+                res.set_content("Unauthorized", "text/plain");
+                return;
+            }
         }
         try {
             nlohmann::json request_json = nlohmann::json::parse(req.body);
@@ -173,20 +170,17 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
 
     // Endpoint to get job status
     svr.Get(R"(/jobs/(.+))", [api_key](const httplib::Request& req, httplib::Response& res) {
-        if (req.get_header_value("Authorization") == "") {
-            res.status = 401;
-            res.set_content("Unauthorized: Missing 'Authorization' header.", "text/plain");
-            return;
-        }
-        if (api_key != "" && req.get_header_value("X-API-Key") == "") {
-            res.status = 401;
-            res.set_content("Unauthorized: Missing 'X-API-Key' header.", "text/plain");
-            return;
-        }
-        if (api_key != "" && req.get_header_value("X-API-Key") != api_key) {
-            res.status = 401;
-            res.set_content("Unauthorized", "text/plain");
-            return;
+        if (api_key != "") {
+            if (req.get_header_value("X-API-Key") == "") {
+                res.status = 401;
+                res.set_content("Unauthorized: Missing 'X-API-Key' header.", "text/plain");
+                return;
+            }
+            if (req.get_header_value("X-API-Key") != api_key) {
+                res.status = 401;
+                res.set_content("Unauthorized", "text/plain");
+                return;
+            }
         }
         std::string job_id = req.matches[1];
         std::lock_guard<std::mutex> lock(state_mutex);
@@ -200,10 +194,17 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
 
     // Endpoint to list all jobs
     svr.Get("/jobs/", [api_key](const httplib::Request& req, httplib::Response& res) {
-        if (api_key != "" && req.get_header_value("X-API-Key") != api_key) {
-            res.status = 401;
-            res.set_content("Unauthorized", "text/plain");
-            return;
+        if (api_key != "") {
+            if (req.get_header_value("X-API-Key") == "") {
+                res.status = 401;
+                res.set_content("Unauthorized: Missing 'X-API-Key' header.", "text/plain");
+                return;
+            }
+            if (req.get_header_value("X-API-Key") != api_key) {
+                res.status = 401;
+                res.set_content("Unauthorized", "text/plain");
+                return;
+            }
         }
         nlohmann::json all_jobs = nlohmann::json::array();
         {
@@ -219,10 +220,17 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
 
     // Endpoint to list all engines
     svr.Get("/engines/", [api_key](const httplib::Request& req, httplib::Response& res) {
-        if (api_key != "" && req.get_header_value("X-API-Key") != api_key) {
-            res.status = 401;
-            res.set_content("Unauthorized", "text/plain");
-            return;
+        if (api_key != "") {
+            if (req.get_header_value("X-API-Key") == "") {
+                res.status = 401;
+                res.set_content("Unauthorized: Missing 'X-API-Key' header.", "text/plain");
+                return;
+            }
+            if (req.get_header_value("X-API-Key") != api_key) {
+                res.status = 401;
+                res.set_content("Unauthorized", "text/plain");
+                return;
+            }
         }
         nlohmann::json all_engines = nlohmann::json::array();
         {
@@ -238,10 +246,17 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
 
     // Endpoint for engine heartbeat
     svr.Post("/engines/heartbeat", [api_key](const httplib::Request& req, httplib::Response& res) {
-        if (api_key != "" && req.get_header_value("X-API-Key") != api_key) {
-            res.status = 401;
-            res.set_content("Unauthorized", "text/plain");
-            return;
+        if (api_key != "") {
+            if (req.get_header_value("X-API-Key") == "") {
+                res.status = 401;
+                res.set_content("Unauthorized: Missing 'X-API-Key' header.", "text/plain");
+                return;
+            }
+            if (req.get_header_value("X-API-Key") != api_key) {
+                res.status = 401;
+                res.set_content("Unauthorized", "text/plain");
+                return;
+            }
         }
         try {
             nlohmann::json request_json = nlohmann::json::parse(req.body);
@@ -273,10 +288,17 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
 
     // Endpoint for benchmark results
     svr.Post("/engines/benchmark_result", [api_key](const httplib::Request& req, httplib::Response& res) {
-        if (api_key != "" && req.get_header_value("X-API-Key") != api_key) {
-            res.status = 401;
-            res.set_content("Unauthorized", "text/plain");
-            return;
+        if (api_key != "") {
+            if (req.get_header_value("X-API-Key") == "") {
+                res.status = 401;
+                res.set_content("Unauthorized: Missing 'X-API-Key' header.", "text/plain");
+                return;
+            }
+            if (req.get_header_value("X-API-Key") != api_key) {
+                res.status = 401;
+                res.set_content("Unauthorized", "text/plain");
+                return;
+            }
         }
         try {
             nlohmann::json request_json = nlohmann::json::parse(req.body);
@@ -304,10 +326,17 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
 
     // Endpoint to complete a job
     svr.Post(R"(/jobs/(\w+)/complete)", [api_key](const httplib::Request& req, httplib::Response& res) {
-        if (api_key != "" && req.get_header_value("X-API-Key") != api_key) {
-            res.status = 401;
-            res.set_content("Unauthorized", "text/plain");
-            return;
+        if (api_key != "") {
+            if (req.get_header_value("X-API-Key") == "") {
+                res.status = 401;
+                res.set_content("Unauthorized: Missing 'X-API-Key' header.", "text/plain");
+                return;
+            }
+            if (req.get_header_value("X-API-Key") != api_key) {
+                res.status = 401;
+                res.set_content("Unauthorized", "text/plain");
+                return;
+            }
         }
         std::string job_id = req.matches[1];
         try {
@@ -349,10 +378,17 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
 
     // Endpoint to fail a job
     svr.Post(R"(/jobs/(\w+)/fail)", [api_key](const httplib::Request& req, httplib::Response& res) {
-        if (api_key != "" && req.get_header_value("X-API-Key") != api_key) {
-            res.status = 401;
-            res.set_content("Unauthorized", "text/plain");
-            return;
+        if (api_key != "") {
+            if (req.get_header_value("X-API-Key") == "") {
+                res.status = 401;
+                res.set_content("Unauthorized: Missing 'X-API-Key' header.", "text/plain");
+                return;
+            }
+            if (req.get_header_value("X-API-Key") != api_key) {
+                res.status = 401;
+                res.set_content("Unauthorized", "text/plain");
+                return;
+            }
         }
         std::string job_id = req.matches[1];
         try {
@@ -398,10 +434,17 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
 
     // Endpoint to assign a job (for engines to poll)
     svr.Post("/assign_job/", [api_key](const httplib::Request& req, httplib::Response& res) {
-        if (api_key != "" && req.get_header_value("X-API-Key") != api_key) {
-            res.status = 401;
-            res.set_content("Unauthorized", "text/plain");
-            return;
+        if (api_key != "") {
+            if (req.get_header_value("X-API-Key") == "") {
+                res.status = 401;
+                res.set_content("Unauthorized: Missing 'X-API-Key' header.", "text/plain");
+                return;
+            }
+            if (req.get_header_value("X-API-Key") != api_key) {
+                res.status = 401;
+                res.set_content("Unauthorized", "text/plain");
+                return;
+            }
         }
         
         std::lock_guard<std::mutex> lock(state_mutex);
@@ -488,8 +531,13 @@ DispatchServer* run_dispatch_server(int argc, char* argv[], DispatchServer* serv
     std::string api_key = "";
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
-        if (arg == "--api-key" && i + 1 < argc) {
-            api_key = argv[++i];
+        if (arg == "--api-key") {
+            if (i + 1 < argc && argv[i+1][0] != '-') { // Check if next argument exists and is not another flag
+                api_key = argv[++i];
+            } else {
+                // Handle case where --api-key is the last argument or followed by another flag
+                api_key = ""; // Explicitly set to empty if no valid value is found
+            }
         }
     }
 
