@@ -311,3 +311,35 @@ TEST_F(ApiTest, ServerHandlesLargeNumberOfEngines) {
     nlohmann::json listed_engines = nlohmann::json::parse(res_list->body);
     ASSERT_EQ(listed_engines.size(), num_engines);
 }
+
+TEST_F(ApiTest, ServerHandlesNumericJobIdAsString) {
+    // Submit a job with a job ID that looks like a number but is a string
+    nlohmann::json job_payload = {
+        {"source_url", "http://example.com/video_numeric_id.mp4"},
+        {"target_codec", "h264"}
+    };
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
+    ASSERT_TRUE(res_submit != nullptr);
+    ASSERT_EQ(res_submit->status, 200);
+    
+    // Extract the job_id from the response, which should be a string
+    std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
+
+    // Verify that the job_id is indeed a string and not converted to a number
+    // The current implementation generates job IDs as strings from milliseconds, so this should pass.
+    // If the implementation changes to generate numeric IDs, this test might need adjustment.
+    ASSERT_TRUE(job_id.length() > 0);
+    ASSERT_FALSE(job_id.empty());
+
+    // Attempt to retrieve the job using the string job ID
+    auto res_get = client->Get("/jobs/" + job_id, admin_headers);
+    ASSERT_TRUE(res_get != nullptr);
+    ASSERT_EQ(res_get->status, 200);
+    nlohmann::json retrieved_job = nlohmann::json::parse(res_get->body);
+    ASSERT_EQ(retrieved_job["job_id"], job_id);
+    ASSERT_EQ(retrieved_job["source_url"], "http://example.com/video_numeric_id.mp4");
+}
