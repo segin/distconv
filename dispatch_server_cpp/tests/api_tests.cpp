@@ -571,3 +571,28 @@ TEST_F(ApiTest, ServerHandlesJobsTrailingSlash) {
         ASSERT_TRUE(jobs_db.contains(job_id));
     }
 }
+
+TEST_F(ApiTest, ServerHandlesEnginesTrailingSlash) {
+    // Register an engine
+    nlohmann::json engine_payload = {
+        {"engine_id", "engine-trailing-slash"},
+        {"engine_type", "transcoder"},
+        {"supported_codecs", {"h264", "vp9"}},
+        {"status", "idle"},
+        {"benchmark_time", 100.0}
+    };
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res_heartbeat = client->Post("/engines/heartbeat", admin_headers, engine_payload.dump(), "application/json");
+    ASSERT_EQ(res_heartbeat->status, 200);
+
+    // Request all engines with a trailing slash
+    auto res_list = client->Get("/engines/", admin_headers);
+    ASSERT_TRUE(res_list != nullptr);
+    ASSERT_EQ(res_list->status, 200);
+    nlohmann::json listed_engines = nlohmann::json::parse(res_list->body);
+    ASSERT_FALSE(listed_engines.empty());
+    ASSERT_EQ(listed_engines[0]["engine_id"], "engine-trailing-slash");
+}
