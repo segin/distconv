@@ -633,3 +633,33 @@ TEST_F(ApiTest, ServerHandlesVeryLargeRequestBody) {
     // If it doesn't reject, we might need to configure httplib or add a manual size check.
     ASSERT_TRUE(res->status == 413 || res->status == 400);
 }
+
+TEST_F(ApiTest, HttplibServerInstanceCanBeAccessed) {
+    // Create a DispatchServer instance
+    DispatchServer server;
+    server.set_api_key(api_key);
+    server.start(8080, false); // Start in non-blocking mode
+
+    // Give the server a moment to start its thread
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    // Get the httplib::Server instance
+    httplib::Server* raw_server = server.getServer();
+    ASSERT_TRUE(raw_server != nullptr);
+
+    // Add a new endpoint directly to the httplib::Server instance
+    raw_server->Get("/test_endpoint", [](const httplib::Request&, httplib::Response& res) {
+        res.set_content("Test Endpoint Reached", "text/plain");
+    });
+
+    // Make a request to the new endpoint to verify it works
+    httplib::Client test_client("localhost", 8080);
+    test_client.set_connection_timeout(10);
+    auto res = test_client.Get("/test_endpoint");
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 200);
+    ASSERT_EQ(res->body, "Test Endpoint Reached");
+
+    // Stop the server
+    server.stop();
+}

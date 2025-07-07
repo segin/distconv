@@ -185,7 +185,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 ### E. Refactoring-Specific Tests
 141. [x] Test: (Refactor) `run_dispatch_server` can be called without `argc`/`argv`.
 142. [x] Test: (Refactor) `API_KEY` can be set programmatically, not just from `argv`.
-143. [ ] Test: (Refactor) The `httplib::Server` instance can be accessed from tests.
+143. [x] Test: (Refactor) The `httplib::Server` instance can be accessed from tests.
 144. [ ] Test: (Refactor) `jobs_db` can be cleared and pre-populated for a test.
 145. [ ] Test: (Refactor) `engines_db` can be cleared and pre-populated for a test.
 146. [ ] Test: (Refactor) `PERSISTENT_STORAGE_FILE` can be pointed to a temporary file for a test.
