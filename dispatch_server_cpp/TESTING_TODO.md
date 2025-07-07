@@ -52,7 +52,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 37. [x] Test: List engines with an incorrect API key. Expect HTTP 401.
 
 ### F. `POST /jobs/{job_id}/complete`
-38. [ ] Test: Mark a valid, assigned job as complete. Expect HTTP 200.
+38. [x] Test: Mark a valid, assigned job as complete. Expect HTTP 200.
 39. [ ] Test: Mark a non-existent job as complete. Expect HTTP 404.
 40. [ ] Test: Mark a job as complete with a missing `output_url`. Expect HTTP 400.
 41. [ ] Test: Mark a job as complete with invalid JSON. Expect HTTP 400.
