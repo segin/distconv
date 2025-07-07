@@ -2,8 +2,8 @@
 
 This document defines the communication protocols between the three main components of the distributed transcoding system:
 
-1. **Submission Clients** ↔ **Dispatch Server**
-2. **Dispatch Server** ↔ **Transcoding Engines**
+1. **Submission Clients** ↔ **Dispatch Server** (Client API)
+2. **Dispatch Server** ↔ **Transcoding Engines/Compute Nodes** (Engine API)
 
 ## Overview
 
@@ -21,9 +21,11 @@ X-API-Key: your_api_key_here
 - `401 Unauthorized: Missing 'X-API-Key' header.` - When header is missing
 - `401 Unauthorized` - When API key is incorrect
 
-## 1. Submission Client ↔ Dispatch Server Protocol
+# Part 1: Client API (Submission Client ↔ Dispatch Server)
 
-### 1.1 Job Submission
+This section documents the REST API endpoints used by submission clients to interact with the dispatch server for job management.
+
+## 1.1 Job Submission
 
 **Endpoint:** `POST /jobs/`  
 **Purpose:** Submit a new transcoding job
@@ -76,7 +78,7 @@ X-API-Key: {api_key}
 - `400 Bad Request: 'max_retries' must be a non-negative integer.`
 - `400 Invalid JSON: {error_details}`
 
-### 1.2 Job Status Retrieval
+## 1.2 Job Status Retrieval
 
 **Endpoint:** `GET /jobs/{job_id}`  
 **Purpose:** Get the current status of a specific job
@@ -104,7 +106,7 @@ X-API-Key: {api_key}
 **Error Responses:**
 - `404 Job not found` - Job ID does not exist
 
-### 1.3 List All Jobs
+## 1.3 List All Jobs
 
 **Endpoint:** `GET /jobs/`  
 **Purpose:** Retrieve a list of all jobs
@@ -136,9 +138,11 @@ X-API-Key: {api_key}
 []
 ```
 
-## 2. Dispatch Server ↔ Transcoding Engine Protocol
+# Part 2: Engine API (Dispatch Server ↔ Transcoding Engines/Compute Nodes)
 
-### 2.1 Engine Registration/Heartbeat
+This section documents the REST API endpoints used by transcoding engines (compute nodes) to interact with the dispatch server for engine registration, job assignment, and job completion reporting.
+
+## 2.1 Engine Registration/Heartbeat
 
 **Endpoint:** `POST /engines/heartbeat`  
 **Purpose:** Register a new engine or update an existing engine's status
@@ -186,7 +190,7 @@ Heartbeat received from engine {engine_id}
 - `400 Bad Request: 'streaming_support' must be a boolean.`
 - `400 Invalid JSON: {error_details}`
 
-### 2.2 List All Engines
+## 2.2 List All Engines
 
 **Endpoint:** `GET /engines/`  
 **Purpose:** Retrieve a list of all registered engines
@@ -216,7 +220,7 @@ X-API-Key: {api_key}
 []
 ```
 
-### 2.3 Job Completion
+## 2.3 Job Completion
 
 **Endpoint:** `POST /jobs/{job_id}/complete`  
 **Purpose:** Mark a job as completed by a transcoding engine
@@ -247,19 +251,23 @@ Job {job_id} marked as completed
 - `400 Bad Request: 'output_url' must be a string.`
 - `400 Invalid JSON: {error_details}`
 
-### 2.4 Job Failure (Pending Documentation)
+## 2.4 Job Failure (Pending Documentation)
 
 **Endpoint:** `POST /jobs/{job_id}/fail`  
 **Purpose:** Mark a job as failed by a transcoding engine
 
 *This endpoint is currently being implemented and documented as part of tests 43-47.*
 
-### 2.5 Job Assignment (Pending Documentation)
+## 2.5 Job Assignment (Pending Documentation)
 
 **Endpoint:** `POST /assign_job/`  
 **Purpose:** Request assignment of a pending job to an available engine
 
 *This endpoint is currently being implemented and documented as part of tests 48-50.*
+
+---
+
+# Part 3: Shared Data Structures and Concepts
 
 ## Job States
 
