@@ -159,7 +159,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 118. [x] Test: JSON parsing of a valid job submission request.
 119. [x] Test: JSON parsing of a valid heartbeat request.
 120. [x] Test: JSON parsing of a valid job completion request.
-121. [ ] Test: JSON parsing of a job failure request.
+121. [x] Test: JSON parsing of a valid job failure request.
 
 ### D. Edge Cases & Error Handling
 122. [ ] Test: Server handles a client disconnecting mid-request.
