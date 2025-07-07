@@ -178,3 +178,30 @@ TEST_F(CommandLineTest, RunDispatchServerWithoutArgcArgv) {
     ASSERT_TRUE(res != nullptr);
     ASSERT_EQ(res->status, 200);
 }
+
+TEST_F(CommandLineTest, ApiKeyCanBeSetProgrammatically) {
+    const std::string test_api_key = "programmatic_api_key";
+
+    server_instance = new DispatchServer();
+    server_instance->set_api_key(test_api_key);
+    server_instance->start(port, false); // Start in non-blocking mode
+
+    // Give the server a moment to start its thread
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    client = new httplib::Client("localhost", port);
+    client->set_connection_timeout(10);
+
+    // Verify server is running and accessible with the programmatic API key
+    httplib::Headers headers = {
+        {"X-API-Key", test_api_key}
+    };
+    auto res_with_api_key = client->Get("/jobs/", headers);
+    ASSERT_TRUE(res_with_api_key != nullptr);
+    ASSERT_EQ(res_with_api_key->status, 200);
+
+    // Verify access without API key is unauthorized
+    auto res_no_api_key = client->Get("/jobs/");
+    ASSERT_TRUE(res_no_api_key != nullptr);
+    ASSERT_EQ(res_no_api_key->status, 401);
+}
