@@ -168,7 +168,7 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 125. [x] Test: Server handles a very large number of jobs in the database.
 126. [x] Test: Server handles a very large number of engines in the database.
 127. [x] Test: Server handles a job ID that looks like a number but is a string.
-128. [ ] Test: Server handles a heartbeat for an engine that was assigned a job that no longer exists.
+128. [x] Test: Server handles a heartbeat for an engine that was assigned a job that no longer exists.
 129. [ ] Test: Server handles a request to complete a job that was never assigned.
 130. [ ] Test: Server handles a request to fail a a job that was never assigned.
 131. [ ] Test: Server handles a job submission with a negative `job_size`.

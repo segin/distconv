@@ -343,3 +343,60 @@ TEST_F(ApiTest, ServerHandlesNumericJobIdAsString) {
     ASSERT_EQ(retrieved_job["job_id"], job_id);
     ASSERT_EQ(retrieved_job["source_url"], "http://example.com/video_numeric_id.mp4");
 }
+
+TEST_F(ApiTest, ServerHandlesHeartbeatForNonExistentAssignedJob) {
+    // 1. Create a job and an engine
+    nlohmann::json job_payload = {
+        {"source_url", "http://example.com/video_temp.mp4"},
+        {"target_codec", "h264"}
+    };
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+    auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
+    ASSERT_EQ(res_submit->status, 200);
+    std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
+
+    nlohmann::json engine_payload = {
+        {"engine_id", "engine-non-existent-job"},
+        {"engine_type", "transcoder"},
+        {"supported_codecs", {"h264", "vp9"}},
+        {"status", "idle"},
+        {"benchmark_time", 100.0}
+    };
+    auto res_heartbeat = client->Post("/engines/heartbeat", admin_headers, engine_payload.dump(), "application/json");
+    ASSERT_EQ(res_heartbeat->status, 200);
+
+    // 2. Assign the job to the engine
+    nlohmann::json assign_payload = {
+        {"engine_id", "engine-non-existent-job"}
+    };
+    auto res_assign = client->Post("/assign_job/", admin_headers, assign_payload.dump(), "application/json");
+    ASSERT_EQ(res_assign->status, 200);
+
+    // 3. Simulate the job no longer existing by removing it from jobs_db
+    {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        jobs_db.erase(job_id);
+    }
+
+    // 4. Send a heartbeat from the engine (which was assigned the now non-existent job)
+    nlohmann::json heartbeat_payload_after_job_removal = {
+        {"engine_id", "engine-non-existent-job"},
+        {"engine_type", "transcoder"},
+        {"supported_codecs", {"h264", "vp9"}},
+        {"status", "busy"}, // Engine would still think it's busy
+        {"benchmark_time", 100.0}
+    };
+    auto res_heartbeat_after_removal = client->Post("/engines/heartbeat", admin_headers, heartbeat_payload_after_job_removal.dump(), "application/json");
+    ASSERT_TRUE(res_heartbeat_after_removal != nullptr);
+    ASSERT_EQ(res_heartbeat_after_removal->status, 200); // Server should still respond OK
+
+    // 5. Verify that the engine still exists in the engines_db and its status is updated
+    {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        ASSERT_TRUE(engines_db.contains("engine-non-existent-job"));
+        ASSERT_EQ(engines_db["engine-non-existent-job"]["status"], "busy"); // Status should be updated from the heartbeat
+    }
+}
