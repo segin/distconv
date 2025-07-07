@@ -417,3 +417,20 @@ TEST_F(ApiTest, ServerHandlesCompleteJobNeverAssigned) {
     ASSERT_EQ(res->status, 404);
     ASSERT_EQ(res->body, "Job not found");
 }
+
+TEST_F(ApiTest, ServerHandlesFailJobNeverAssigned) {
+    // Attempt to fail a job that was never assigned (i.e., doesn't exist)
+    std::string non_existent_job_id = "non_existent_job_456";
+    nlohmann::json fail_payload = {
+        {"error_message", "Simulated failure"}
+    };
+    httplib::Headers admin_headers = {
+        {"Authorization", "some_token"},
+        {"X-API-Key", api_key}
+    };
+
+    auto res = client->Post("/jobs/" + non_existent_job_id + "/fail", admin_headers, fail_payload.dump(), "application/json");
+    ASSERT_TRUE(res != nullptr);
+    ASSERT_EQ(res->status, 404);
+    ASSERT_EQ(res->body, "Job not found");
+}
