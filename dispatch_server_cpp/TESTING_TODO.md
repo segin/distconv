@@ -66,9 +66,9 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 47. [x] Test: Mark a job as failed without an API key when required. Expect HTTP 401.
 
 ### H. `POST /assign_job/`
-48. [ ] Test: Request a job when jobs are pending and engines are idle. Expect HTTP 200 and a job object.
-49. [ ] Test: Request a job when no jobs are pending. Expect HTTP 204.
-50. [ ] Test: Request a job when jobs are pending but no engines are idle. Expect HTTP 204.
+48. [x] Test: Request a job when jobs are pending and engines are idle. Expect HTTP 200 and a job object.
+49. [x] Test: Request a job when no jobs are pending. Expect HTTP 204.
+50. [x] Test: Request a job when jobs are pending but no engines are idle. Expect HTTP 204.
 
 ## II. State Management & Logic (50 Tests)
 
