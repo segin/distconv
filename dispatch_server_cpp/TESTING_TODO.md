@@ -80,32 +80,32 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 55. [x] Test: Job becomes `failed_permanently` after `POST /jobs/{job_id}/fail` if retries are exhausted.
 56. [x] Test: A `completed` job cannot be marked as failed.
 57. [x] Test: A `failed_permanently` job cannot be marked as failed again.
-58. [ ] Test: A `completed` job is not returned by `POST /assign_job/`.
-59. [ ] Test: A `failed_permanently` job is not returned by `POST /assign_job/`.
-60. [ ] Test: An `assigned` job is not returned by `POST /assign_job/`.
+58. [x] Test: A `completed` job is not returned by `POST /assign_job/`.
+59. [x] Test: A `failed_permanently` job is not returned by `POST /assign_job/`.
+60. [x] Test: An `assigned` job is not returned by `POST /assign_job/`.
 
 ### B. Engine State Transitions
-61. [ ] Test: Engine status is `idle` after a heartbeat.
-62. [ ] Test: Engine status becomes `busy` after being assigned a job.
-63. [ ] Test: Engine status becomes `idle` again after the job it was assigned is marked `completed`.
-64. [ ] Test: Engine status becomes `idle` again after the job it was assigned is marked `failed`.
-65. [ ] Test: A `busy` engine is not assigned another job.
+61. [x] Test: Engine status is `idle` after a heartbeat.
+62. [x] Test: Engine status becomes `busy` after being assigned a job.
+63. [x] Test: Engine status becomes `idle` again after the job it was assigned is marked `completed`.
+64. [x] Test: Engine status becomes `idle` again after the job it was assigned is marked `failed`.
+65. [x] Test: A `busy` engine is not assigned another job.
 
 ### C. Job Resubmission Logic
-66. [ ] Test: A failed job has its `retries` count incremented.
-67. [ ] Test: A failed job with `retries` < `max_retries` is re-queued (status `pending`).
-68. [ ] Test: A failed job with `retries` == `max_retries` becomes `failed_permanently`.
-69. [ ] Test: `max_retries` defaults to 3 if not provided in the submission.
-70. [ ] Test: `max_retries` can be set to 0.
-71. [ ] Test: A job with `max_retries`=0 that fails goes to `failed_permanently` immediately.
+66. [x] Test: A failed job has its `retries` count incremented.
+67. [x] Test: A failed job with `retries` < `max_retries` is re-queued (status `pending`).
+68. [x] Test: A failed job with `retries` == `max_retries` becomes `failed_permanently`.
+69. [x] Test: `max_retries` defaults to 3 if not provided in the submission.
+70. [x] Test: `max_retries` can be set to 0.
+71. [x] Test: A job with `max_retries`=0 that fails goes to `failed_permanently` immediately.
 
 ### D. Scheduling Logic
-72. [ ] Test: Scheduler assigns a pending job to an idle engine.
-73. [ ] Test: Scheduler does not assign a job if no engines are registered.
-74. [ ] Test: Scheduler does not assign a job if all registered engines are busy.
-75. [ ] Test: Scheduler correctly assigns a large job to a streaming-capable engine if available.
-76. [ ] Test: Scheduler assigns a large job to the fastest non-streaming engine if no streaming engines are available.
-77. [ ] Test: Scheduler assigns a small job to the slowest engine.
+72. [x] Test: Scheduler assigns a pending job to an idle engine.
+73. [x] Test: Scheduler does not assign a job if no engines are registered.
+74. [x] Test: Scheduler does not assign a job if all registered engines are busy.
+75. [x] Test: Scheduler correctly assigns a large job to a streaming-capable engine if available.
+76. [x] Test: Scheduler assigns a large job to the fastest non-streaming engine if no streaming engines are available.
+77. [x] Test: Scheduler assigns a small job to the slowest engine.
 78. [ ] Test: Scheduler assigns a medium job to the fastest engine.
 79. [ ] Test: Scheduler handles engines without benchmark data correctly (e.g., ignores them or uses a default).
 80. [ ] Test: Scheduler correctly updates engine status to `busy` upon assignment.

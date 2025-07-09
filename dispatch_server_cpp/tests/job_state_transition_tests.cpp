@@ -312,3 +312,168 @@ TEST_F(ApiTest, FailedPermanentlyJobCannotBeMarkedAsFailedAgain) {
     ASSERT_EQ(res_fail_again->status, 400);
     ASSERT_EQ(res_fail_again->body, "Bad Request: Job is already in a final state.");
 }
+
+TEST_F(ApiTest, CompletedJobIsNotReturnedByAssignJob) {
+    // Test 58: A `completed` job is not returned by `POST /assign_job/`.
+    
+    // 1. Create, assign and complete a job
+    nlohmann::json job_payload = {
+        {"source_url", "http://example.com/video.mp4"},
+        {"target_codec", "h264"}
+    };
+    httplib::Headers headers = {
+        {"X-API-Key", api_key}
+    };
+    auto res_submit = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
+    ASSERT_EQ(res_submit->status, 200);
+    std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
+    
+    // 2. Register an idle engine and assign job
+    nlohmann::json engine_payload = {
+        {"engine_id", "engine-123"},
+        {"engine_type", "transcoder"},
+        {"supported_codecs", {"h264", "vp9"}},
+        {"status", "idle"},
+        {"benchmark_time", 100.0}
+    };
+    auto res_heartbeat = client->Post("/engines/heartbeat", headers, engine_payload.dump(), "application/json");
+    ASSERT_EQ(res_heartbeat->status, 200);
+    
+    nlohmann::json assign_payload = {
+        {"engine_id", "engine-123"}
+    };
+    auto res_assign = client->Post("/assign_job/", headers, assign_payload.dump(), "application/json");
+    ASSERT_EQ(res_assign->status, 200);
+    
+    // 3. Complete the job
+    nlohmann::json complete_payload = {
+        {"output_url", "http://example.com/video_out.mp4"}
+    };
+    auto res_complete = client->Post(("/jobs/" + job_id + "/complete").c_str(), headers, complete_payload.dump(), "application/json");
+    ASSERT_EQ(res_complete->status, 200);
+    
+    // 4. Register another idle engine and try to assign a job (should get no jobs)
+    nlohmann::json engine2_payload = {
+        {"engine_id", "engine-456"},
+        {"engine_type", "transcoder"},
+        {"supported_codecs", {"h264", "vp9"}},
+        {"status", "idle"},
+        {"benchmark_time", 100.0}
+    };
+    auto res_heartbeat2 = client->Post("/engines/heartbeat", headers, engine2_payload.dump(), "application/json");
+    ASSERT_EQ(res_heartbeat2->status, 200);
+    
+    nlohmann::json assign2_payload = {
+        {"engine_id", "engine-456"}
+    };
+    auto res_assign2 = client->Post("/assign_job/", headers, assign2_payload.dump(), "application/json");
+    ASSERT_EQ(res_assign2->status, 204); // No Content - completed job not assignable
+}
+
+TEST_F(ApiTest, FailedPermanentlyJobIsNotReturnedByAssignJob) {
+    // Test 59: A `failed_permanently` job is not returned by `POST /assign_job/`.
+    
+    // 1. Create a job with max_retries = 0 (so it fails permanently immediately)
+    nlohmann::json job_payload = {
+        {"source_url", "http://example.com/video.mp4"},
+        {"target_codec", "h264"},
+        {"max_retries", 0}
+    };
+    httplib::Headers headers = {
+        {"X-API-Key", api_key}
+    };
+    auto res_submit = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
+    ASSERT_EQ(res_submit->status, 200);
+    std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
+    
+    // 2. Register an idle engine and assign job
+    nlohmann::json engine_payload = {
+        {"engine_id", "engine-123"},
+        {"engine_type", "transcoder"},
+        {"supported_codecs", {"h264", "vp9"}},
+        {"status", "idle"},
+        {"benchmark_time", 100.0}
+    };
+    auto res_heartbeat = client->Post("/engines/heartbeat", headers, engine_payload.dump(), "application/json");
+    ASSERT_EQ(res_heartbeat->status, 200);
+    
+    nlohmann::json assign_payload = {
+        {"engine_id", "engine-123"}
+    };
+    auto res_assign = client->Post("/assign_job/", headers, assign_payload.dump(), "application/json");
+    ASSERT_EQ(res_assign->status, 200);
+    
+    // 3. Fail the job (should become failed_permanently since max_retries = 0)
+    nlohmann::json fail_payload = {
+        {"error_message", "Transcoding failed"}
+    };
+    auto res_fail = client->Post(("/jobs/" + job_id + "/fail").c_str(), headers, fail_payload.dump(), "application/json");
+    ASSERT_EQ(res_fail->status, 200);
+    
+    // 4. Register another idle engine and try to assign a job (should get no jobs)
+    nlohmann::json engine2_payload = {
+        {"engine_id", "engine-456"},
+        {"engine_type", "transcoder"},
+        {"supported_codecs", {"h264", "vp9"}},
+        {"status", "idle"},
+        {"benchmark_time", 100.0}
+    };
+    auto res_heartbeat2 = client->Post("/engines/heartbeat", headers, engine2_payload.dump(), "application/json");
+    ASSERT_EQ(res_heartbeat2->status, 200);
+    
+    nlohmann::json assign2_payload = {
+        {"engine_id", "engine-456"}
+    };
+    auto res_assign2 = client->Post("/assign_job/", headers, assign2_payload.dump(), "application/json");
+    ASSERT_EQ(res_assign2->status, 204); // No Content - failed_permanently job not assignable
+}
+
+TEST_F(ApiTest, AssignedJobIsNotReturnedByAssignJob) {
+    // Test 60: An `assigned` job is not returned by `POST /assign_job/`.
+    
+    // 1. Create a job
+    nlohmann::json job_payload = {
+        {"source_url", "http://example.com/video.mp4"},
+        {"target_codec", "h264"}
+    };
+    httplib::Headers headers = {
+        {"X-API-Key", api_key}
+    };
+    auto res_submit = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
+    ASSERT_EQ(res_submit->status, 200);
+    std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
+    
+    // 2. Register an idle engine and assign job
+    nlohmann::json engine_payload = {
+        {"engine_id", "engine-123"},
+        {"engine_type", "transcoder"},
+        {"supported_codecs", {"h264", "vp9"}},
+        {"status", "idle"},
+        {"benchmark_time", 100.0}
+    };
+    auto res_heartbeat = client->Post("/engines/heartbeat", headers, engine_payload.dump(), "application/json");
+    ASSERT_EQ(res_heartbeat->status, 200);
+    
+    nlohmann::json assign_payload = {
+        {"engine_id", "engine-123"}
+    };
+    auto res_assign = client->Post("/assign_job/", headers, assign_payload.dump(), "application/json");
+    ASSERT_EQ(res_assign->status, 200);
+    
+    // 3. Register another idle engine and try to assign a job (should get no jobs)
+    nlohmann::json engine2_payload = {
+        {"engine_id", "engine-456"},
+        {"engine_type", "transcoder"},
+        {"supported_codecs", {"h264", "vp9"}},
+        {"status", "idle"},
+        {"benchmark_time", 100.0}
+    };
+    auto res_heartbeat2 = client->Post("/engines/heartbeat", headers, engine2_payload.dump(), "application/json");
+    ASSERT_EQ(res_heartbeat2->status, 200);
+    
+    nlohmann::json assign2_payload = {
+        {"engine_id", "engine-456"}
+    };
+    auto res_assign2 = client->Post("/assign_job/", headers, assign2_payload.dump(), "application/json");
+    ASSERT_EQ(res_assign2->status, 204); // No Content - assigned job not re-assignable
+}
