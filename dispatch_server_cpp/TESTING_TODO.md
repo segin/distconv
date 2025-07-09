@@ -106,21 +106,21 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 75. [x] Test: Scheduler correctly assigns a large job to a streaming-capable engine if available.
 76. [x] Test: Scheduler assigns a large job to the fastest non-streaming engine if no streaming engines are available.
 77. [x] Test: Scheduler assigns a small job to the slowest engine.
-78. [ ] Test: Scheduler assigns a medium job to the fastest engine.
-79. [ ] Test: Scheduler handles engines without benchmark data correctly (e.g., ignores them or uses a default).
-80. [ ] Test: Scheduler correctly updates engine status to `busy` upon assignment.
-81. [ ] Test: Scheduler correctly updates job status to `assigned` upon assignment.
-82. [ ] Test: Scheduler correctly records the `assigned_engine` ID in the job data.
+78. [x] Test: Scheduler assigns a medium job to the fastest engine.
+79. [x] Test: Scheduler handles engines without benchmark data correctly (e.g., ignores them or uses a default).
+80. [x] Test: Scheduler correctly updates engine status to `busy` upon assignment.
+81. [x] Test: Scheduler correctly updates job status to `assigned` upon assignment.
+82. [x] Test: Scheduler correctly records the `assigned_engine` ID in the job data.
 
 ### E. Persistent Storage (`load_state`/`save_state`)
-83. [ ] Test: `save_state` correctly writes the current jobs and engines to the JSON file.
-84. [ ] Test: `load_state` correctly loads jobs from the JSON file on startup.
-85. [ ] Test: `load_state` correctly loads engines from the JSON file on startup.
-86. [ ] Test: `load_state` handles a non-existent file gracefully (starts with empty state).
-87. [ ] Test: `load_state` handles a corrupt/invalid JSON file gracefully.
-88. [ ] Test: `load_state` handles an empty JSON file gracefully.
-89. [ ] Test: State is preserved after a simulated server restart (call `save_state` then `load_state`).
-90. [ ] Test: Submitting a new job triggers `save_state`.
+83. [x] Test: `save_state` correctly writes the current jobs and engines to the JSON file.
+84. [x] Test: `load_state` correctly loads jobs from the JSON file on startup.
+85. [x] Test: `load_state` correctly loads engines from the JSON file on startup.
+86. [x] Test: `load_state` handles a non-existent file gracefully (starts with empty state).
+87. [x] Test: `load_state` handles a corrupt/invalid JSON file gracefully.
+88. [x] Test: `load_state` handles an empty JSON file gracefully.
+89. [x] Test: State is preserved after a simulated server restart (call `save_state` then `load_state`).
+90. [x] Test: Submitting a new job triggers `save_state`.
 91. [ ] Test: A heartbeat triggers `save_state`.
 92. [ ] Test: Completing a job triggers `save_state`.
 93. [ ] Test: Failing a job triggers `save_state`.

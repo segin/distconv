@@ -456,7 +456,10 @@ The dispatch server uses intelligent scheduling algorithms to assign jobs to eng
 - Busy engines are not assigned additional jobs
 - Engine status changes to "busy" upon job assignment
 - Job status changes to "assigned" upon assignment
+- `assigned_engine` field populated with engine ID upon assignment
 - No assignment occurs if no idle engines available
+- Engines without benchmark data are ignored during assignment
+- Assignment process updates both job and engine records atomically
 
 ## Retry and Failure Handling
 
@@ -529,8 +532,11 @@ State is automatically saved when:
 
 ### Recovery Behavior
 - Server gracefully handles missing state files (starts with empty state)
-- Server gracefully handles corrupted JSON files (starts with empty state)
+- Server gracefully handles corrupted JSON files (starts with empty state and logs error)
 - Server gracefully handles partial state files (missing jobs or engines sections)
+- Server gracefully handles empty JSON files (starts with empty state)
+- Server gracefully handles malformed JSON syntax (parse errors logged, empty state used)
+- State loading failures do not prevent server startup
 
 ## Thread Safety
 
