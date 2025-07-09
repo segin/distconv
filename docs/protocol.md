@@ -507,14 +507,17 @@ The dispatch server implements persistent state management:
 - Default storage file: `dispatch_server_state.json`
 - State is automatically saved after any data modification
 - State is loaded on server startup
+- JSON files are well-formatted with indentation for readability
+- Special characters and Unicode are properly escaped and preserved
+- Atomic file operations prevent corruption (temporary file + rename)
 
 ### Auto-save Triggers
 State is automatically saved when:
-- New job is submitted
-- Engine sends heartbeat
-- Job is completed
-- Job is failed  
-- Job is assigned to engine
+- New job is submitted (`SubmitJobTriggersSaveState`)
+- Engine sends heartbeat (`HeartbeatTriggersSaveState`)
+- Job is completed (`CompleteJobTriggersSaveState`)
+- Job is failed (`FailJobTriggersSaveState`)
+- Job is assigned to engine (`AssignJobTriggersSaveState`)
 
 ### State File Format
 ```json
@@ -536,6 +539,8 @@ State is automatically saved when:
 - Server gracefully handles partial state files (missing jobs or engines sections)
 - Server gracefully handles empty JSON files (starts with empty state)
 - Server gracefully handles malformed JSON syntax (parse errors logged, empty state used)
+- Server gracefully handles files with only "jobs" key (engines initialized as empty)
+- Server gracefully handles files with only "engines" key (jobs initialized as empty)
 - State loading failures do not prevent server startup
 
 ## Thread Safety
@@ -549,9 +554,11 @@ The dispatch server implements thread-safe operations:
 - State persistence operations are atomic
 
 ### Concurrent Operations
-- Multiple job submissions can occur simultaneously
-- Multiple engine heartbeats can be processed concurrently
-- Job assignment and completion can happen in parallel
+- Multiple job submissions can occur simultaneously (`SubmitMultipleJobsConcurrently`)
+- Multiple engine heartbeats can be processed concurrently (`SendMultipleHeartbeatsConcurrently`)
+- Job assignment and completion can happen in parallel (`ConcurrentlyAssignJobsAndCompleteJobs`)
+- Mixed operations (jobs + heartbeats) maintain consistency (`ConcurrentlySubmitJobsAndSendHeartbeats`)
+- Database access is thread-safe with proper locking (`AccessJobsDbFromMultipleThreadsWithLocking`, `AccessEnginesDbFromMultipleThreadsWithLocking`)
 - All operations maintain data consistency
 
 ---

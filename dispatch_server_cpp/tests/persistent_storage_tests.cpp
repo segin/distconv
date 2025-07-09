@@ -908,3 +908,111 @@ TEST_F(ApiTest, LoadStateCanBeMocked) {
     mock_load_state_enabled = false;
     mock_load_state_data.clear();
 }
+
+TEST_F(ApiTest, SaveStateProducesFormattedJson) {
+    // Test 97: save_state produces a well-formatted (indented) JSON file.
+    
+    // 1. Create a job and engine
+    nlohmann::json job_payload = {
+        {"source_url", "http://example.com/video.mp4"},
+        {"target_codec", "h264"}
+    };
+    httplib::Headers headers = {
+        {"X-API-Key", api_key}
+    };
+    auto res_submit = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
+    ASSERT_EQ(res_submit->status, 200);
+    
+    nlohmann::json engine_payload = {
+        {"engine_id", "engine-123"},
+        {"engine_type", "transcoder"},
+        {"supported_codecs", {"h264", "vp9"}},
+        {"status", "idle"}
+    };
+    auto res_heartbeat = client->Post("/engines/heartbeat", headers, engine_payload.dump(), "application/json");
+    ASSERT_EQ(res_heartbeat->status, 200);
+    
+    // 2. Save state
+    save_state();
+    
+    // 3. Read the file as raw text and verify it's indented
+    std::ifstream ifs(PERSISTENT_STORAGE_FILE);
+    ASSERT_TRUE(ifs.is_open());
+    std::string file_content((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    ifs.close();
+    
+    // 4. Verify the JSON is formatted with indentation (contains newlines and spaces)
+    ASSERT_TRUE(file_content.find('\n') != std::string::npos); // Contains newlines
+    ASSERT_TRUE(file_content.find("  \"jobs\"") != std::string::npos || file_content.find("    \"jobs\"") != std::string::npos); // Contains indented keys
+}
+
+TEST_F(ApiTest, LoadStateHandlesOnlyEnginesKey) {
+    // Test 99: load_state handles a file with only an "engines" key.
+    
+    // 1. Create a state file with only an "engines" key
+    std::string temp_storage_file = "temp_state.json";
+    PERSISTENT_STORAGE_FILE = temp_storage_file;
+    nlohmann::json state_with_only_engines = {
+        {"engines", {{"engine1", {{"engine_id", "engine1"}, {"status", "idle"}}}}}
+    };
+    std::ofstream ofs(temp_storage_file);
+    ofs << state_with_only_engines.dump(4);
+    ofs.close();
+    
+    // 2. Load the state
+    load_state();
+    
+    // 3. Verify that engines are loaded and jobs are empty
+    {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        ASSERT_TRUE(engines_db.contains("engine1"));
+        ASSERT_EQ(engines_db["engine1"]["engine_id"], "engine1");
+        ASSERT_EQ(engines_db["engine1"]["status"], "idle");
+        ASSERT_TRUE(jobs_db.empty());
+    }
+    
+    // 4. Clean up the temporary file
+    std::remove(temp_storage_file.c_str());
+}
+
+TEST_F(ApiTest, SaveStateHandlesSpecialCharacters) {
+    // Test 100: save_state correctly handles special characters in job/engine data.
+    
+    // 1. Create a job with special characters
+    nlohmann::json job_payload = {
+        {"source_url", "http://example.com/video with spaces & symbols!@#.mp4"},
+        {"target_codec", "h264"}
+    };
+    httplib::Headers headers = {
+        {"X-API-Key", api_key}
+    };
+    auto res_submit = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
+    ASSERT_EQ(res_submit->status, 200);
+    std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
+    
+    // 2. Create an engine with special characters
+    nlohmann::json engine_payload = {
+        {"engine_id", "engine-with-special-chars-αβγ"},
+        {"engine_type", "transcoder"},
+        {"supported_codecs", {"h264", "vp9"}},
+        {"status", "idle"}
+    };
+    auto res_heartbeat = client->Post("/engines/heartbeat", headers, engine_payload.dump(), "application/json");
+    ASSERT_EQ(res_heartbeat->status, 200);
+    
+    // 3. Save state
+    save_state();
+    
+    // 4. Load state to verify round-trip correctness
+    load_state();
+    
+    // 5. Verify special characters are preserved
+    {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        ASSERT_TRUE(jobs_db.contains(job_id));
+        ASSERT_EQ(jobs_db[job_id]["source_url"], "http://example.com/video with spaces & symbols!@#.mp4");
+        
+        ASSERT_TRUE(engines_db.contains("engine-with-special-chars-αβγ"));
+        ASSERT_EQ(engines_db["engine-with-special-chars-αβγ"]["engine_id"], "engine-with-special-chars-αβγ");
+    }
+}

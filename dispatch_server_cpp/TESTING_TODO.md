@@ -121,32 +121,32 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 88. [x] Test: `load_state` handles an empty JSON file gracefully.
 89. [x] Test: State is preserved after a simulated server restart (call `save_state` then `load_state`).
 90. [x] Test: Submitting a new job triggers `save_state`.
-91. [ ] Test: A heartbeat triggers `save_state`.
-92. [ ] Test: Completing a job triggers `save_state`.
-93. [ ] Test: Failing a job triggers `save_state`.
-94. [ ] Test: Assigning a job triggers `save_state`.
-95. [ ] Test: `save_state` writes to a temporary file and renames to prevent corruption.
-96. [ ] Test: `load_state` correctly handles empty "jobs" or "engines" keys in the JSON file.
-97. [ ] Test: `save_state` produces a well-formatted (indented) JSON file.
-98. [ ] Test: `load_state` handles a file with only a "jobs" key.
-99. [ ] Test: `load_state` handles a file with only an "engines" key.
-100. [ ] Test: `save_state` correctly handles special characters in job/engine data.
+91. [x] Test: A heartbeat triggers `save_state`.
+92. [x] Test: Completing a job triggers `save_state`.
+93. [x] Test: Failing a job triggers `save_state`.
+94. [x] Test: Assigning a job triggers `save_state`.
+95. [x] Test: `save_state` writes to a temporary file and renames to prevent corruption.
+96. [x] Test: `load_state` correctly handles empty "jobs" or "engines" keys in the JSON file.
+97. [x] Test: `save_state` produces a well-formatted (indented) JSON file.
+98. [x] Test: `load_state` handles a file with only a "jobs" key.
+99. [x] Test: `load_state` handles a file with only an "engines" key.
+100. [x] Test: `save_state` correctly handles special characters in job/engine data.
 
 ## III. Core C++ & Miscellaneous (50 Tests)
 
 ### A. Command-Line Arguments
-101. [ ] Test: Server starts with no arguments.
-102. [ ] Test: Server correctly parses the `--api-key` argument.
-103. [ ] Test: Server ignores unknown command-line arguments.
-104. [ ] Test: Server handles `--api-key` without a value gracefully.
+101. [x] Test: Server starts with no arguments.
+102. [x] Test: Server correctly parses the `--api-key` argument.
+103. [x] Test: Server ignores unknown command-line arguments.
+104. [x] Test: Server handles `--api-key` without a value gracefully.
 
 ### B. Thread Safety
-105. [ ] Test: Submit multiple jobs concurrently from different threads. Verify all are added correctly.
-106. [ ] Test: Send multiple heartbeats concurrently from different threads. Verify all engines are updated correctly.
-107. [ ] Test: Concurrently submit jobs and send heartbeats. Verify data integrity.
-108. [ ] Test: Concurrently assign jobs and complete jobs. Verify state transitions are correct.
-109. [ ] Test: Access the main jobs database (`jobs_db`) from multiple threads with proper locking.
-110. [ ] Test: Access the main engines database (`engines_db`) from multiple threads with proper locking.
+105. [x] Test: Submit multiple jobs concurrently from different threads. Verify all are added correctly.
+106. [x] Test: Send multiple heartbeats concurrently from different threads. Verify all engines are updated correctly.
+107. [x] Test: Concurrently submit jobs and send heartbeats. Verify data integrity.
+108. [x] Test: Concurrently assign jobs and complete jobs. Verify state transitions are correct.
+109. [x] Test: Access the main jobs database (`jobs_db`) from multiple threads with proper locking.
+110. [x] Test: Access the main engines database (`engines_db`) from multiple threads with proper locking.
 
 ### C. Helper Functions & Utilities
 111. [ ] Test: `load_state` with a file containing a single job.
