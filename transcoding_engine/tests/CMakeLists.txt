@@ -19,6 +19,9 @@ add_executable(transcoding_engine_tests
     main.cpp
     test_helpers.cpp
     initialization_tests.cpp
+    main_loop_tests.cpp
+    transcoding_process_tests.cpp
+    sqlite_queue_tests.cpp
     ../transcoding_engine_core.cpp
 )
 

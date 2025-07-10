@@ -1,0 +1,15 @@
+{
+  "dispatch_server_url": "${DISPATCH_SERVER_URL:-http://localhost:8080}",
+  "engine_id": "${ENGINE_ID:-}",
+  "api_key": "${API_KEY:-}",
+  "ca_cert_path": "${CA_CERT_PATH:-}",
+  "hostname": "${HOSTNAME:-}",
+  "database_path": "/app/data/transcoding_jobs.db",
+  "storage_capacity_gb": "${STORAGE_CAPACITY_GB:-500.0}",
+  "streaming_support": "${STREAMING_SUPPORT:-true}",
+  "heartbeat_interval_seconds": "${HEARTBEAT_INTERVAL:-5}",
+  "benchmark_interval_minutes": "${BENCHMARK_INTERVAL:-5}",
+  "job_poll_interval_seconds": "${JOB_POLL_INTERVAL:-1}",
+  "http_timeout_seconds": "${HTTP_TIMEOUT:-30}",
+  "test_mode": "${TEST_MODE:-false}"
+}

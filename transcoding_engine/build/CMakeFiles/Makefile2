@@ -124,12 +124,12 @@ CMakeFiles/transcoding_engine.dir/clean:
 tests/CMakeFiles/transcoding_engine_tests.dir/all:
 	$(MAKE) $(MAKESILENT) -f tests/CMakeFiles/transcoding_engine_tests.dir/build.make tests/CMakeFiles/transcoding_engine_tests.dir/depend
 	$(MAKE) $(MAKESILENT) -f tests/CMakeFiles/transcoding_engine_tests.dir/build.make tests/CMakeFiles/transcoding_engine_tests.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/segin/distconv/transcoding_engine/build/CMakeFiles --progress-num=4,5,6,7,8 "Built target transcoding_engine_tests"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/segin/distconv/transcoding_engine/build/CMakeFiles --progress-num=4,5,6,7,8,9,10,11 "Built target transcoding_engine_tests"
 .PHONY : tests/CMakeFiles/transcoding_engine_tests.dir/all
 
 # Build rule for subdir invocation for target.
 tests/CMakeFiles/transcoding_engine_tests.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/segin/distconv/transcoding_engine/build/CMakeFiles 5
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/segin/distconv/transcoding_engine/build/CMakeFiles 8
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tests/CMakeFiles/transcoding_engine_tests.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/segin/distconv/transcoding_engine/build/CMakeFiles 0
 .PHONY : tests/CMakeFiles/transcoding_engine_tests.dir/rule

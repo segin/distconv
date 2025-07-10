@@ -1,0 +1,150 @@
+version: '3.8'
+
+services:
+  transcoding-engine:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        BUILD_DATE: ${BUILD_DATE}
+        VCS_REF: ${VCS_REF}
+    image: distconv/transcoding-engine:${VERSION:-latest}
+    container_name: distconv-transcoding-engine
+    
+    environment:
+      # Dispatch server connection
+      DISPATCH_SERVER_URL: ${DISPATCH_SERVER_URL:-http://dispatch-server:8080}
+      API_KEY: ${API_KEY}
+      
+      # Engine configuration
+      ENGINE_ID: ${ENGINE_ID:-}
+      HOSTNAME: ${HOSTNAME:-}
+      STORAGE_CAPACITY_GB: ${STORAGE_CAPACITY_GB:-500.0}
+      STREAMING_SUPPORT: ${STREAMING_SUPPORT:-true}
+      
+      # Performance tuning
+      HEARTBEAT_INTERVAL: ${HEARTBEAT_INTERVAL:-5}
+      BENCHMARK_INTERVAL: ${BENCHMARK_INTERVAL:-5}
+      JOB_POLL_INTERVAL: ${JOB_POLL_INTERVAL:-1}
+      HTTP_TIMEOUT: ${HTTP_TIMEOUT:-30}
+      
+      # SSL/TLS
+      CA_CERT_PATH: ${CA_CERT_PATH:-}
+      
+      # Development
+      TEST_MODE: ${TEST_MODE:-false}
+    
+    volumes:
+      # Persistent data storage
+      - transcoding_data:/app/data
+      - transcoding_logs:/app/logs
+      - transcoding_temp:/app/temp
+      
+      # Optional: mount custom configuration
+      - ${CONFIG_FILE:-./docker-config.json}:/app/config/engine.json:ro
+      
+      # Optional: mount CA certificates
+      - ${CA_CERT_DIR:-/etc/ssl/certs}:/etc/ssl/certs:ro
+    
+    networks:
+      - distconv-network
+    
+    restart: unless-stopped
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "transcoding_engine_modern"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+        labels: "service=transcoding-engine"
+    
+    # Security
+    user: "1000:1000"  # Run as non-root
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=256m
+    
+    # Dependencies (if dispatch server is also containerized)
+    depends_on:
+      - dispatch-server
+    
+    # Optional: Connect to external dispatch server
+    # external_links:
+    #   - "external-dispatch-server:dispatch-server"
+
+  # Optional: Include dispatch server in same compose file
+  dispatch-server:
+    image: distconv/dispatch-server:${DISPATCH_VERSION:-latest}
+    container_name: distconv-dispatch-server
+    
+    environment:
+      API_KEY: ${API_KEY}
+      PORT: 8080
+    
+    ports:
+      - "${DISPATCH_PORT:-8080}:8080"
+    
+    volumes:
+      - dispatch_data:/opt/distconv/server
+    
+    networks:
+      - distconv-network
+    
+    restart: unless-stopped
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  transcoding_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR:-./data}
+  
+  transcoding_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${LOGS_DIR:-./logs}
+  
+  transcoding_temp:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${TEMP_DIR:-./temp}
+  
+  dispatch_data:
+    driver: local
+
+networks:
+  distconv-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
