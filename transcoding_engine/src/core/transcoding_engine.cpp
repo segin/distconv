@@ -6,6 +6,7 @@
 #include <chrono>
 #include <unistd.h>
 #include <sstream>
+#include <optional>
 
 namespace transcoding_engine {
 
@@ -102,6 +103,8 @@ bool TranscodingEngine::is_running() const {
 }
 
 bool TranscodingEngine::register_with_dispatcher() {
+    auto queued_jobs = get_queued_jobs();
+    
     nlohmann::json heartbeat_data = {
         {"engine_id", config_.engine_id},
         {"engine_type", "transcoder"},
@@ -109,7 +112,8 @@ bool TranscodingEngine::register_with_dispatcher() {
         {"status", "idle"},
         {"storage_capacity_gb", config_.storage_capacity_gb},
         {"streaming_support", config_.streaming_support},
-        {"hostname", config_.hostname}
+        {"hostname", config_.hostname},
+        {"local_job_queue", queued_jobs}
     };
     
     auto headers = create_auth_headers();

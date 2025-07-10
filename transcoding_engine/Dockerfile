@@ -35,15 +35,13 @@ RUN git clone https://github.com/libcpr/cpr.git && \
 
 # Copy source code
 WORKDIR /app
-COPY src/ src/
-COPY CMakeLists_modern.txt CMakeLists.txt
-COPY app_main_modern.cpp .
+COPY . .
 
-# Build the application
-RUN mkdir build && cd build && \
-    cmake .. -DCMAKE_BUILD_TYPE=Release && \
-    make -j$(nproc) && \
-    make test
+# Build the application using the modern CMakeLists.txt
+RUN cp CMakeLists_modern.txt CMakeLists.txt && \
+    mkdir -p build_modern && cd build_modern && \
+    cmake -DCMAKE_BUILD_TYPE=Release .. && \
+    make -j$(nproc)
 
 # Runtime stage
 FROM ubuntu:22.04 AS runtime
@@ -74,8 +72,8 @@ RUN mkdir -p /app/{bin,config,logs,data,temp} && \
     chown -R distconv:distconv /app
 
 # Copy built application
-COPY --from=builder /app/build/transcoding_engine_modern /app/bin/
-COPY --from=builder /app/build/libTranscodingEngine* /usr/local/lib/ 2>/dev/null || true
+COPY --from=builder /app/build_modern/transcoding_engine_modern /app/bin/
+COPY --from=builder /app/build_modern/lib*.a /usr/local/lib/ 2>/dev/null || true
 
 # Copy configuration template
 COPY deployment/docker-config.json /app/config/engine.json

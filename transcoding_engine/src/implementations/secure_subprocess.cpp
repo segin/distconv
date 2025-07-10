@@ -177,6 +177,7 @@ private:
         }
     }
     
+public:
     bool is_executable_available_impl(const std::string& executable) {
         // Check if it's an absolute path
         if (executable[0] == '/') {

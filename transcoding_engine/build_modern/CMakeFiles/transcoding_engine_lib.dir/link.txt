@@ -1,0 +1,2 @@
+/usr/bin/ar qc libtranscoding_engine_lib.a CMakeFiles/transcoding_engine_lib.dir/src/implementations/cpr_http_client.cpp.o CMakeFiles/transcoding_engine_lib.dir/src/implementations/sqlite_database.cpp.o CMakeFiles/transcoding_engine_lib.dir/src/implementations/secure_subprocess.cpp.o CMakeFiles/transcoding_engine_lib.dir/src/core/transcoding_engine.cpp.o
+/usr/bin/ranlib libtranscoding_engine_lib.a

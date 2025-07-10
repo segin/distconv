@@ -1,0 +1,5 @@
+if(EXISTS "/home/segin/distconv/transcoding_engine/build_modern/transcoding_engine_modern_tests[1]_tests.cmake")
+  include("/home/segin/distconv/transcoding_engine/build_modern/transcoding_engine_modern_tests[1]_tests.cmake")
+else()
+  add_test(transcoding_engine_modern_tests_NOT_BUILT transcoding_engine_modern_tests_NOT_BUILT)
+endif()

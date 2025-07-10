@@ -1,5 +1,6 @@
 #include "mock_subprocess.h"
 #include <sstream>
+#include <algorithm>
 
 namespace transcoding_engine {
 

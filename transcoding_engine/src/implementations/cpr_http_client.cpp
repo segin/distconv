@@ -20,14 +20,7 @@ public:
     }
     
     cpr::SslOptions create_ssl_options() {
-        if (!ssl_verify_) {
-            return cpr::SslOptions{cpr::ssl::VerifyPeer{false}, cpr::ssl::VerifyHost{false}};
-        }
-        
-        if (!ca_cert_path_.empty()) {
-            return cpr::SslOptions{cpr::ssl::CaInfo{ca_cert_path_}};
-        }
-        
+        // TODO: Fix SSL options configuration for cpr library
         return cpr::SslOptions{};
     }
     

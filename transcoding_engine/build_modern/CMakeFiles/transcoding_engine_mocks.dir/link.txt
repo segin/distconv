@@ -1,0 +1,2 @@
+/usr/bin/ar qc libtranscoding_engine_mocks.a CMakeFiles/transcoding_engine_mocks.dir/src/mocks/mock_http_client.cpp.o CMakeFiles/transcoding_engine_mocks.dir/src/mocks/mock_database.cpp.o CMakeFiles/transcoding_engine_mocks.dir/src/mocks/mock_subprocess.cpp.o
+/usr/bin/ranlib libtranscoding_engine_mocks.a

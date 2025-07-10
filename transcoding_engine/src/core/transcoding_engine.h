@@ -10,6 +10,7 @@
 #include <vector>
 #include <atomic>
 #include <thread>
+#include <optional>
 
 namespace transcoding_engine {
 
