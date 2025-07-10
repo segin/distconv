@@ -129,7 +129,8 @@ TEST_F(TranscodingEngineTest, PerformTranscodingMockedFileIO) {
     // Configure default successful HTTP responses for all calls
     http_client_ptr->set_default_response({200, "", {}, true, ""});
     
-    // Configure mock subprocess for successful transcoding (any ffmpeg command)
+    // Configure mock subprocess for successful transcoding
+    // The mock will automatically create output files for FFmpeg commands
     subprocess_ptr->set_default_result({0, "transcoding output", "", true, ""});
     
     // Test job processing
@@ -139,22 +140,8 @@ TEST_F(TranscodingEngineTest, PerformTranscodingMockedFileIO) {
     job.target_codec = "h264";
     job.job_size = 100.0;
     
-    // First attempt to process job
+    // Process job - the mock subprocess will create the output file automatically
     bool result = engine->process_job(job);
-    
-    // If it failed, create the output file that was expected and try again
-    if (!result && subprocess_ptr->get_call_count() > 0) {
-        auto last_call = subprocess_ptr->get_last_call();
-        if (last_call.command.size() >= 2) {
-            std::string output_file = last_call.command.back();
-            std::ofstream file(output_file);
-            file << "dummy transcoded video content";
-            file.close();
-            
-            // Try processing the job again
-            result = engine->process_job(job);
-        }
-    }
     
     EXPECT_TRUE(result);
     
@@ -171,7 +158,7 @@ TEST_F(TranscodingEngineTest, PerformTranscodingMockedFFmpeg) {
     // Mock successful download and upload
     http_client_ptr->set_default_response({200, "", {}, true, ""});
     
-    // Mock ffmpeg failure scenario - remove default result to ensure specific command takes precedence
+    // Mock ffmpeg failure scenario
     subprocess_ptr->set_default_result({1, "", "ffmpeg: command failed", false, "Default failure"});
     subprocess_ptr->set_result_for_command(
         {"ffmpeg", "-y", "-i", "input_test-job-456.mp4", "-c:v", "vp9", "output_test-job-456.mp4"},

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="4" failures="0" disabled="0" errors="0" time="0.514" timestamp="2025-07-10T17:00:51.261" name="AllTests">
+  <testsuite name="ApiTest" tests="4" failures="0" disabled="0" skipped="0" errors="0" time="0.007" timestamp="2025-07-10T17:00:51.767">
+    <testcase name="RegisterEngineValid" file="/home/segin/distconv/dispatch_server_cpp/tests/engines_api_tests.cpp" line="12" status="run" result="completed" time="0.001" timestamp="2025-07-10T17:00:51.767" classname="ApiTest" />
+    <testcase name="RegisterEngineDuplicate" file="/home/segin/distconv/dispatch_server_cpp/tests/engines_api_tests.cpp" line="34" status="run" result="completed" time="0.003" timestamp="2025-07-10T17:00:51.769" classname="ApiTest" />
+    <testcase name="RegisterEngineNoApiKey" file="/home/segin/distconv/dispatch_server_cpp/tests/engines_api_tests.cpp" line="55" status="run" result="completed" time="0.001" timestamp="2025-07-10T17:00:51.772" classname="ApiTest" />
+    <testcase name="RegisterEngineIncorrectApiKey" file="/home/segin/distconv/dispatch_server_cpp/tests/engines_api_tests.cpp" line="67" status="run" result="completed" time="0.001" timestamp="2025-07-10T17:00:51.773" classname="ApiTest" />
+  </testsuite>
+</testsuites>

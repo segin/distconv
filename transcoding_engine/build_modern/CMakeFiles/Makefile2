@@ -164,8 +164,8 @@ CMakeFiles/transcoding_engine_mocks.dir/clean:
 # Target rules for target CMakeFiles/transcoding_engine_modern_tests.dir
 
 # All Build rule for target.
-CMakeFiles/transcoding_engine_modern_tests.dir/all: CMakeFiles/transcoding_engine_mocks.dir/all
 CMakeFiles/transcoding_engine_modern_tests.dir/all: CMakeFiles/transcoding_engine_lib.dir/all
+CMakeFiles/transcoding_engine_modern_tests.dir/all: CMakeFiles/transcoding_engine_mocks.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/transcoding_engine_modern_tests.dir/build.make CMakeFiles/transcoding_engine_modern_tests.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/transcoding_engine_modern_tests.dir/build.make CMakeFiles/transcoding_engine_modern_tests.dir/build
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/segin/distconv/transcoding_engine/build_modern/CMakeFiles --progress-num=14,15,16,17,18 "Built target transcoding_engine_modern_tests"

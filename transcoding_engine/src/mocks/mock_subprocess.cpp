@@ -1,6 +1,7 @@
 #include "mock_subprocess.h"
 #include <sstream>
 #include <algorithm>
+#include <fstream>
 
 namespace transcoding_engine {
 
@@ -8,7 +9,21 @@ SubprocessResult MockSubprocess::run(const std::vector<std::string>& command,
                                     const std::string& working_directory,
                                     int timeout_seconds) {
     record_call(command, "", working_directory, timeout_seconds);
-    return get_result_for_command(command);
+    
+    auto result = get_result_for_command(command);
+    
+    // If this looks like an FFmpeg command and the result is successful, create the output file
+    if (result.success && result.exit_code == 0 && command.size() >= 7 && command[0] == "ffmpeg") {
+        // FFmpeg command format: ffmpeg -y -i input.mp4 -c:v codec output.mp4
+        std::string output_file = command.back(); // Last argument is typically the output file
+        if (output_file.find(".mp4") != std::string::npos) {
+            std::ofstream file(output_file);
+            file << "mock transcoded content";
+            file.close();
+        }
+    }
+    
+    return result;
 }
 
 SubprocessResult MockSubprocess::run_with_input(const std::vector<std::string>& command,
@@ -113,7 +128,11 @@ SubprocessResult MockSubprocess::get_result_for_command(const std::vector<std::s
             if (std::find(command.begin(), command.end(), "-hwaccels") != command.end()) {
                 return {0, "cuda,vaapi,qsv", "", true, ""};
             }
-            // Transcoding simulation
+            // For transcoding commands, check if default is set to fail
+            if (!default_result_.success || default_result_.exit_code != 0) {
+                return default_result_; // Use the configured failure
+            }
+            // Transcoding simulation - success case
             return {0, "frame= 1000 fps= 30 q=23.0 size=    1024kB time=00:00:33.33", "", true, ""};
         }
     }
