@@ -1,6 +1,8 @@
 file(REMOVE_RECURSE
   "CMakeFiles/transcoding_engine.dir/app_main.cpp.o"
   "CMakeFiles/transcoding_engine.dir/app_main.cpp.o.d"
+  "CMakeFiles/transcoding_engine.dir/transcoding_engine_core.cpp.o"
+  "CMakeFiles/transcoding_engine.dir/transcoding_engine_core.cpp.o.d"
   "transcoding_engine"
   "transcoding_engine.pdb"
 )

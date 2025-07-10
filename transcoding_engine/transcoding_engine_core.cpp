@@ -244,15 +244,6 @@ bool downloadFile(const std::string& url, const std::string& output_path);
 // Function to upload a file (placeholder)
 bool uploadFile(const std::string& url, const std::string& file_path);
 
-// Function to report job status to dispatch server
-void reportJobStatus(const std::string& dispatchServerUrl, const std::string& job_id, const std::string& status, const std::string& output_url, const std::string& error_message, const std::string& caCertPath, const std::string& apiKey) {
-
-// Placeholder for streaming transcoding logic
-void performStreamingTranscoding(const std::string& dispatchServerUrl, const std::string& job_id, const std::string& source_url, const std::string& target_codec, const std::string& caCertPath, const std::string& apiKey);
-
-// Actual transcoding logic
-void performTranscoding(const std::string& dispatchServerUrl, const std::string& job_id, const std::string& source_url, const std::string& target_codec, const std::string& caCertPath, const std::string& apiKey);
-
 // Function to download a file
 bool downloadFile(const std::string& url, const std::string& output_path, const std::string& caCertPath, const std::string& apiKey) {
     CURL *curl;
@@ -455,7 +446,7 @@ int run_transcoding_engine(int argc, char* argv[]) {
     // Main loop for listening for jobs
     std::cout << "Engine " << engineId << " is idle, waiting for jobs..." << std::endl;
     while (true) {
-        std::string job_json = getJob(dispatchServerUrl, engineId, caCertPath);
+        std::string job_json = getJob(dispatchServerUrl, engineId, caCertPath, apiKey);
         if (!job_json.empty()) {
             cJSON *root = cJSON_Parse(job_json.c_str());
             if (root) {
@@ -475,7 +466,7 @@ int run_transcoding_engine(int argc, char* argv[]) {
                     add_job_to_db(job_id);
                     localJobQueue.push_back(job_id);
 
-                    performTranscoding(dispatchServerUrl, job_id, source_url, target_codec, caCertPath);
+                    performTranscoding(dispatchServerUrl, job_id, source_url, target_codec, caCertPath, apiKey);
 
                     // Remove job from local queue after completion (or failure)
                     remove_job_from_db(job_id);

@@ -1,3 +1,8 @@
 /home/segin/distconv/transcoding_engine/build/CMakeFiles/transcoding_engine.dir
+/home/segin/distconv/transcoding_engine/build/CMakeFiles/test.dir
 /home/segin/distconv/transcoding_engine/build/CMakeFiles/edit_cache.dir
 /home/segin/distconv/transcoding_engine/build/CMakeFiles/rebuild_cache.dir
+/home/segin/distconv/transcoding_engine/build/tests/CMakeFiles/transcoding_engine_tests.dir
+/home/segin/distconv/transcoding_engine/build/tests/CMakeFiles/test.dir
+/home/segin/distconv/transcoding_engine/build/tests/CMakeFiles/edit_cache.dir
+/home/segin/distconv/transcoding_engine/build/tests/CMakeFiles/rebuild_cache.dir

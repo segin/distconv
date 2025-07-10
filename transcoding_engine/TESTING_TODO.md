@@ -5,19 +5,19 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 ## I. Core Logic & State (50 Tests)
 
 ### A. Initialization & Configuration
-1.  [ ] Test: Engine starts with default configuration values.
-2.  [ ] Test: Engine correctly parses `--ca-cert` command-line argument.
-3.  [ ] Test: Engine correctly parses `--dispatch-url` command-line argument.
-4.  [ ] Test: Engine correctly parses `--api-key` command-line argument.
-5.  [ ] Test: Engine correctly parses `--hostname` command-line argument.
-6.  [ ] Test: Engine ignores unknown command-line arguments.
-7.  [ ] Test: `engineId` is generated and is not empty.
-8.  [ ] Test: `engineId` is reasonably unique on subsequent runs.
-9.  [ ] Test: `getHostname` returns a non-empty string.
-10. [ ] Test: `init_sqlite` creates the database file if it doesn't exist.
-11. [ ] Test: `init_sqlite` creates the `jobs` table if it doesn't exist.
-12. [ ] Test: `init_sqlite` handles an existing database and table without error.
-13. [ ] Test: `get_jobs_from_db` returns an empty vector when the database is new.
+1.  [x] Test: Engine starts with default configuration values.
+2.  [x] Test: Engine correctly parses `--ca-cert` command-line argument.
+3.  [x] Test: Engine correctly parses `--dispatch-url` command-line argument.
+4.  [x] Test: Engine correctly parses `--api-key` command-line argument.
+5.  [x] Test: Engine correctly parses `--hostname` command-line argument.
+6.  [x] Test: Engine ignores unknown command-line arguments.
+7.  [x] Test: `engineId` is generated and is not empty.
+8.  [x] Test: `engineId` is reasonably unique on subsequent runs.
+9.  [x] Test: `getHostname` returns a non-empty string.
+10. [x] Test: `init_sqlite` creates the database file if it doesn't exist.
+11. [x] Test: `init_sqlite` creates the `jobs` table if it doesn't exist.
+12. [x] Test: `init_sqlite` handles an existing database and table without error.
+13. [x] Test: `get_jobs_from_db` returns an empty vector when the database is new.
 
 ### B. Main Loop & Job Polling
 14. [ ] Test: `getJob` function is called periodically in the main loop.

@@ -65,6 +65,16 @@ CMAKE_BINARY_DIR = /home/segin/distconv/transcoding_engine/build
 #=============================================================================
 # Targets provided globally by CMake.
 
+# Special rule for the target test
+test:
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Running tests..."
+	/usr/bin/ctest --force-new-ctest-process $(ARGS)
+.PHONY : test
+
+# Special rule for the target test
+test/fast: test
+.PHONY : test/fast
+
 # Special rule for the target edit_cache
 edit_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "No interactive CMake dialog available..."
@@ -129,6 +139,19 @@ transcoding_engine/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/transcoding_engine.dir/build.make CMakeFiles/transcoding_engine.dir/build
 .PHONY : transcoding_engine/fast
 
+#=============================================================================
+# Target rules for targets named transcoding_engine_tests
+
+# Build rule for target.
+transcoding_engine_tests: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 transcoding_engine_tests
+.PHONY : transcoding_engine_tests
+
+# fast build rule for target.
+transcoding_engine_tests/fast:
+	$(MAKE) $(MAKESILENT) -f tests/CMakeFiles/transcoding_engine_tests.dir/build.make tests/CMakeFiles/transcoding_engine_tests.dir/build
+.PHONY : transcoding_engine_tests/fast
+
 app_main.o: app_main.cpp.o
 .PHONY : app_main.o
 
@@ -153,6 +176,30 @@ app_main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/transcoding_engine.dir/build.make CMakeFiles/transcoding_engine.dir/app_main.cpp.s
 .PHONY : app_main.cpp.s
 
+transcoding_engine_core.o: transcoding_engine_core.cpp.o
+.PHONY : transcoding_engine_core.o
+
+# target to build an object file
+transcoding_engine_core.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/transcoding_engine.dir/build.make CMakeFiles/transcoding_engine.dir/transcoding_engine_core.cpp.o
+.PHONY : transcoding_engine_core.cpp.o
+
+transcoding_engine_core.i: transcoding_engine_core.cpp.i
+.PHONY : transcoding_engine_core.i
+
+# target to preprocess a source file
+transcoding_engine_core.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/transcoding_engine.dir/build.make CMakeFiles/transcoding_engine.dir/transcoding_engine_core.cpp.i
+.PHONY : transcoding_engine_core.cpp.i
+
+transcoding_engine_core.s: transcoding_engine_core.cpp.s
+.PHONY : transcoding_engine_core.s
+
+# target to generate assembly for a file
+transcoding_engine_core.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/transcoding_engine.dir/build.make CMakeFiles/transcoding_engine.dir/transcoding_engine_core.cpp.s
+.PHONY : transcoding_engine_core.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -161,10 +208,15 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... test"
 	@echo "... transcoding_engine"
+	@echo "... transcoding_engine_tests"
 	@echo "... app_main.o"
 	@echo "... app_main.i"
 	@echo "... app_main.s"
+	@echo "... transcoding_engine_core.o"
+	@echo "... transcoding_engine_core.i"
+	@echo "... transcoding_engine_core.s"
 .PHONY : help
 
 

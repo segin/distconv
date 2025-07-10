@@ -9,6 +9,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/segin/distconv/transcoding_engine/app_main.cpp" "CMakeFiles/transcoding_engine.dir/app_main.cpp.o" "gcc" "CMakeFiles/transcoding_engine.dir/app_main.cpp.o.d"
+  "/home/segin/distconv/transcoding_engine/transcoding_engine_core.cpp" "CMakeFiles/transcoding_engine.dir/transcoding_engine_core.cpp.o" "gcc" "CMakeFiles/transcoding_engine.dir/transcoding_engine_core.cpp.o.d"
   )
 
 # Targets to which this target links which contain Fortran sources.
