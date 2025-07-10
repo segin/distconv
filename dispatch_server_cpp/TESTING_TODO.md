@@ -149,28 +149,28 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 110. [x] Test: Access the main engines database (`engines_db`) from multiple threads with proper locking.
 
 ### C. Helper Functions & Utilities
-111. [ ] Test: `load_state` with a file containing a single job.
-112. [ ] Test: `load_state` with a file containing a single engine.
-113. [ ] Test: `save_state` with a single job.
-114. [ ] Test: `save_state` with a single engine.
-115. [ ] Test: `save_state` with zero jobs and zero engines.
-116. [ ] Test: `load_state` from a file created by `save_state` with zero jobs/engines.
-117. [ ] Test: Job ID generation is sufficiently random to avoid collisions in a tight loop.
-118. [ ] Test: JSON parsing of a valid job submission request.
-119. [ ] Test: JSON parsing of a valid heartbeat request.
-120. [ ] Test: JSON parsing of a valid job completion request.
-121. [ ] Test: JSON parsing of a valid job failure request.
+111. [x] Test: `load_state` with a file containing a single job.
+112. [x] Test: `load_state` with a file containing a single engine.
+113. [x] Test: `save_state` with a single job.
+114. [x] Test: `save_state` with a single engine.
+115. [x] Test: `save_state` with zero jobs and zero engines.
+116. [x] Test: `load_state` from a file created by `save_state` with zero jobs/engines.
+117. [x] Test: Job ID generation is sufficiently random to avoid collisions in a tight loop.
+118. [x] Test: JSON parsing of a valid job submission request.
+119. [x] Test: JSON parsing of a valid heartbeat request.
+120. [x] Test: JSON parsing of a valid job completion request.
+121. [x] Test: JSON parsing of a valid job failure request.
 
 ### D. Edge Cases & Error Handling
-122. [ ] Test: Server handles a client disconnecting mid-request.
-123. [ ] Test: Server handles extremely long `source_url` values.
-124. [ ] Test: Server handles extremely long `engine_id` values.
-125. [ ] Test: Server handles a very large number of jobs in the database.
-126. [ ] Test: Server handles a very large number of engines in the database.
-127. [ ] Test: Server handles a job ID that looks like a number but is a string.
-128. [ ] Test: Server handles a heartbeat for an engine that was assigned a job that no longer exists.
-129. [ ] Test: Server handles a request to complete a job that was never assigned.
-130. [ ] Test: Server handles a request to fail a a job that was never assigned.
+122. [x] Test: Server handles a client disconnecting mid-request.
+123. [x] Test: Server handles extremely long `source_url` values.
+124. [x] Test: Server handles extremely long `engine_id` values.
+125. [x] Test: Server handles a very large number of jobs in the database.
+126. [x] Test: Server handles a very large number of engines in the database.
+127. [x] Test: Server handles a job ID that looks like a number but is a string.
+128. [x] Test: Server handles a heartbeat for an engine that was assigned a job that no longer exists.
+129. [x] Test: Server handles a request to complete a job that was never assigned.
+130. [x] Test: Server handles a request to fail a a job that was never assigned.
 131. [ ] Test: Server handles a job submission with a negative `job_size`.
 132. [ ] Test: Server handles a job submission with a negative `max_retries`.
 133. [ ] Test: Server handles a heartbeat with a negative `storage_capacity_gb`.
