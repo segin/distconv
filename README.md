@@ -47,12 +47,12 @@ DistConv is a comprehensive distributed video transcoding system consisting of a
 #### Option 1: Automated Installation
 
 ```bash
-# Download and run the installation script
-curl -fsSL https://raw.githubusercontent.com/segin/distconv/main/install.sh | sudo bash
+# Clone the repository
+git clone https://github.com/segin/distconv.git
+cd distconv
 
-# Start the service
-sudo systemctl start distconv-dispatch
-sudo systemctl enable distconv-dispatch
+# Run the installation script
+sudo deployment/install.sh
 ```
 
 #### Option 2: Manual Installation
@@ -77,7 +77,7 @@ sudo chown -R distconv:distconv /opt/distconv
 sudo useradd -r -s /bin/false distconv
 
 # Install systemd service
-sudo cp ../systemd/distconv-dispatch.service /etc/systemd/system/
+sudo cp ../deployment/distconv-dispatch.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable distconv-dispatch
 sudo systemctl start distconv-dispatch
@@ -365,7 +365,22 @@ sudo cp /opt/distconv/server/state.json /opt/distconv/server/state.json.backup
 # Restart with clean state (will lose job history)
 sudo rm /opt/distconv/server/state.json
 sudo systemctl restart distconv-dispatch
+
+### Uninstallation
+
+To completely remove DistConv:
+
+```bash
+# Run the uninstall script
+sudo deployment/uninstall.sh
 ```
+
+The uninstall script will:
+- Stop and disable the service
+- Optionally backup configuration and state files
+- Remove all application files
+- Clean up systemd configuration
+- Optionally remove the system user
 
 ### Log Analysis
 ```bash
