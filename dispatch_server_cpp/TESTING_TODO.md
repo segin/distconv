@@ -171,25 +171,25 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 128. [x] Test: Server handles a heartbeat for an engine that was assigned a job that no longer exists.
 129. [x] Test: Server handles a request to complete a job that was never assigned.
 130. [x] Test: Server handles a request to fail a a job that was never assigned.
-131. [ ] Test: Server handles a job submission with a negative `job_size`.
-132. [ ] Test: Server handles a job submission with a negative `max_retries`.
-133. [ ] Test: Server handles a heartbeat with a negative `storage_capacity_gb`.
-134. [ ] Test: Server handles a heartbeat with a non-boolean `streaming_support`.
-135. [ ] Test: Server handles a benchmark result for a non-existent engine.
-136. [ ] Test: Server handles a benchmark result with a negative `benchmark_time`.
-137. [ ] Test: Server handles a request to `/jobs/` with a trailing slash.
-138. [ ] Test: Server handles a request to `/engines/` with a trailing slash.
-139. [ ] Test: Server handles a request with a non-standard `Content-Type` header.
-140. [ ] Test: Server handles a request with a very large request body (should be rejected).
+131. [x] Test: Server handles a job submission with a negative `job_size`.
+132. [x] Test: Server handles a job submission with a negative `max_retries`.
+133. [x] Test: Server handles a heartbeat with a negative `storage_capacity_gb`.
+134. [x] Test: Server handles a heartbeat with a non-boolean `streaming_support`.
+135. [x] Test: Server handles a benchmark result for a non-existent engine.
+136. [x] Test: Server handles a benchmark result with a negative `benchmark_time`.
+137. [x] Test: Server handles a request to `/jobs/` with a trailing slash.
+138. [x] Test: Server handles a request to `/engines/` with a trailing slash.
+139. [x] Test: Server handles a request with a non-standard `Content-Type` header.
+140. [x] Test: Server handles a request with a very large request body (should be rejected).
 
 ### E. Refactoring-Specific Tests
-141. [ ] Test: (Refactor) `run_dispatch_server` can be called without `argc`/`argv`.
-142. [ ] Test: (Refactor) `API_KEY` can be set programmatically, not just from `argv`.
-143. [ ] Test: (Refactor) The `httplib::Server` instance can be accessed from tests.
-144. [ ] Test: (Refactor) `jobs_db` can be cleared and pre-populated for a test.
-145. [ ] Test: (Refactor) `engines_db` can be cleared and pre-populated for a test.
-146. [ ] Test: (Refactor) `PERSISTENT_STORAGE_FILE` can be pointed to a temporary file for a test.
-147. [ ] Test: (Refactor) The main server loop can be started and stopped programmatically from a test.
-148. [ ] Test: (Refactor) The server can be started on a random available port to allow parallel test execution.
-149. [ ] Test: (Refactor) `save_state` can be mocked to prevent actual file I/O during tests.
-150. [ ] Test: (Refactor) `load_state` can be mocked to provide a specific state for a test.
+141. [x] Test: (Refactor) `run_dispatch_server` can be called without `argc`/`argv`.
+142. [x] Test: (Refactor) `API_KEY` can be set programmatically, not just from `argv`.
+143. [x] Test: (Refactor) The `httplib::Server` instance can be accessed from tests.
+144. [x] Test: (Refactor) `jobs_db` can be cleared and pre-populated for a test.
+145. [x] Test: (Refactor) `engines_db` can be cleared and pre-populated for a test.
+146. [x] Test: (Refactor) `PERSISTENT_STORAGE_FILE` can be pointed to a temporary file for a test.
+147. [x] Test: (Refactor) The main server loop can be started and stopped programmatically from a test.
+148. [x] Test: (Refactor) The server can be started on a random available port to allow parallel test execution.
+149. [x] Test: (Refactor) `save_state` can be mocked to prevent actual file I/O during tests.
+150. [x] Test: (Refactor) `load_state` can be mocked to provide a specific state for a test.
