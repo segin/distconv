@@ -1,0 +1,94 @@
+[Unit]
+Description=DistConv Dispatch Server - Distributed Video Transcoding System
+Documentation=https://github.com/segin/distconv
+Documentation=https://github.com/segin/distconv/blob/main/docs/protocol.md
+After=network.target network-online.target
+Wants=network-online.target
+RequiresMountsFor=/opt/distconv
+
+[Service]
+Type=simple
+User=distconv
+Group=distconv
+WorkingDirectory=/opt/distconv/server
+
+# Load configuration from file
+EnvironmentFile=-/opt/distconv/config/server.conf
+
+# Command line arguments - API key loaded from environment
+ExecStart=/opt/distconv/server/dispatch_server_app --api-key ${DISTCONV_API_KEY}
+
+# Service lifecycle management
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+# Restart policy
+Restart=always
+RestartSec=10
+StartLimitInterval=60
+StartLimitBurst=3
+
+# Health monitoring
+WatchdogSec=30
+
+# Security hardening
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectControlGroups=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+
+# Writable directories
+ReadWritePaths=/opt/distconv/server
+ReadWritePaths=/opt/distconv/logs
+ReadWritePaths=/opt/distconv/config
+
+# Capability restrictions
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+# System call filtering
+SystemCallFilter=@system-service
+SystemCallFilter=~@clock
+SystemCallFilter=~@debug
+SystemCallFilter=~@module
+SystemCallFilter=~@mount
+SystemCallFilter=~@raw-io
+SystemCallFilter=~@reboot
+SystemCallFilter=~@swap
+SystemCallFilter=~@privileged
+SystemCallErrorNumber=EPERM
+
+# Network restrictions
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=256
+MemoryLimit=2G
+CPUQuota=200%
+
+# Logging configuration
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=distconv-dispatch
+SyslogFacility=daemon
+SyslogLevel=info
+
+# Performance optimizations
+Nice=-5
+IOSchedulingClass=1
+IOSchedulingPriority=4
+
+[Install]
+WantedBy=multi-user.target
+Alias=distconv.service

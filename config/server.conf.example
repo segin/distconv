@@ -1,0 +1,111 @@
+# DistConv Dispatch Server Configuration
+# This file contains environment variables for the dispatch server
+# Copy this file to /opt/distconv/config/server.conf and modify as needed
+
+# API Key for authentication (REQUIRED)
+# Generate a secure random key: openssl rand -hex 32
+# This key is required for all API requests via X-API-Key header
+DISTCONV_API_KEY=your_secure_api_key_here
+
+# Server listening port (default: 8080)
+# Change this if you need to run on a different port
+DISTCONV_PORT=8080
+
+# State file location for persistent storage
+# This file stores all job and engine data
+# Ensure the distconv user has read/write access to this path
+DISTCONV_STATE_FILE=/opt/distconv/server/state.json
+
+# Logging level (DEBUG, INFO, WARN, ERROR)
+# DEBUG: Verbose logging for development
+# INFO:  Standard operational logging (recommended for production)
+# WARN:  Only warnings and errors
+# ERROR: Only error messages
+DISTCONV_LOG_LEVEL=INFO
+
+# Optional: Custom listening address (default: 0.0.0.0)
+# Set to 127.0.0.1 to only accept local connections
+# DISTCONV_BIND_ADDRESS=0.0.0.0
+
+# Optional: Maximum number of concurrent connections
+# DISTCONV_MAX_CONNECTIONS=1000
+
+# Optional: Request timeout in seconds
+# DISTCONV_REQUEST_TIMEOUT=30
+
+# Optional: Enable metrics collection
+# DISTCONV_ENABLE_METRICS=true
+
+# Optional: Metrics endpoint path
+# DISTCONV_METRICS_PATH=/metrics
+
+# Security Settings
+
+# Optional: Enable CORS for web clients
+# DISTCONV_ENABLE_CORS=false
+
+# Optional: Allowed CORS origins (comma-separated)
+# DISTCONV_CORS_ORIGINS=http://localhost:3000,https://yourdomain.com
+
+# Optional: Enable request rate limiting
+# DISTCONV_ENABLE_RATE_LIMIT=true
+
+# Optional: Rate limit (requests per minute per IP)
+# DISTCONV_RATE_LIMIT_RPM=60
+
+# Performance Tuning
+
+# Optional: Thread pool size for handling requests
+# DISTCONV_THREAD_POOL_SIZE=4
+
+# Optional: Maximum request body size in MB
+# DISTCONV_MAX_REQUEST_SIZE=10
+
+# Optional: Keep-alive timeout in seconds
+# DISTCONV_KEEP_ALIVE_TIMEOUT=5
+
+# Optional: Connection timeout in seconds
+# DISTCONV_CONNECTION_TIMEOUT=30
+
+# State Management
+
+# Optional: Auto-save interval in seconds (0 = save immediately)
+# DISTCONV_AUTOSAVE_INTERVAL=0
+
+# Optional: State file backup retention count
+# DISTCONV_BACKUP_COUNT=5
+
+# Optional: Enable state compression
+# DISTCONV_COMPRESS_STATE=false
+
+# Monitoring and Health Checks
+
+# Optional: Health check interval in seconds
+# DISTCONV_HEALTH_CHECK_INTERVAL=30
+
+# Optional: Engine heartbeat timeout in seconds
+# DISTCONV_ENGINE_TIMEOUT=120
+
+# Optional: Job assignment timeout in seconds
+# DISTCONV_JOB_TIMEOUT=300
+
+# Development Settings (do not use in production)
+
+# Optional: Enable debug mode (additional logging and endpoints)
+# DISTCONV_DEBUG_MODE=false
+
+# Optional: Enable test mode (use in-memory storage)
+# DISTCONV_TEST_MODE=false
+
+# Optional: Mock external dependencies
+# DISTCONV_MOCK_MODE=false
+
+# Production Recommendations:
+# 1. Use a strong, randomly generated API key (32+ characters)
+# 2. Set DISTCONV_LOG_LEVEL=INFO for production
+# 3. Ensure DISTCONV_STATE_FILE is on a persistent volume
+# 4. Enable appropriate security settings for your environment
+# 5. Monitor logs regularly: journalctl -u distconv-dispatch -f
+# 6. Set up log rotation for long-running deployments
+# 7. Configure firewall rules to restrict access to port 8080
+# 8. Use HTTPS reverse proxy (nginx/apache) for production deployments
