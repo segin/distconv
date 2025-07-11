@@ -1,8 +1,7 @@
 [Unit]
-Description=DistConv Dispatch Server - Distributed Video Transcoding System
+Description=DistConv Transcoding Engine - Video Processing Worker
 Documentation=https://github.com/segin/distconv
-Documentation=https://github.com/segin/distconv/blob/main/docs/protocol.md
-After=network.target network-online.target
+After=network.target network-online.target distconv-dispatch.service
 Wants=network-online.target
 RequiresMountsFor=/var/lib/distconv /opt/distconv
 
@@ -10,31 +9,26 @@ RequiresMountsFor=/var/lib/distconv /opt/distconv
 Type=simple
 User=distconv
 Group=distconv
-WorkingDirectory=/var/lib/distconv/dispatch
+WorkingDirectory=/var/lib/distconv/engine
 
-# Load configuration from FHS-compliant location
-EnvironmentFile=-/etc/distconv/dispatch-server.conf
-
-# Use modern executable with proper database path
-ExecStart=/opt/distconv/server/bin/dispatch_server_modern \
-  --api-key ${DISTCONV_API_KEY} \
-  --database ${DISTCONV_DATABASE_PATH} \
-  --port ${DISTCONV_PORT}
+# Use FHS-compliant configuration
+ExecStart=/opt/distconv/engine/bin/transcoding_engine_modern \
+  --config /etc/distconv/transcoding-engine.conf
 
 # Service lifecycle management
 ExecReload=/bin/kill -HUP $MAINPID
 KillMode=mixed
 KillSignal=SIGTERM
-TimeoutStopSec=30
+TimeoutStopSec=60
 
 # Restart policy
 Restart=always
-RestartSec=10
-StartLimitInterval=60
-StartLimitBurst=3
+RestartSec=15
+StartLimitInterval=120
+StartLimitBurst=5
 
 # Health monitoring
-WatchdogSec=30
+WatchdogSec=60
 
 # Security hardening
 NoNewPrivileges=yes
@@ -48,51 +42,53 @@ ProtectKernelTunables=yes
 RestrictRealtime=yes
 RestrictSUIDSGID=yes
 LockPersonality=yes
-MemoryDenyWriteExecute=yes
+MemoryDenyWriteExecute=no  # FFmpeg needs executable memory
 
 # Writable directories (FHS-compliant)
-ReadWritePaths=/var/lib/distconv
+ReadWritePaths=/var/lib/distconv/engine
 ReadWritePaths=/var/log/distconv
 ReadWritePaths=/run/distconv
 ReadWritePaths=/tmp/distconv
+ReadWritePaths=/var/cache/distconv
 
-# Capability restrictions
-CapabilityBoundingSet=
+# Capability restrictions (FFmpeg needs some capabilities)
+CapabilityBoundingSet=CAP_SETUID CAP_SETGID
 AmbientCapabilities=
 
-# System call filtering
+# System call filtering (more permissive for FFmpeg)
 SystemCallFilter=@system-service
-SystemCallFilter=~@clock
 SystemCallFilter=~@debug
-SystemCallFilter=~@module
 SystemCallFilter=~@mount
-SystemCallFilter=~@raw-io
 SystemCallFilter=~@reboot
 SystemCallFilter=~@swap
-SystemCallFilter=~@privileged
 SystemCallErrorNumber=EPERM
 
 # Network restrictions
 RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
 
-# Resource limits
+# Resource limits (higher for transcoding)
 LimitNOFILE=65536
-LimitNPROC=256
-MemoryLimit=2G
-CPUQuota=200%
+LimitNPROC=512
+MemoryLimit=8G
+CPUQuota=400%
 
 # Logging configuration
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=distconv-dispatch
+SyslogIdentifier=distconv-transcoding-engine
 SyslogFacility=daemon
 SyslogLevel=info
 
-# Performance optimizations
-Nice=-5
+# Performance optimizations for media processing
+Nice=-10
 IOSchedulingClass=1
-IOSchedulingPriority=4
+IOSchedulingPriority=2
+CPUSchedulingPolicy=1
+
+# Environment variables
+Environment=TMPDIR=/tmp/distconv
+Environment=FFMPEG_LOG_LEVEL=warning
 
 [Install]
 WantedBy=multi-user.target
-Alias=distconv.service
+Alias=distconv-engine.service

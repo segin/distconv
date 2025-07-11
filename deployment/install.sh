@@ -7,6 +7,11 @@ set -e
 
 DISTCONV_USER="distconv"
 DISTCONV_HOME="/opt/distconv"
+DISTCONV_CONFIG_DIR="/etc/distconv"
+DISTCONV_DATA_DIR="/var/lib/distconv"
+DISTCONV_LOG_DIR="/var/log/distconv"
+DISTCONV_RUN_DIR="/run/distconv"
+DISTCONV_CACHE_DIR="/var/cache/distconv"
 CONFIG_BACKUP_DIR="/tmp/distconv_config_backup"
 CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$CURRENT_DIR")"
@@ -44,9 +49,43 @@ check_requirements() {
     print_success "System requirements satisfied"
 }
 
+# Function to create FHS-compliant directory structure
+create_directories() {
+    print_step "Creating FHS-compliant directory structure..."
+    
+    # Create all necessary directories
+    mkdir -p "$DISTCONV_HOME"/{server/bin,engine/bin,lib,share}
+    mkdir -p "$DISTCONV_CONFIG_DIR"/{ssl,backup}
+    mkdir -p "$DISTCONV_DATA_DIR"/{dispatch,engine,backup}
+    mkdir -p "$DISTCONV_LOG_DIR"
+    mkdir -p "$DISTCONV_RUN_DIR"/{sockets,locks}
+    mkdir -p "$DISTCONV_CACHE_DIR"
+    mkdir -p /tmp/distconv
+    
+    # Set proper ownership
+    chown -R "$DISTCONV_USER:$DISTCONV_USER" "$DISTCONV_HOME"
+    chown -R "$DISTCONV_USER:$DISTCONV_USER" "$DISTCONV_DATA_DIR"
+    chown -R "$DISTCONV_USER:$DISTCONV_USER" "$DISTCONV_LOG_DIR"
+    chown -R "$DISTCONV_USER:$DISTCONV_USER" "$DISTCONV_RUN_DIR"
+    chown -R "$DISTCONV_USER:$DISTCONV_USER" "$DISTCONV_CACHE_DIR"
+    chown -R "$DISTCONV_USER:$DISTCONV_USER" /tmp/distconv
+    
+    # Set proper permissions
+    chmod 755 "$DISTCONV_HOME"
+    chmod 750 "$DISTCONV_CONFIG_DIR"
+    chmod 700 "$DISTCONV_CONFIG_DIR/ssl"
+    chmod 750 "$DISTCONV_DATA_DIR"
+    chmod 755 "$DISTCONV_LOG_DIR"
+    chmod 755 "$DISTCONV_RUN_DIR"
+    chmod 755 "$DISTCONV_CACHE_DIR"
+    chmod 1777 /tmp/distconv  # Sticky bit for temp directory
+    
+    print_success "Directory structure created"
+}
+
 # Function to backup configuration files
 backup_config() {
-    if [[ -d "$DISTCONV_HOME" ]]; then
+    if [[ -d "$DISTCONV_HOME" ]] || [[ -d "$DISTCONV_CONFIG_DIR" ]]; then
         print_step "Backing up existing configuration..."
         mkdir -p "$CONFIG_BACKUP_DIR"
         
@@ -144,10 +183,8 @@ else
     print_info "User $DISTCONV_USER already exists"
 fi
 
-# Create directory structure
-print_step "Setting up directory structure: $DISTCONV_HOME"
-mkdir -p "$DISTCONV_HOME"/{server,config,logs}
-chown -R "$DISTCONV_USER:$DISTCONV_USER" "$DISTCONV_HOME"
+# Create FHS-compliant directory structure
+create_directories
 
 # Build the project
 print_step "Building DistConv Dispatch Server..."
@@ -163,7 +200,7 @@ cd build
 
 # Configure and build
 cmake .. -DCMAKE_BUILD_TYPE=Release
-make -j$(nproc)
+make -j8
 
 # Verify build succeeded
 if [[ ! -f "dispatch_server_app" ]]; then
@@ -175,17 +212,45 @@ print_success "Build completed successfully"
 
 # Install binaries
 print_step "Installing binaries..."
-cp dispatch_server_app "$DISTCONV_HOME/server/"
+cp dispatch_server_app "$DISTCONV_HOME/server/bin/"
+cp dispatch_server_modern "$DISTCONV_HOME/server/bin/"
 cp ../dispatch_server_core.h "$DISTCONV_HOME/server/"
-chmod +x "$DISTCONV_HOME/server/dispatch_server_app"
+chmod +x "$DISTCONV_HOME/server/bin/dispatch_server_app"
+chmod +x "$DISTCONV_HOME/server/bin/dispatch_server_modern"
 
-# Install configuration files
-print_step "Installing configuration files..."
-cp "$PROJECT_ROOT/config/server.conf.example" "$DISTCONV_HOME/config/"
+# Install FHS-compliant configuration files
+install_config_files() {
+    print_step "Installing configuration files..."
+    
+    # Install configuration templates
+    cp "$CURRENT_DIR/etc/distconv/"* "$DISTCONV_CONFIG_DIR/"
+    
+    # Set proper permissions for sensitive files
+    chmod 600 "$DISTCONV_CONFIG_DIR/api-keys.conf"
+    chmod 640 "$DISTCONV_CONFIG_DIR/dispatch-server.conf"
+    chmod 640 "$DISTCONV_CONFIG_DIR/transcoding-engine.conf"
+    chmod 644 "$DISTCONV_CONFIG_DIR/ports.conf"
+    chmod 644 "$DISTCONV_CONFIG_DIR/directories.conf"
+    
+    # Generate secure API key if not already configured
+    if grep -q "CHANGE-THIS" "$DISTCONV_CONFIG_DIR/api-keys.conf"; then
+        print_step "Generating secure API keys..."
+        local api_key=$(openssl rand -hex 32)
+        sed -i "s/CHANGE-THIS-TO-A-SECURE-RANDOM-KEY/$api_key/g" "$DISTCONV_CONFIG_DIR/api-keys.conf"
+        sed -i "s/change-this-production-api-key/$api_key/g" "$DISTCONV_CONFIG_DIR/dispatch-server.conf"
+        print_success "Generated secure API key: ${api_key:0:8}..."
+    fi
+    
+    chown -R root:$DISTCONV_USER "$DISTCONV_CONFIG_DIR"
+    print_success "Configuration files installed"
+}
 
-# Create default configuration if it doesn't exist
+install_config_files
+
+# Create legacy configuration if it doesn't exist (backward compatibility)
 if [[ ! -f "$DISTCONV_HOME/config/server.conf" ]]; then
-    print_step "Creating default configuration..."
+    print_step "Creating legacy configuration for backward compatibility..."
+    mkdir -p "$DISTCONV_HOME/config"
     cat > "$DISTCONV_HOME/config/server.conf" << EOF
 # DistConv Dispatch Server Configuration
 # Generated on $(date)
@@ -216,13 +281,14 @@ restore_config
 
 # Install systemd service
 print_step "Installing systemd service..."
-cp "$PROJECT_ROOT/systemd/distconv-dispatch.service" /etc/systemd/system/
+cp "$CURRENT_DIR/distconv-dispatch.service" /etc/systemd/system/
+cp "$CURRENT_DIR/distconv-transcoding-engine.service" /etc/systemd/system/
 systemctl daemon-reload
 
 # Create logrotate configuration
 print_step "Setting up log rotation..."
 cat > /etc/logrotate.d/distconv << EOF
-$DISTCONV_HOME/logs/*.log {
+$DISTCONV_LOG_DIR/*.log {
     daily
     missingok
     rotate 30
@@ -232,24 +298,37 @@ $DISTCONV_HOME/logs/*.log {
     create 0644 $DISTCONV_USER $DISTCONV_USER
     postrotate
         systemctl reload distconv-dispatch > /dev/null 2>&1 || true
+        systemctl reload distconv-transcoding-engine > /dev/null 2>&1 || true
     endscript
 }
 EOF
 
-# Enable and start service
-print_step "Enabling and starting DistConv service..."
+# Enable and start services
+print_step "Enabling and starting DistConv services..."
 systemctl enable distconv-dispatch
+systemctl enable distconv-transcoding-engine
 systemctl start distconv-dispatch
+systemctl start distconv-transcoding-engine
 
 # Check service status
 print_step "Checking service status..."
 sleep 2
 if systemctl is-active --quiet distconv-dispatch; then
-    print_success "DistConv service is running successfully"
-    print_success "Service will start automatically on boot"
+    print_success "DistConv Dispatch Server is running successfully"
 else
-    print_error "DistConv service failed to start"
+    print_error "DistConv Dispatch Server failed to start"
     print_error "Check logs with: journalctl -u distconv-dispatch -f"
+fi
+
+if systemctl is-active --quiet distconv-transcoding-engine; then
+    print_success "DistConv Transcoding Engine is running successfully"
+else
+    print_warning "DistConv Transcoding Engine status unclear - this is normal if no engine binary is installed"
+fi
+
+if systemctl is-active --quiet distconv-dispatch; then
+    print_success "Services will start automatically on boot"
+else
     exit 1
 fi
 
@@ -274,21 +353,32 @@ echo "  ${CYAN}Logs:${RESET}    ${WHITE}journalctl -u distconv-dispatch -f${RESE
 echo ""
 
 echo "${BOLD}${YELLOW}Configuration:${RESET}"
-echo "  ${CYAN}Location:${RESET} ${WHITE}$DISTCONV_HOME${RESET}"
-echo "  ${CYAN}Config:${RESET}   ${WHITE}$DISTCONV_HOME/config/server.conf${RESET}"
-echo "  ${CYAN}State:${RESET}    ${WHITE}$DISTCONV_HOME/server/state.json${RESET}"
-echo "  ${CYAN}Service:${RESET}  ${WHITE}/etc/systemd/system/distconv-dispatch.service${RESET}"
-echo "  ${CYAN}User:${RESET}     ${WHITE}$DISTCONV_USER${RESET}"
+echo "  ${CYAN}Install Dir:${RESET} ${WHITE}$DISTCONV_HOME${RESET}"
+echo "  ${CYAN}Config Dir:${RESET}  ${WHITE}$DISTCONV_CONFIG_DIR${RESET}"
+echo "  ${CYAN}Data Dir:${RESET}    ${WHITE}$DISTCONV_DATA_DIR${RESET}"
+echo "  ${CYAN}Log Dir:${RESET}     ${WHITE}$DISTCONV_LOG_DIR${RESET}"
+echo "  ${CYAN}Legacy Config:${RESET} ${WHITE}$DISTCONV_HOME/config/server.conf${RESET}"
+echo "  ${CYAN}Services:${RESET}    ${WHITE}/etc/systemd/system/distconv-*.service${RESET}"
+echo "  ${CYAN}User:${RESET}       ${WHITE}$DISTCONV_USER${RESET}"
 echo ""
 
 echo "${BOLD}${MAGENTA}🎯 API is accessible at: ${WHITE}http://localhost:8080${RESET}"
 echo ""
 
 # Display API key information
-if [[ -f "$DISTCONV_HOME/config/server.conf" ]]; then
-    API_KEY=$(grep "DISTCONV_API_KEY=" "$DISTCONV_HOME/config/server.conf" | cut -d'=' -f2)
+if [[ -f "$DISTCONV_CONFIG_DIR/api-keys.conf" ]]; then
+    API_KEY=$(grep "DISTCONV_API_KEY=" "$DISTCONV_CONFIG_DIR/api-keys.conf" | cut -d'=' -f2)
     if [[ -n "$API_KEY" ]]; then
         echo "${BOLD}${YELLOW}🔑 Your API Key:${RESET} ${WHITE}$API_KEY${RESET}"
+        echo ""
+        echo "${BOLD}${CYAN}Test the API:${RESET}"
+        echo "${WHITE}curl -H \"X-API-Key: $API_KEY\" http://localhost:8080/jobs/${RESET}"
+        echo ""
+    fi
+elif [[ -f "$DISTCONV_HOME/config/server.conf" ]]; then
+    API_KEY=$(grep "DISTCONV_API_KEY=" "$DISTCONV_HOME/config/server.conf" | cut -d'=' -f2)
+    if [[ -n "$API_KEY" ]]; then
+        echo "${BOLD}${YELLOW}🔑 Your API Key (Legacy):${RESET} ${WHITE}$API_KEY${RESET}"
         echo ""
         echo "${BOLD}${CYAN}Test the API:${RESET}"
         echo "${WHITE}curl -H \"X-API-Key: $API_KEY\" http://localhost:8080/jobs/${RESET}"
