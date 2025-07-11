@@ -90,14 +90,31 @@ void save_state() {
 
 void setup_endpoints(httplib::Server &svr, const std::string& api_key); // Forward declaration
 
-DispatchServer::DispatchServer() {
+// Constructor with dependency injection
+DispatchServer::DispatchServer(std::unique_ptr<IJobRepository> job_repo, 
+                               std::unique_ptr<IEngineRepository> engine_repo) 
+    : job_repo_(std::move(job_repo)), 
+      engine_repo_(std::move(engine_repo)),
+      use_legacy_storage_(false) {
+    // Endpoints will be set up when set_api_key is called
+}
+
+// Default constructor (for backward compatibility)
+DispatchServer::DispatchServer() 
+    : job_repo_(nullptr), 
+      engine_repo_(nullptr),
+      use_legacy_storage_(true) {
     // Endpoints will be set up when set_api_key is called
 }
 
 void DispatchServer::set_api_key(const std::string& key) {
     api_key_ = key;
     // Re-setup endpoints with the new API key
-    setup_endpoints(svr, api_key_);
+    if (use_legacy_storage_) {
+        ::setup_endpoints(svr, api_key_);
+    } else {
+        setup_endpoints();
+    }
 }
 
 void DispatchServer::start(int port, bool block) {
@@ -631,4 +648,278 @@ DispatchServer* run_dispatch_server(DispatchServer* server_instance) {
         server_instance->start(8080, false); // Start in non-blocking mode
     }
     return server_instance;
+}
+
+// New dependency-injected setup_endpoints method
+void DispatchServer::setup_endpoints() {
+    // Note: Cannot reassign httplib::Server, so we'll just set up endpoints
+    // The server endpoints will be overwritten by the new ones
+    
+    setup_system_endpoints();
+    setup_job_endpoints();
+    setup_engine_endpoints();
+}
+
+void DispatchServer::setup_system_endpoints() {
+    svr.Get("/", [](const httplib::Request&, httplib::Response& res) {
+        res.set_content("OK", "text/plain");
+    });
+
+    // Health check endpoint
+    svr.Get("/health", [](const httplib::Request&, httplib::Response& res) {
+        nlohmann::json health_response;
+        health_response["status"] = "healthy";
+        health_response["timestamp"] = std::chrono::duration_cast<std::chrono::seconds>(
+            std::chrono::system_clock::now().time_since_epoch()).count();
+        res.set_content(health_response.dump(), "application/json");
+    });
+}
+
+void DispatchServer::setup_job_endpoints() {
+    // POST /jobs/ - Submit a new job
+    svr.Post("/jobs/", ApiMiddleware::with_api_key_validation(api_key_, 
+        [this](const httplib::Request& req, httplib::Response& res) {
+            try {
+                nlohmann::json request_json = nlohmann::json::parse(req.body);
+
+                // Validate required fields
+                if (!request_json.contains("source_url") || !request_json["source_url"].is_string()) {
+                    res.status = 400;
+                    res.set_content("Bad Request: 'source_url' is missing or not a string.", "text/plain");
+                    return;
+                }
+                if (!request_json.contains("target_codec") || !request_json["target_codec"].is_string()) {
+                    res.status = 400;
+                    res.set_content("Bad Request: 'target_codec' is missing or not a string.", "text/plain");
+                    return;
+                }
+
+                // Validate optional fields
+                if (request_json.contains("job_size") && !request_json["job_size"].is_number()) {
+                    res.status = 400;
+                    res.set_content("Bad Request: 'job_size' must be a number.", "text/plain");
+                    return;
+                }
+                if (request_json.contains("max_retries") && !request_json["max_retries"].is_number_integer()) {
+                    res.status = 400;
+                    res.set_content("Bad Request: 'max_retries' must be an integer.", "text/plain");
+                    return;
+                }
+
+                // Generate unique job ID
+                static std::atomic<int> job_counter{0};
+                auto now = std::chrono::system_clock::now().time_since_epoch();
+                auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(now).count();
+                std::string job_id = std::to_string(microseconds) + "_" + std::to_string(job_counter.fetch_add(1));
+
+                // Create job object
+                nlohmann::json job;
+                job["job_id"] = job_id;
+                job["source_url"] = request_json["source_url"];
+                job["target_codec"] = request_json["target_codec"];
+                job["job_size"] = request_json.value("job_size", 0.0);
+                job["status"] = "pending";
+                job["assigned_engine"] = nullptr;
+                job["output_url"] = nullptr;
+                job["retries"] = 0;
+                job["max_retries"] = request_json.value("max_retries", 3);
+
+                // Save job
+                job_repo_->save_job(job_id, job);
+
+                res.status = 201;
+                res.set_content(job.dump(), "application/json");
+            } catch (const nlohmann::json::parse_error& e) {
+                res.status = 400;
+                res.set_content("Invalid JSON: " + std::string(e.what()), "text/plain");
+            } catch (const std::exception& e) {
+                res.status = 500;
+                res.set_content("Server error: " + std::string(e.what()), "text/plain");
+            }
+        }));
+
+    // GET /jobs/{job_id} - Get job status
+    svr.Get(R"(/jobs/(.+))", ApiMiddleware::with_api_key_validation(api_key_, 
+        [this](const httplib::Request& req, httplib::Response& res) {
+            std::string job_id = req.matches[1];
+            
+            if (job_repo_->job_exists(job_id)) {
+                nlohmann::json job = job_repo_->get_job(job_id);
+                res.set_content(job.dump(), "application/json");
+            } else {
+                res.status = 404;
+                res.set_content("Job not found", "text/plain");
+            }
+        }));
+
+    // GET /jobs/ - List all jobs
+    svr.Get("/jobs/", ApiMiddleware::with_api_key_validation(api_key_, 
+        [this](const httplib::Request& req, httplib::Response& res) {
+            std::vector<nlohmann::json> jobs = job_repo_->get_all_jobs();
+            nlohmann::json response = nlohmann::json::array();
+            
+            for (const auto& job : jobs) {
+                response.push_back(job);
+            }
+            
+            res.set_content(response.dump(), "application/json");
+        }));
+
+    // POST /jobs/{job_id}/complete - Mark job as completed
+    svr.Post(R"(/jobs/(.+)/complete)", ApiMiddleware::with_api_key_validation(api_key_, 
+        [this](const httplib::Request& req, httplib::Response& res) {
+            std::string job_id = req.matches[1];
+            
+            if (!job_repo_->job_exists(job_id)) {
+                res.status = 404;
+                res.set_content("Job not found", "text/plain");
+                return;
+            }
+
+            try {
+                nlohmann::json request_json = nlohmann::json::parse(req.body);
+                
+                nlohmann::json job = job_repo_->get_job(job_id);
+                job["status"] = "completed";
+                job["output_url"] = request_json.value("output_url", "");
+                
+                job_repo_->save_job(job_id, job);
+                
+                res.set_content(job.dump(), "application/json");
+            } catch (const nlohmann::json::parse_error& e) {
+                res.status = 400;
+                res.set_content("Invalid JSON: " + std::string(e.what()), "text/plain");
+            } catch (const std::exception& e) {
+                res.status = 500;
+                res.set_content("Server error: " + std::string(e.what()), "text/plain");
+            }
+        }));
+
+    // POST /jobs/{job_id}/fail - Mark job as failed
+    svr.Post(R"(/jobs/(.+)/fail)", ApiMiddleware::with_api_key_validation(api_key_, 
+        [this](const httplib::Request& req, httplib::Response& res) {
+            std::string job_id = req.matches[1];
+            
+            if (!job_repo_->job_exists(job_id)) {
+                res.status = 404;
+                res.set_content("Job not found", "text/plain");
+                return;
+            }
+
+            try {
+                nlohmann::json request_json = nlohmann::json::parse(req.body);
+                
+                nlohmann::json job = job_repo_->get_job(job_id);
+                job["status"] = "failed";
+                job["error_message"] = request_json.value("error_message", "");
+                
+                job_repo_->save_job(job_id, job);
+                
+                res.set_content(job.dump(), "application/json");
+            } catch (const nlohmann::json::parse_error& e) {
+                res.status = 400;
+                res.set_content("Invalid JSON: " + std::string(e.what()), "text/plain");
+            } catch (const std::exception& e) {
+                res.status = 500;
+                res.set_content("Server error: " + std::string(e.what()), "text/plain");
+            }
+        }));
+}
+
+void DispatchServer::setup_engine_endpoints() {
+    // POST /engines/heartbeat - Engine registration/heartbeat
+    svr.Post("/engines/heartbeat", ApiMiddleware::with_api_key_validation(api_key_, 
+        [this](const httplib::Request& req, httplib::Response& res) {
+            try {
+                nlohmann::json engine_data = nlohmann::json::parse(req.body);
+                
+                if (!engine_data.contains("engine_id") || !engine_data["engine_id"].is_string()) {
+                    res.status = 400;
+                    res.set_content("Bad Request: 'engine_id' is missing or not a string.", "text/plain");
+                    return;
+                }
+                
+                std::string engine_id = engine_data["engine_id"];
+                
+                // Add timestamp
+                engine_data["last_heartbeat"] = std::chrono::duration_cast<std::chrono::seconds>(
+                    std::chrono::system_clock::now().time_since_epoch()).count();
+                
+                engine_repo_->save_engine(engine_id, engine_data);
+                
+                res.set_content("OK", "text/plain");
+            } catch (const nlohmann::json::parse_error& e) {
+                res.status = 400;
+                res.set_content("Invalid JSON: " + std::string(e.what()), "text/plain");
+            } catch (const std::exception& e) {
+                res.status = 500;
+                res.set_content("Server error: " + std::string(e.what()), "text/plain");
+            }
+        }));
+
+    // GET /engines/ - List all engines
+    svr.Get("/engines/", ApiMiddleware::with_api_key_validation(api_key_, 
+        [this](const httplib::Request& req, httplib::Response& res) {
+            std::vector<nlohmann::json> engines = engine_repo_->get_all_engines();
+            nlohmann::json response = nlohmann::json::array();
+            
+            for (const auto& engine : engines) {
+                response.push_back(engine);
+            }
+            
+            res.set_content(response.dump(), "application/json");
+        }));
+
+    // POST /assign_job/ - Assign job to engine
+    svr.Post("/assign_job/", ApiMiddleware::with_api_key_validation(api_key_, 
+        [this](const httplib::Request& req, httplib::Response& res) {
+            try {
+                nlohmann::json request_json = nlohmann::json::parse(req.body);
+                
+                if (!request_json.contains("engine_id") || !request_json["engine_id"].is_string()) {
+                    res.status = 400;
+                    res.set_content("Bad Request: 'engine_id' is missing or not a string.", "text/plain");
+                    return;
+                }
+                
+                std::string engine_id = request_json["engine_id"];
+                
+                // Find a pending job
+                std::vector<nlohmann::json> jobs = job_repo_->get_all_jobs();
+                nlohmann::json selected_job;
+                
+                for (const auto& job : jobs) {
+                    if (job["status"] == "pending") {
+                        selected_job = job;
+                        break;
+                    }
+                }
+                
+                if (selected_job.is_null()) {
+                    res.status = 204; // No Content
+                    return;
+                }
+                
+                // Assign the job
+                selected_job["status"] = "assigned";
+                selected_job["assigned_engine"] = engine_id;
+                
+                job_repo_->save_job(selected_job["job_id"], selected_job);
+                
+                // Update engine status
+                if (engine_repo_->engine_exists(engine_id)) {
+                    nlohmann::json engine = engine_repo_->get_engine(engine_id);
+                    engine["status"] = "busy";
+                    engine_repo_->save_engine(engine_id, engine);
+                }
+                
+                res.set_content(selected_job.dump(), "application/json");
+            } catch (const nlohmann::json::parse_error& e) {
+                res.status = 400;
+                res.set_content("Invalid JSON: " + std::string(e.what()), "text/plain");
+            } catch (const std::exception& e) {
+                res.status = 500;
+                res.set_content("Server error: " + std::string(e.what()), "text/plain");
+            }
+        }));
 }

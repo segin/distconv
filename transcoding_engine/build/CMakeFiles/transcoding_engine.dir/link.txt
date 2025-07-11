@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/transcoding_engine.dir/app_main.cpp.o CMakeFiles/transcoding_engine.dir/transcoding_engine_core.cpp.o -o transcoding_engine  /usr/lib/x86_64-linux-gnu/libcjson.so.1.7.17 -lcurl -lsqlite3 -lm 

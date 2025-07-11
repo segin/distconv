@@ -2,11 +2,14 @@
 #define DISPATCH_SERVER_CORE_H
 
 #include <string>
+#include <memory>
+#include <thread>
 #include "nlohmann/json.hpp"
 #include "httplib.h"
-#include <mutex>
+#include "repositories.h"
+#include "api_middleware.h"
 
-// In-memory storage for jobs and engines
+// Legacy global state (for backward compatibility with tests)
 extern nlohmann::json jobs_db;
 extern nlohmann::json engines_db;
 extern std::mutex state_mutex;
@@ -24,18 +27,41 @@ extern nlohmann::json mock_load_state_data;
 
 class DispatchServer {
 public:
+    // Constructor with dependency injection
+    DispatchServer(std::unique_ptr<IJobRepository> job_repo, 
+                   std::unique_ptr<IEngineRepository> engine_repo);
+    
+    // Default constructor (for backward compatibility)
     DispatchServer();
+    
     void start(int port, bool block = true);
     void stop();
     httplib::Server* getServer();
     void set_api_key(const std::string& key);
+    
+    // For testing
+    IJobRepository* get_job_repository() { return job_repo_.get(); }
+    IEngineRepository* get_engine_repository() { return engine_repo_.get(); }
+
 private:
     httplib::Server svr;
     std::thread server_thread;
     std::string api_key_;
+    
+    // Injected dependencies
+    std::unique_ptr<IJobRepository> job_repo_;
+    std::unique_ptr<IEngineRepository> engine_repo_;
+    
+    // Whether to use legacy global state or repositories
+    bool use_legacy_storage_;
+    
+    void setup_endpoints();
+    void setup_job_endpoints();
+    void setup_engine_endpoints();
+    void setup_system_endpoints();
 };
 
-// Function declarations
+// Function declarations (for backward compatibility)
 void load_state();
 void save_state();
 void setup_endpoints(httplib::Server &svr, const std::string& api_key);

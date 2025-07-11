@@ -1,1 +1,0 @@
-/usr/bin/c++ -g CMakeFiles/transcoding_engine_modern.dir/app_main_modern.cpp.o -o transcoding_engine_modern  -Wl,-rpath,/usr/local/lib: libtranscoding_engine_lib.a /usr/local/lib/libcpr.so.1.11.2 /usr/lib/x86_64-linux-gnu/libcurl.so /usr/lib/x86_64-linux-gnu/libsqlite3.so 

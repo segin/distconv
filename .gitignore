@@ -6,6 +6,29 @@ temp_state_single_job.json
 build/
 */build/
 **/build/
+build_modern/
+*/build_modern/
+**/build_modern/
+
+# Build artifacts
+*.o
+*.a
+*.so
+*.exe
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+CTestTestfile.cmake
+*.dir/
+TranscodingEngineConfigVersion.cmake
+
+# Test files
+test-job-*.mp4
+test-job-*.input
+test-job-*.output
+*.xml
+test_results.xml
 
 # Test state files
 dispatch_server_state_*.json

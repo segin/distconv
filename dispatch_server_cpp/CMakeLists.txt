@@ -15,7 +15,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
-add_library(dispatch_server_core STATIC dispatch_server_core.cpp dispatch_server_core.h)
+add_library(dispatch_server_core STATIC dispatch_server_core.cpp dispatch_server_core.h api_middleware.cpp api_middleware.h repositories.cpp repositories.h)
 
 # Include directories for httplib and nlohmann/json
 target_include_directories(dispatch_server_core PRIVATE
@@ -24,11 +24,18 @@ target_include_directories(dispatch_server_core PRIVATE
 )
 
 # Link core library with necessary libraries
-target_link_libraries(dispatch_server_core pthread)
+target_link_libraries(dispatch_server_core pthread sqlite3)
 
 add_executable(dispatch_server_app app_main.cpp)
 target_link_libraries(dispatch_server_app dispatch_server_core)
 target_include_directories(dispatch_server_app PRIVATE
+    /home/segin/distconv/third_party/json/single_include
+)
+
+# Modern app with dependency injection
+add_executable(dispatch_server_modern app_main_modern.cpp)
+target_link_libraries(dispatch_server_modern dispatch_server_core)
+target_include_directories(dispatch_server_modern PRIVATE
     /home/segin/distconv/third_party/json/single_include
 )
 
