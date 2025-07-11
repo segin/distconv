@@ -1,0 +1,135 @@
+version: '3.8'
+
+services:
+  dispatch-server:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/Dockerfile.dispatch-server
+    ports:
+      - "8080:8080"
+    volumes:
+      - dispatch_data:/app/data
+      - dispatch_logs:/app/logs
+    environment:
+      - API_KEY=your_api_key_here
+      - LOG_LEVEL=INFO
+      - STATE_FILE=/app/data/dispatch_state.json
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - distconv
+
+  transcoding-engine:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/Dockerfile.transcoding-engine
+    depends_on:
+      - dispatch-server
+    volumes:
+      - transcoding_temp:/app/temp
+      - transcoding_logs:/app/logs
+    environment:
+      - DISPATCH_SERVER_URL=http://dispatch-server:8080
+      - TEMP_DIR=/app/temp
+      - LOG_LEVEL=INFO
+      - ENGINE_ID=engine-1
+      - MAX_CONCURRENT_JOBS=2
+    networks:
+      - distconv
+    deploy:
+      replicas: 2
+
+  submission-client:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/Dockerfile.submission-client
+    depends_on:
+      - dispatch-server
+    volumes:
+      - client_data:/app/data
+      - client_config:/app/config
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    environment:
+      - DISPATCH_SERVER_URL=http://dispatch-server:8080
+      - DISPLAY=${DISPLAY}
+      - QT_QPA_PLATFORM=xcb
+    networks:
+      - distconv
+    # Note: This service requires X11 forwarding for GUI
+    # For headless operation, consider using VNC or similar
+
+  # Optional: Database for persistent storage
+  database:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=distconv
+      - POSTGRES_USER=distconv
+      - POSTGRES_PASSWORD=distconv_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - distconv
+    # Uncomment if you want to enable database storage
+    # profiles:
+    #   - database
+
+  # Optional: Redis for caching and job queuing
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    networks:
+      - distconv
+    # Uncomment if you want to enable Redis
+    # profiles:
+    #   - cache
+
+  # Optional: Monitoring with Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus_config:/etc/prometheus
+      - prometheus_data:/prometheus
+    networks:
+      - distconv
+    # Uncomment if you want to enable monitoring
+    # profiles:
+    #   - monitoring
+
+  # Optional: Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - distconv
+    # Uncomment if you want to enable monitoring
+    # profiles:
+    #   - monitoring
+
+volumes:
+  dispatch_data:
+  dispatch_logs:
+  transcoding_temp:
+  transcoding_logs:
+  client_data:
+  client_config:
+  postgres_data:
+  redis_data:
+  prometheus_config:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  distconv:
+    driver: bridge

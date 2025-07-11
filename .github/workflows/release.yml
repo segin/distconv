@@ -1,0 +1,169 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake \
+          build-essential \
+          libssl-dev \
+          zlib1g-dev \
+          libcurl4-openssl-dev \
+          pkg-config \
+          uuid-dev \
+          ffmpeg \
+          libavcodec-dev \
+          libavformat-dev \
+          libavutil-dev \
+          libswscale-dev \
+          qtbase5-dev \
+          qttools5-dev \
+          qttools5-dev-tools \
+          libqt5svg5-dev \
+          zip
+    
+    - name: Get version from tag
+      id: get_version
+      run: echo "VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
+    
+    - name: Build dispatch server
+      working-directory: dispatch_server_cpp
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Release
+        cmake --build build --config Release -j$(nproc)
+    
+    - name: Build transcoding engine
+      working-directory: transcoding_engine_cpp
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Release
+        cmake --build build --config Release -j$(nproc)
+    
+    - name: Build submission client
+      working-directory: submission_client_desktop
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Release
+        cmake --build build --config Release -j$(nproc)
+    
+    - name: Run tests
+      run: |
+        cd dispatch_server_cpp/build
+        ./dispatch_server_tests
+        
+        cd ../../transcoding_engine_cpp/build
+        if [ -f "./transcoding_engine_tests" ]; then
+          ./transcoding_engine_tests
+        fi
+        
+        cd ../../submission_client_desktop/build
+        if [ -f "./submission_client_tests" ]; then
+          xvfb-run -a ./submission_client_tests
+        fi
+    
+    - name: Create release package
+      run: |
+        mkdir -p release/bin
+        mkdir -p release/docs
+        mkdir -p release/examples
+        
+        # Copy binaries
+        cp dispatch_server_cpp/build/dispatch_server_app release/bin/
+        cp dispatch_server_cpp/build/dispatch_server_modern release/bin/
+        cp transcoding_engine_cpp/build/transcoding_engine* release/bin/ || true
+        cp submission_client_desktop/build/submission_client* release/bin/ || true
+        
+        # Copy documentation
+        cp README.md release/
+        cp docs/* release/docs/ || true
+        cp dispatch_server_cpp/SUGGESTIONS release/docs/dispatch_server_suggestions.md || true
+        
+        # Copy examples and configs
+        cp -r examples/* release/examples/ || true
+        cp -r deployment/docker release/ || true
+        
+        # Create archive
+        cd release
+        zip -r ../distconv-${{ steps.get_version.outputs.VERSION }}-linux-x64.zip .
+    
+    - name: Generate changelog
+      id: changelog
+      run: |
+        # Get commits since last tag
+        LAST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+        if [ -z "$LAST_TAG" ]; then
+          CHANGELOG="Initial release"
+        else
+          CHANGELOG=$(git log --pretty=format:"- %s" $LAST_TAG..HEAD)
+        fi
+        
+        echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+        echo "$CHANGELOG" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+    
+    - name: Create Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.get_version.outputs.VERSION }}
+        release_name: Release ${{ steps.get_version.outputs.VERSION }}
+        body: |
+          ## Changes
+          
+          ${{ steps.changelog.outputs.CHANGELOG }}
+          
+          ## Downloads
+          
+          - **Linux x64**: distconv-${{ steps.get_version.outputs.VERSION }}-linux-x64.zip
+          
+          ## Components
+          
+          - **Dispatch Server**: Central job coordinator with API v1 endpoints
+          - **Transcoding Engine**: FFmpeg-based video transcoding worker
+          - **Submission Client**: Desktop GUI for job management
+          
+          ## Features
+          
+          - UUID-based job identifiers
+          - Enhanced API v1 with structured error responses
+          - Job priority system (0=normal, 1=high, 2=urgent)
+          - Job cancellation and retry capabilities
+          - Engine management and deregistration
+          - Comprehensive test coverage (150+ tests)
+          - Thread-safe operation with atomic file operations
+          
+          ## Installation
+          
+          1. Download the appropriate package for your platform
+          2. Extract the archive
+          3. Run the components as needed:
+             - `./bin/dispatch_server_app` - Start dispatch server
+             - `./bin/transcoding_engine` - Start transcoding engine
+             - `./bin/submission_client` - Start GUI client
+          
+          See the documentation in the `docs/` directory for detailed setup instructions.
+        draft: false
+        prerelease: false
+    
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./distconv-${{ steps.get_version.outputs.VERSION }}-linux-x64.zip
+        asset_name: distconv-${{ steps.get_version.outputs.VERSION }}-linux-x64.zip
+        asset_content_type: application/zip

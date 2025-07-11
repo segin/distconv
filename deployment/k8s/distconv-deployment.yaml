@@ -1,0 +1,246 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: distconv
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dispatch-server
+  namespace: distconv
+  labels:
+    app: dispatch-server
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: dispatch-server
+  template:
+    metadata:
+      labels:
+        app: dispatch-server
+    spec:
+      containers:
+      - name: dispatch-server
+        image: ghcr.io/your-org/distconv/dispatch-server:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: distconv-secrets
+              key: api-key
+        - name: LOG_LEVEL
+          value: "INFO"
+        - name: STATE_FILE
+          value: "/app/data/dispatch_state.json"
+        volumeMounts:
+        - name: data-volume
+          mountPath: /app/data
+        - name: logs-volume
+          mountPath: /app/logs
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /api/v1/status
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/v1/status
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: data-volume
+        persistentVolumeClaim:
+          claimName: dispatch-server-data
+      - name: logs-volume
+        persistentVolumeClaim:
+          claimName: dispatch-server-logs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dispatch-server
+  namespace: distconv
+spec:
+  selector:
+    app: dispatch-server
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: transcoding-engine
+  namespace: distconv
+  labels:
+    app: transcoding-engine
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: transcoding-engine
+  template:
+    metadata:
+      labels:
+        app: transcoding-engine
+    spec:
+      containers:
+      - name: transcoding-engine
+        image: ghcr.io/your-org/distconv/transcoding-engine:latest
+        env:
+        - name: DISPATCH_SERVER_URL
+          value: "http://dispatch-server:8080"
+        - name: TEMP_DIR
+          value: "/app/temp"
+        - name: LOG_LEVEL
+          value: "INFO"
+        - name: ENGINE_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: MAX_CONCURRENT_JOBS
+          value: "2"
+        volumeMounts:
+        - name: temp-volume
+          mountPath: /app/temp
+        - name: logs-volume
+          mountPath: /app/logs
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - "ps aux | grep transcoding_engine || exit 1"
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - "ps aux | grep transcoding_engine || exit 1"
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: temp-volume
+        emptyDir: {}
+      - name: logs-volume
+        persistentVolumeClaim:
+          claimName: transcoding-engine-logs
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dispatch-server-data
+  namespace: distconv
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dispatch-server-logs
+  namespace: distconv
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: transcoding-engine-logs
+  namespace: distconv
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: distconv-secrets
+  namespace: distconv
+type: Opaque
+data:
+  api-key: eW91cl9hcGlfa2V5X2hlcmU=  # base64 encoded "your_api_key_here"
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dispatch-server-ingress
+  namespace: distconv
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+  - hosts:
+    - distconv.example.com
+    secretName: distconv-tls
+  rules:
+  - host: distconv.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: dispatch-server
+            port:
+              number: 8080
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: transcoding-engine-hpa
+  namespace: distconv
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: transcoding-engine
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

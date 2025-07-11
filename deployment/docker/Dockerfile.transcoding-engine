@@ -1,0 +1,83 @@
+# Multi-stage build for transcoding engine
+FROM ubuntu:22.04 AS builder
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    cmake \
+    build-essential \
+    libssl-dev \
+    zlib1g-dev \
+    libcurl4-openssl-dev \
+    pkg-config \
+    ffmpeg \
+    libavcodec-dev \
+    libavformat-dev \
+    libavutil-dev \
+    libswscale-dev \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy source code
+COPY transcoding_engine_cpp/ ./transcoding_engine_cpp/
+COPY third_party/ ./third_party/
+
+# Build the application
+WORKDIR /app/transcoding_engine_cpp
+RUN cmake -B build -DCMAKE_BUILD_TYPE=Release \
+    && cmake --build build --config Release -j$(nproc)
+
+# Runtime stage
+FROM ubuntu:22.04
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    libssl3 \
+    zlib1g \
+    libcurl4 \
+    ffmpeg \
+    libavcodec59 \
+    libavformat59 \
+    libavutil57 \
+    libswscale6 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN useradd -r -s /bin/false -U transcoder
+
+# Create application directory
+RUN mkdir -p /app/data /app/logs /app/temp \
+    && chown -R transcoder:transcoder /app
+
+# Copy built application
+COPY --from=builder /app/transcoding_engine_cpp/build/transcoding_engine* /app/
+
+# Copy configuration and documentation
+COPY docs/ /app/docs/
+COPY README.md /app/
+
+# Set proper permissions
+RUN chmod +x /app/transcoding_engine* \
+    && chown -R transcoder:transcoder /app
+
+# Switch to non-root user
+USER transcoder
+WORKDIR /app
+
+# Volume for temporary files
+VOLUME ["/app/temp"]
+
+# Environment variables
+ENV DISPATCH_SERVER_URL=http://dispatch-server:8080
+ENV TEMP_DIR=/app/temp
+ENV LOG_LEVEL=INFO
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f ${DISPATCH_SERVER_URL}/api/v1/status || exit 1
+
+# Default command
+CMD ["./transcoding_engine"]

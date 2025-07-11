@@ -1,0 +1,100 @@
+# Multi-stage build for submission client
+FROM ubuntu:22.04 AS builder
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    cmake \
+    build-essential \
+    libssl-dev \
+    zlib1g-dev \
+    libcurl4-openssl-dev \
+    pkg-config \
+    qtbase5-dev \
+    qttools5-dev \
+    qttools5-dev-tools \
+    libqt5svg5-dev \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy source code
+COPY submission_client_desktop/ ./submission_client_desktop/
+COPY third_party/ ./third_party/
+
+# Build the application
+WORKDIR /app/submission_client_desktop
+RUN cmake -B build -DCMAKE_BUILD_TYPE=Release \
+    && cmake --build build --config Release -j$(nproc)
+
+# Runtime stage
+FROM ubuntu:22.04
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    libssl3 \
+    zlib1g \
+    libcurl4 \
+    qtbase5-dev \
+    qttools5-dev \
+    libqt5svg5 \
+    libqt5widgets5 \
+    libqt5gui5 \
+    libqt5core5a \
+    libqt5network5 \
+    libqt5concurrent5 \
+    libqt5dbus5 \
+    libqt5xml5 \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    libxkbcommon-x11-0 \
+    libxcb-icccm4 \
+    libxcb-image0 \
+    libxcb-keysyms1 \
+    libxcb-randr0 \
+    libxcb-render-util0 \
+    libxcb-xinerama0 \
+    libxcb-xfixes0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN useradd -r -s /bin/bash -m -u 1000 -g users client
+
+# Create application directory
+RUN mkdir -p /app/data /app/logs /app/config \
+    && chown -R client:users /app
+
+# Copy built application
+COPY --from=builder /app/submission_client_desktop/build/submission_client* /app/
+
+# Copy configuration and documentation
+COPY docs/ /app/docs/
+COPY README.md /app/
+
+# Set proper permissions
+RUN chmod +x /app/submission_client* \
+    && chown -R client:users /app
+
+# Switch to non-root user
+USER client
+WORKDIR /app
+
+# Volume for user data
+VOLUME ["/app/data", "/app/config"]
+
+# Environment variables
+ENV DISPATCH_SERVER_URL=http://dispatch-server:8080
+ENV QT_QPA_PLATFORM=xcb
+ENV DISPLAY=:0
+ENV XDG_RUNTIME_DIR=/tmp/runtime-client
+
+# Create runtime directory
+RUN mkdir -p /tmp/runtime-client && chmod 700 /tmp/runtime-client
+
+# Health check (for headless mode)
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+    CMD ps aux | grep submission_client || exit 1
+
+# Default command
+CMD ["./submission_client"]
