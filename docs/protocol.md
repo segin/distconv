@@ -42,7 +42,8 @@ X-API-Key: {api_key}
   "source_url": "http://example.com/video.mp4",
   "target_codec": "h264",
   "job_size": 100.5,
-  "max_retries": 3
+  "max_retries": 3,
+  "priority": 1
 }
 ```
 
@@ -53,11 +54,15 @@ X-API-Key: {api_key}
 **Optional Fields:**
 - `job_size` (number): Size of the job in MB (default: 0.0)
 - `max_retries` (integer): Maximum retry attempts (default: 3)
+- `priority` (integer): Job priority level (default: 0)
+  - `0`: Normal priority
+  - `1`: High priority  
+  - `2`: Urgent priority
 
 **Success Response:** `200 OK`
 ```json
 {
-  "job_id": "1704067200123456_0",
+  "job_id": "550e8400-e29b-41d4-a716-446655440000",
   "source_url": "http://example.com/video.mp4",
   "target_codec": "h264",
   "job_size": 100.5,
@@ -65,7 +70,10 @@ X-API-Key: {api_key}
   "assigned_engine": null,
   "output_url": null,
   "retries": 0,
-  "max_retries": 3
+  "max_retries": 3,
+  "priority": 1,
+  "created_at": 1704067200123,
+  "updated_at": 1704067200123
 }
 ```
 
@@ -422,7 +430,7 @@ Complete job object contains the following fields:
 
 ```json
 {
-  "job_id": "1704067200123456_0",
+  "job_id": "550e8400-e29b-41d4-a716-446655440000",
   "source_url": "http://example.com/video.mp4", 
   "target_codec": "h264",
   "job_size": 100.5,
@@ -431,12 +439,15 @@ Complete job object contains the following fields:
   "output_url": "http://example.com/video_out.mp4",
   "retries": 1,
   "max_retries": 3,
+  "priority": 1,
+  "created_at": 1704067200123,
+  "updated_at": 1704067250789,
   "error_message": "Previous transcoding attempt failed"
 }
 ```
 
 **Field Descriptions:**
-- `job_id` (string): Unique job identifier
+- `job_id` (string): Unique UUID job identifier
 - `source_url` (string): URL to source video file
 - `target_codec` (string): Target codec for transcoding
 - `job_size` (number): Size of job in MB
@@ -445,7 +456,54 @@ Complete job object contains the following fields:
 - `output_url` (string|null): URL to transcoded output (null until completed)
 - `retries` (integer): Number of retry attempts made
 - `max_retries` (integer): Maximum allowed retry attempts
-- `error_message` (string): Last error message (present only after failure)
+- `priority` (integer): Job priority level (0=normal, 1=high, 2=urgent)
+- `created_at` (integer): Job creation timestamp (milliseconds since epoch)
+- `updated_at` (integer): Last update timestamp (milliseconds since epoch)
+- `error_message` (string): Error message from last failure (only present when status is failed)
+
+## Recent Protocol Improvements
+
+The following enhancements have been made to improve reliability, performance, and usability:
+
+### 1. UUID-based Job Identifiers
+- **Previous:** Time-based job IDs (`1704067200123456_0`) that could collide under high load
+- **Current:** UUID-based job IDs (`550e8400-e29b-41d4-a716-446655440000`) that are globally unique
+- **Benefit:** Eliminates potential job ID collisions in high-throughput scenarios
+
+### 2. Job Priority System
+- **New Field:** `priority` (integer) with values 0=normal, 1=high, 2=urgent
+- **Benefit:** Allows prioritization of critical transcoding jobs
+- **Usage:** Higher priority jobs are processed before lower priority ones
+
+### 3. Enhanced Timestamps
+- **New Fields:** `created_at` and `updated_at` (milliseconds since epoch)
+- **Benefit:** Enables better tracking of job lifecycle and performance analytics
+- **Usage:** Helps identify stale jobs and measure processing times
+
+### 4. Improved Thread Safety
+- **Enhancement:** All database operations now use proper mutex locking
+- **Benefit:** Eliminates race conditions in concurrent job submissions
+- **Implementation:** Dedicated mutexes for jobs and engines data structures
+
+### 5. Asynchronous State Persistence
+- **Enhancement:** State saving is now performed asynchronously to avoid blocking request handlers
+- **Benefit:** Improved response times for API calls
+- **Implementation:** Atomic file operations with temporary files and renames
+
+### 6. Background Processing
+- **New Feature:** Automatic cleanup of stale engines and job timeout handling
+- **Benefit:** System self-maintenance without manual intervention
+- **Implementation:** Background worker thread running every 30 seconds
+
+### 7. Job Timeout Handling
+- **Enhancement:** Jobs assigned to engines are automatically failed after 30 minutes of inactivity
+- **Benefit:** Prevents jobs from getting stuck indefinitely
+- **Implementation:** Background monitoring with automatic engine release
+
+### 8. Structured Domain Objects
+- **Enhancement:** Introduction of `Job` and `Engine` structs for type safety
+- **Benefit:** Better code organization and reduced JSON manipulation errors
+- **Implementation:** Proper serialization/deserialization methods
 
 ## Engine Data Structure
 

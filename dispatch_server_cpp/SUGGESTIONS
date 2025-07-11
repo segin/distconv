@@ -3,18 +3,18 @@
 This checklist contains 100 specific suggestions for improving the dispatch server component.
 
 ## Database & Thread Safety
-- [ ] Add Mutexes for Database Access: The global `jobs_db` and `engines_db` are read from and written to by multiple threads without any locking, which is a major race condition. Add `std::mutex` and `std::lock_guard` around all accesses to these objects.
-- [ ] Replace JSON file with SQLite: For better performance, transactional safety, and to avoid read/write race conditions, replace the `dispatch_server_state.json` file with an SQLite database.
-- [ ] Don't block in request handlers: The `save_state()` function performs synchronous file I/O within the HTTP request handler, which will block the server's worker thread. Offload this to a separate thread.
-- [ ] The server state file is a single point of failure. Implement backups or use a more robust database.
-- [ ] `save_state()` is not transactional. If the server crashes mid-write, the JSON file will be corrupt. Write to a temp file and rename.
+- [x] Add Mutexes for Database Access: The global `jobs_db` and `engines_db` are read from and written to by multiple threads without any locking, which is a major race condition. Add `std::mutex` and `std::lock_guard` around all accesses to these objects.
+- [x] Replace JSON file with SQLite: For better performance, transactional safety, and to avoid read/write race conditions, replace the `dispatch_server_state.json` file with an SQLite database. (Repositories implementation with SQLite already exists)
+- [x] Don't block in request handlers: The `save_state()` function performs synchronous file I/O within the HTTP request handler, which will block the server's worker thread. Offload this to a separate thread.
+- [x] The server state file is a single point of failure. Implement backups or use a more robust database.
+- [x] `save_state()` is not transactional. If the server crashes mid-write, the JSON file will be corrupt. Write to a temp file and rename.
 
 ## Code Structure & Architecture
-- [ ] Refactor `main.cpp`: The `main.cpp` file is too large. Refactor it by creating classes for `JobManager`, `EngineManager`, and `ApiServer`.
-- [ ] Create a `Server` class: Encapsulate all server setup and endpoint registration logic within a `Server` class instead of doing it all in `main`.
-- [ ] Separate the storage logic into a `Storage` class.
-- [ ] Create a `Job` struct/class to represent a job instead of manipulating raw `nlohmann::json` objects everywhere.
-- [ ] Create an `Engine` struct/class.
+- [x] Refactor `main.cpp`: The `main.cpp` file is too large. Refactor it by creating classes for `JobManager`, `EngineManager`, and `ApiServer`. (DispatchServer class with proper separation exists)
+- [x] Create a `Server` class: Encapsulate all server setup and endpoint registration logic within a `Server` class instead of doing it all in `main`.
+- [x] Separate the storage logic into a `Storage` class. (Repository pattern implemented)
+- [x] Create a `Job` struct/class to represent a job instead of manipulating raw `nlohmann::json` objects everywhere.
+- [x] Create an `Engine` struct/class.
 - [ ] Eliminate Global State: Refactor to remove global variables like `API_KEY`, `jobs_db`, and `engines_db`. Pass them as dependencies (e.g., in a context/application object).
 
 ## Job Management & Scheduling

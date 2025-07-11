@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <chrono>
 #include <atomic>
+#include <future>
+#include <uuid/uuid.h>
 #include "httplib.h"
 #include "nlohmann/json.hpp"
 #include "dispatch_server_core.h" // Include the new header
@@ -14,6 +16,8 @@
 nlohmann::json jobs_db = nlohmann::json::object();
 nlohmann::json engines_db = nlohmann::json::object();
 std::mutex state_mutex; // Single mutex for all shared state
+std::mutex jobs_mutex; // Dedicated mutex for jobs
+std::mutex engines_mutex; // Dedicated mutex for engines
 
 // Persistent storage for jobs and engines
 std::string PERSISTENT_STORAGE_FILE = "dispatch_server_state.json";
@@ -26,6 +30,93 @@ void save_state_unlocked();
 
 bool mock_load_state_enabled = false;
 nlohmann::json mock_load_state_data = nlohmann::json::object();
+
+// Job and Engine struct implementations
+nlohmann::json Job::to_json() const {
+    nlohmann::json j;
+    j["id"] = id;
+    j["status"] = status;
+    j["source_url"] = source_url;
+    j["output_url"] = output_url;
+    j["assigned_engine"] = assigned_engine;
+    j["codec"] = codec;
+    j["job_size"] = job_size;
+    j["max_retries"] = max_retries;
+    j["retries"] = retries;
+    j["priority"] = priority;
+    j["created_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(created_at.time_since_epoch()).count();
+    j["updated_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(updated_at.time_since_epoch()).count();
+    return j;
+}
+
+Job Job::from_json(const nlohmann::json& j) {
+    Job job;
+    job.id = j.value("id", "");
+    job.status = j.value("status", "pending");
+    job.source_url = j.value("source_url", "");
+    job.output_url = j.value("output_url", "");
+    job.assigned_engine = j.value("assigned_engine", "");
+    job.codec = j.value("codec", "");
+    job.job_size = j.value("job_size", 0.0);
+    job.max_retries = j.value("max_retries", 3);
+    job.retries = j.value("retries", 0);
+    job.priority = j.value("priority", 0);
+    
+    if (j.contains("created_at")) {
+        job.created_at = std::chrono::system_clock::time_point{std::chrono::milliseconds{j["created_at"]}};
+    } else {
+        job.created_at = std::chrono::system_clock::now();
+    }
+    
+    if (j.contains("updated_at")) {
+        job.updated_at = std::chrono::system_clock::time_point{std::chrono::milliseconds{j["updated_at"]}};
+    } else {
+        job.updated_at = std::chrono::system_clock::now();
+    }
+    
+    return job;
+}
+
+nlohmann::json Engine::to_json() const {
+    nlohmann::json j;
+    j["id"] = id;
+    j["hostname"] = hostname;
+    j["status"] = status;
+    j["benchmark_time"] = benchmark_time;
+    j["can_stream"] = can_stream;
+    j["storage_capacity_gb"] = storage_capacity_gb;
+    j["current_job_id"] = current_job_id;
+    j["last_heartbeat"] = std::chrono::duration_cast<std::chrono::milliseconds>(last_heartbeat.time_since_epoch()).count();
+    return j;
+}
+
+Engine Engine::from_json(const nlohmann::json& j) {
+    Engine engine;
+    engine.id = j.value("id", "");
+    engine.hostname = j.value("hostname", "");
+    engine.status = j.value("status", "idle");
+    engine.benchmark_time = j.value("benchmark_time", 0.0);
+    engine.can_stream = j.value("can_stream", false);
+    engine.storage_capacity_gb = j.value("storage_capacity_gb", 0);
+    engine.current_job_id = j.value("current_job_id", "");
+    
+    if (j.contains("last_heartbeat")) {
+        engine.last_heartbeat = std::chrono::system_clock::time_point{std::chrono::milliseconds{j["last_heartbeat"]}};
+    } else {
+        engine.last_heartbeat = std::chrono::system_clock::now();
+    }
+    
+    return engine;
+}
+
+// Utility function to generate UUID for job IDs
+std::string generate_uuid() {
+    uuid_t uuid;
+    uuid_generate_random(uuid);
+    char uuid_str[37];
+    uuid_unparse(uuid, uuid_str);
+    return std::string(uuid_str);
+}
 
 void load_state() {
     std::lock_guard<std::mutex> lock(state_mutex);
@@ -88,7 +179,140 @@ void save_state() {
     save_state_unlocked();
 }
 
+// Asynchronous save state function
+void async_save_state() {
+    if (mock_save_state_enabled) {
+        save_state_call_count++;
+        return;
+    }
+    
+    // Create a copy of the state under lock, then save asynchronously
+    nlohmann::json state_copy;
+    {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        state_copy["jobs"] = jobs_db;
+        state_copy["engines"] = engines_db;
+    }
+    
+    // Use a temporary file for atomic write
+    std::string temp_file = PERSISTENT_STORAGE_FILE + ".tmp";
+    std::ofstream ofs(temp_file);
+    if (ofs.is_open()) {
+        ofs << state_copy.dump(4) << std::endl;
+        ofs.close();
+        
+        // Atomic rename
+        if (std::rename(temp_file.c_str(), PERSISTENT_STORAGE_FILE.c_str()) == 0) {
+            std::cout << "Saved state asynchronously." << std::endl;
+        } else {
+            std::cerr << "Failed to atomically save state." << std::endl;
+            std::remove(temp_file.c_str()); // Clean up temp file
+        }
+    } else {
+        std::cerr << "Failed to open temporary file for state saving." << std::endl;
+    }
+}
+
 void setup_endpoints(httplib::Server &svr, const std::string& api_key); // Forward declaration
+
+// Background processing methods
+void DispatchServer::background_worker() {
+    while (!shutdown_requested_.load()) {
+        try {
+            cleanup_stale_engines();
+            handle_job_timeouts();
+            
+            // Sleep for 30 seconds before next iteration
+            std::this_thread::sleep_for(std::chrono::seconds(30));
+        } catch (const std::exception& e) {
+            std::cerr << "Background worker error: " << e.what() << std::endl;
+        }
+    }
+}
+
+void DispatchServer::cleanup_stale_engines() {
+    if (use_legacy_storage_) {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        auto now = std::chrono::system_clock::now();
+        
+        for (auto it = engines_db.begin(); it != engines_db.end();) {
+            if (it->contains("last_heartbeat")) {
+                auto last_heartbeat = std::chrono::system_clock::time_point{
+                    std::chrono::milliseconds{it.value()["last_heartbeat"]}
+                };
+                auto duration = std::chrono::duration_cast<std::chrono::minutes>(now - last_heartbeat);
+                
+                if (duration.count() > 5) { // 5 minutes timeout
+                    std::cout << "Removing stale engine: " << it.key() << std::endl;
+                    it = engines_db.erase(it);
+                    async_save_state();
+                } else {
+                    ++it;
+                }
+            } else {
+                ++it;
+            }
+        }
+    }
+}
+
+void DispatchServer::handle_job_timeouts() {
+    if (use_legacy_storage_) {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        auto now = std::chrono::system_clock::now();
+        
+        for (auto& [job_id, job_data] : jobs_db.items()) {
+            if (job_data["status"] == "assigned" && job_data.contains("updated_at")) {
+                auto updated_at = std::chrono::system_clock::time_point{
+                    std::chrono::milliseconds{job_data["updated_at"]}
+                };
+                auto duration = std::chrono::duration_cast<std::chrono::minutes>(now - updated_at);
+                
+                if (duration.count() > 30) { // 30 minutes timeout
+                    std::cout << "Job " << job_id << " timed out, marking as failed" << std::endl;
+                    job_data["status"] = "failed";
+                    job_data["retries"] = job_data.value("retries", 0) + 1;
+                    job_data["updated_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+                    
+                    // Free up the engine
+                    if (job_data.contains("assigned_engine") && !job_data["assigned_engine"].is_null()) {
+                        std::string engine_id = job_data["assigned_engine"];
+                        if (engines_db.contains(engine_id)) {
+                            engines_db[engine_id]["status"] = "idle";
+                            engines_db[engine_id]["current_job_id"] = "";
+                        }
+                    }
+                    
+                    async_save_state();
+                }
+            }
+        }
+    }
+}
+
+void DispatchServer::async_save_state() {
+    // Launch async save if previous one is complete
+    if (state_save_future_.valid() && state_save_future_.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+        state_save_future_.get(); // Clear the future
+    }
+    
+    if (!state_save_future_.valid()) {
+        state_save_future_ = std::async(std::launch::async, ::async_save_state);
+    }
+}
+
+// Improved job scheduling methods
+Job* DispatchServer::find_next_pending_job() {
+    // This would use the repository in non-legacy mode
+    // For now, working with legacy storage
+    return nullptr;
+}
+
+Engine* DispatchServer::find_best_engine_for_job(const Job& job) {
+    // This would use the repository in non-legacy mode
+    // For now, working with legacy storage
+    return nullptr;
+}
 
 // Constructor with dependency injection
 DispatchServer::DispatchServer(std::unique_ptr<IJobRepository> job_repo, 
@@ -118,6 +342,10 @@ void DispatchServer::set_api_key(const std::string& key) {
 }
 
 void DispatchServer::start(int port, bool block) {
+    // Start background worker thread
+    shutdown_requested_.store(false);
+    background_worker_ = std::thread(&DispatchServer::background_worker, this);
+    
     if (block) {
         svr.listen("0.0.0.0", port);
     } else {
@@ -128,6 +356,17 @@ void DispatchServer::start(int port, bool block) {
 }
 
 void DispatchServer::stop() {
+    // Stop background worker
+    shutdown_requested_.store(true);
+    if (background_worker_.joinable()) {
+        background_worker_.join();
+    }
+    
+    // Wait for any pending async save to complete
+    if (state_save_future_.valid()) {
+        state_save_future_.wait();
+    }
+    
     svr.stop();
     if (server_thread.joinable()) {
         server_thread.join();
@@ -196,10 +435,10 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
                 }
             }
 
-            static std::atomic<int> job_counter{0};
-            auto now = std::chrono::system_clock::now().time_since_epoch();
-            auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(now).count();
-            std::string job_id = std::to_string(microseconds) + "_" + std::to_string(job_counter.fetch_add(1));
+            std::string job_id = generate_uuid();
+            
+            auto now = std::chrono::system_clock::now();
+            auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
             
             nlohmann::json job;
             job["job_id"] = job_id;
@@ -211,6 +450,9 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
             job["output_url"] = nullptr;
             job["retries"] = 0;
             job["max_retries"] = request_json.value("max_retries", 3);
+            job["priority"] = request_json.value("priority", 0); // 0=normal, 1=high, 2=urgent
+            job["created_at"] = now_ms;
+            job["updated_at"] = now_ms;
 
             {
                 std::lock_guard<std::mutex> lock(state_mutex);
