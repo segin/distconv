@@ -115,6 +115,7 @@ private:
 // Function declarations (for backward compatibility)
 void load_state();
 void save_state();
+void save_state_unlocked();
 void async_save_state();
 std::string generate_uuid();
 void setup_endpoints(httplib::Server &svr, const std::string& api_key);

@@ -15,7 +15,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
-add_library(dispatch_server_core STATIC dispatch_server_core.cpp dispatch_server_core.h api_middleware.cpp api_middleware.h repositories.cpp repositories.h)
+add_library(dispatch_server_core STATIC dispatch_server_core.cpp dispatch_server_core.h api_middleware.cpp api_middleware.h repositories.cpp repositories.h enhanced_endpoints.cpp enhanced_endpoints.h)
 
 # Include directories for httplib and nlohmann/json
 target_include_directories(dispatch_server_core PRIVATE

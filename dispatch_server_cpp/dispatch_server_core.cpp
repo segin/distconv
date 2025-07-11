@@ -10,6 +10,7 @@
 #include "httplib.h"
 #include "nlohmann/json.hpp"
 #include "dispatch_server_core.h" // Include the new header
+#include "enhanced_endpoints.h"
 
 // In-memory storage for jobs and engines (for now)
 // In a real application, this would be a database
@@ -382,6 +383,10 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
     svr.Get("/", [](const httplib::Request&, httplib::Response& res) {
         res.set_content("OK", "text/plain");
     });
+    
+    // Set up enhanced API v1 endpoints
+    setup_enhanced_job_endpoints(svr, api_key);
+    setup_enhanced_system_endpoints(svr, api_key);
 
     // Endpoint to submit a new transcoding job
     svr.Post("/jobs/", [api_key](const httplib::Request& req, httplib::Response& res) {
@@ -658,7 +663,7 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
     });
 
     // Endpoint to complete a job
-    svr.Post(R"(/jobs/(\w+)/complete)", [api_key](const httplib::Request& req, httplib::Response& res) {
+    svr.Post(R"(/jobs/([a-fA-F0-9\\-]{36})/complete)", [api_key](const httplib::Request& req, httplib::Response& res) {
         if (api_key != "") {
             if (req.get_header_value("X-API-Key") == "") {
                 res.status = 401;
@@ -710,7 +715,7 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
     });
 
     // Endpoint to fail a job
-    svr.Post(R"(/jobs/(\w+)/fail)", [api_key](const httplib::Request& req, httplib::Response& res) {
+    svr.Post(R"(/jobs/([a-fA-F0-9\\-]{36})/fail)", [api_key](const httplib::Request& req, httplib::Response& res) {
         if (api_key != "") {
             if (req.get_header_value("X-API-Key") == "") {
                 res.status = 401;

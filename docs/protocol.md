@@ -25,9 +25,20 @@ X-API-Key: your_api_key_here
 
 This section documents the REST API endpoints used by submission clients to interact with the dispatch server for job management.
 
+## API v1 Features
+
+The dispatch server API v1 provides:
+- Enhanced validation and error handling
+- Structured JSON error responses with error codes
+- Content-Type validation (`application/json` required)
+- UUID-based job identifiers (36-character format)
+- Job cancellation, retry, and priority management
+- Engine deregistration capabilities
+- Version and status endpoints
+
 ## 1.1 Job Submission
 
-**Endpoint:** `POST /jobs/`  
+**Endpoint:** `POST /api/v1/jobs`  
 **Purpose:** Submit a new transcoding job
 
 **Request Headers:**
@@ -88,7 +99,7 @@ X-API-Key: {api_key}
 
 ## 1.2 Job Status Retrieval
 
-**Endpoint:** `GET /jobs/{job_id}`  
+**Endpoint:** `GET /api/v1/jobs/{job_id}`  
 **Purpose:** Get the current status of a specific job
 
 **Request Headers:**
@@ -116,7 +127,7 @@ X-API-Key: {api_key}
 
 ## 1.3 List All Jobs
 
-**Endpoint:** `GET /jobs/`  
+**Endpoint:** `GET /api/v1/jobs`  
 **Purpose:** Retrieve a list of all jobs
 
 **Request Headers:**
@@ -152,7 +163,7 @@ This section documents the REST API endpoints used by transcoding engines (compu
 
 ## 2.1 Engine Registration/Heartbeat
 
-**Endpoint:** `POST /engines/heartbeat`  
+**Endpoint:** `POST /api/v1/engines/heartbeat`  
 **Purpose:** Register a new engine or update an existing engine's status
 
 **Request Headers:**
@@ -200,7 +211,7 @@ Heartbeat received from engine {engine_id}
 
 ## 2.2 List All Engines
 
-**Endpoint:** `GET /engines/`  
+**Endpoint:** `GET /api/v1/engines`  
 **Purpose:** Retrieve a list of all registered engines
 
 **Request Headers:**
@@ -230,7 +241,7 @@ X-API-Key: {api_key}
 
 ## 2.3 Job Completion
 
-**Endpoint:** `POST /jobs/{job_id}/complete`  
+**Endpoint:** `POST /api/v1/jobs/{job_id}/complete`  
 **Purpose:** Mark a job as completed by a transcoding engine
 
 **Request Headers:**
@@ -261,7 +272,7 @@ Job {job_id} marked as completed
 
 ## 2.4 Job Failure
 
-**Endpoint:** `POST /jobs/{job_id}/fail`  
+**Endpoint:** `POST /api/v1/jobs/{job_id}/fail`  
 **Purpose:** Mark a job as failed by a transcoding engine
 
 **Request Headers:**
@@ -336,7 +347,7 @@ Benchmark result received from engine {engine_id}
 
 ## 2.6 Job Assignment
 
-**Endpoint:** `POST /assign_job/`  
+**Endpoint:** `POST /api/v1/assign_job`  
 **Purpose:** Request assignment of a pending job to an available engine
 
 **Request Headers:**
@@ -391,6 +402,138 @@ X-API-Key: {api_key}
 ```
 Storage pool configuration to be implemented.
 ```
+
+---
+
+# Part 2.7: New API v1 Endpoints
+
+### Job Cancellation
+
+**Endpoint:** `DELETE /api/v1/jobs/{job_id}`  
+**Purpose:** Cancel a pending or assigned job
+
+**Request Headers:**
+```http
+X-API-Key: {api_key}
+```
+
+**Success Response:** `200 OK`
+```json
+{
+  "message": "Job cancelled successfully",
+  "job_id": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+**Error Responses:**
+```json
+{
+  "error": {
+    "code": "NOT_FOUND",
+    "message": "Job with ID '550e8400-e29b-41d4-a716-446655440000' not found"
+  }
+}
+```
+
+### Job Retry
+
+**Endpoint:** `POST /api/v1/jobs/{job_id}/retry`  
+**Purpose:** Retry a failed job
+
+**Request Headers:**
+```http
+X-API-Key: {api_key}
+```
+
+**Success Response:** `200 OK`
+```json
+{
+  "message": "Job queued for retry",
+  "job_id": "550e8400-e29b-41d4-a716-446655440000",
+  "new_status": "pending"
+}
+```
+
+### Engine Deregistration
+
+**Endpoint:** `DELETE /api/v1/engines/{engine_id}`  
+**Purpose:** Remove an engine from the system
+
+**Request Headers:**
+```http
+X-API-Key: {api_key}
+```
+
+**Success Response:** `200 OK`
+```json
+{
+  "message": "Engine deregistered successfully",
+  "engine_id": "engine-123"
+}
+```
+
+### Version Information
+
+**Endpoint:** `GET /api/v1/version`  
+**Purpose:** Get server version information
+
+**Success Response:** `200 OK`
+```json
+{
+  "version": "2.0.0",
+  "api_version": "v1",
+  "build_time": "Jul 10 2025 21:51:42"
+}
+```
+
+### System Status
+
+**Endpoint:** `GET /api/v1/status`  
+**Purpose:** Get detailed system status and statistics
+
+**Success Response:** `200 OK`
+```json
+{
+  "status": "healthy",
+  "version": "2.0.0",
+  "api_version": "v1",
+  "jobs_total": 150,
+  "engines_total": 5,
+  "job_statistics": {
+    "pending": 10,
+    "assigned": 5,
+    "completed": 130,
+    "failed": 3,
+    "failed_permanently": 2
+  },
+  "engine_statistics": {
+    "idle": 3,
+    "busy": 2
+  }
+}
+```
+
+## Enhanced Error Responses
+
+All API v1 endpoints return structured error responses:
+
+```json
+{
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Human-readable error description"
+  }
+}
+```
+
+**Common Error Codes:**
+- `VALIDATION_ERROR` - Invalid request data
+- `NOT_FOUND` - Resource not found
+- `INVALID_OPERATION` - Operation not allowed in current state
+- `UNAUTHORIZED` - Missing or invalid API key
+- `JSON_PARSE_ERROR` - Invalid JSON in request body
+- `INVALID_CONTENT_TYPE` - Content-Type must be application/json
+- `INTERNAL_ERROR` - Server error
 
 ---
 
