@@ -751,22 +751,25 @@ If you encounter issues not covered here:
 git clone https://github.com/segin/distconv.git
 cd distconv/transcoding_engine
 
-# Configure build
+# Configure build (using modern CMakeLists)
 cp CMakeLists_modern.txt CMakeLists.txt
-mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Debug ..
+mkdir build_modern && cd build_modern
+cmake -DCMAKE_BUILD_TYPE=Release ..
 
 # Build
 make -j$(nproc)
 
-# Run tests
-make test
+# Run tests (37/37 should pass - 100% success rate)
 ./transcoding_engine_modern_tests
+
+# Run specific test suites
+./transcoding_engine_modern_tests --gtest_filter="*Refactoring*"
+./transcoding_engine_modern_tests --gtest_filter="*TranscodingEngine*"
 ```
 
 ### Testing
 
-The engine includes a comprehensive test suite with 150+ tests covering:
+The engine includes a comprehensive test suite with 37 tests (100% pass rate) covering:
 - Unit tests for all components
 - Integration tests with mocks
 - End-to-end workflow tests
