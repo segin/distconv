@@ -1,0 +1,7 @@
+---
+# DistConv Dispatch Server - C++ Code Formatting Configuration
+BasedOnStyle: Google
+IndentWidth: 4
+ColumnLimit: 100
+AccessModifierOffset: -4
+Standard: Cpp17
