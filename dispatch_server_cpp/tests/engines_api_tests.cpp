@@ -281,7 +281,7 @@ TEST_F(ApiTest, HeartbeatMissingEngineId) {
 
     ASSERT_TRUE(res != nullptr);
     ASSERT_EQ(res->status, 400);
-    ASSERT_EQ(res->body, "Bad Request: 'engine_id' is missing.");
+    ASSERT_EQ(res->body, "Bad Request: 'engine_id' is missing or not a string.");
 }
 
 TEST_F(ApiTest, HeartbeatNonStringEngineId) {
@@ -297,7 +297,7 @@ TEST_F(ApiTest, HeartbeatNonStringEngineId) {
 
     ASSERT_TRUE(res != nullptr);
     ASSERT_EQ(res->status, 400);
-    ASSERT_EQ(res->body, "Bad Request: 'engine_id' must be a string.");
+    ASSERT_EQ(res->body, "Bad Request: 'engine_id' is missing or not a string.");
 }
 
 TEST_F(ApiTest, ListEnginesNoApiKey) {
@@ -305,7 +305,9 @@ TEST_F(ApiTest, ListEnginesNoApiKey) {
     auto res = client->Get("/engines/", headers);
     ASSERT_TRUE(res != nullptr);
     ASSERT_EQ(res->status, 401);
-    ASSERT_EQ(res->body, "Unauthorized: Missing 'X-API-Key' header.");
+    // Enhanced endpoints return JSON error
+    nlohmann::json error_response = nlohmann::json::parse(res->body);
+    ASSERT_EQ(error_response["error"]["message"], "Missing 'X-API-Key' header");
 }
 
 TEST_F(ApiTest, ListEnginesIncorrectApiKey) {
@@ -315,6 +317,8 @@ TEST_F(ApiTest, ListEnginesIncorrectApiKey) {
     auto res = client->Get("/engines/", headers);
     ASSERT_TRUE(res != nullptr);
     ASSERT_EQ(res->status, 401);
-    ASSERT_EQ(res->body, "Unauthorized");
+    // Enhanced endpoints return JSON error
+    nlohmann::json error_response = nlohmann::json::parse(res->body);
+    ASSERT_EQ(error_response["error"]["message"], "Invalid API key");
 }
 

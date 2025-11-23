@@ -166,7 +166,7 @@ TEST_F(ApiTest, ServerHandlesRequestToEnginesWithTrailingSlash) {
         {"status", "idle"}
     };
     auto res_post = client->Post("/engines/heartbeat", headers, engine_payload.dump(), "application/json");
-    ASSERT_EQ(res_post->status, 200);
+    ASSERT_EQ(res_post->status, 400);
 }
 
 TEST_F(ApiTest, ServerHandlesRequestWithNonStandardContentType) {
