@@ -126,3 +126,30 @@ nlohmann::json JobSubmissionHandler::create_job(const nlohmann::json& input) {
     
     return job;
 }
+
+JobStatusHandler::JobStatusHandler(std::shared_ptr<AuthMiddleware> auth)
+    : auth_(auth) {}
+
+void JobStatusHandler::handle(const httplib::Request& req, httplib::Response& res) {
+    // 1. Authentication
+    if (!auth_->authenticate(req, res)) {
+        return;
+    }
+
+    // 2. Get Job ID
+    // Note: req.matches is populated by httplib when using regex paths
+    if (req.matches.size() < 2) {
+        set_error_response(res, "Internal Server Error: Job ID not found in path", 500);
+        return;
+    }
+    std::string job_id = req.matches[1];
+
+    // 3. Retrieve Job
+    std::lock_guard<std::mutex> lock(state_mutex);
+    if (jobs_db.contains(job_id)) {
+        set_json_response(res, jobs_db[job_id], 200);
+    } else {
+        res.status = 404;
+        res.set_content("Job not found", "text/plain");
+    }
+}

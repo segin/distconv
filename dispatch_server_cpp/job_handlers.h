@@ -21,4 +21,14 @@ private:
     nlohmann::json create_job(const nlohmann::json& input);
 };
 
+// Handler for GET /jobs/{id} - Get job status
+class JobStatusHandler : public IRequestHandler {
+public:
+    explicit JobStatusHandler(std::shared_ptr<AuthMiddleware> auth);
+    void handle(const httplib::Request& req, httplib::Response& res) override;
+    
+private:
+    std::shared_ptr<AuthMiddleware> auth_;
+};
+
 #endif  // JOB_HANDLERS_H
