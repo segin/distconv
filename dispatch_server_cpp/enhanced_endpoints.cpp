@@ -552,7 +552,10 @@ void setup_enhanced_system_endpoints(httplib::Server &svr, const std::string& ap
     
     // Legacy endpoints for backward compatibility
     
-    // Legacy: Job submission
+    // COMMENTED OUT: Legacy job submission endpoint - now handled by JobSubmissionHandler
+    // The new handler-based implementation in dispatch_server_core.cpp provides better
+    // validation including negative number checks that this legacy version lacked
+    /*
     svr.Post("/jobs/", [api_key](const httplib::Request& req, httplib::Response& res) {
         if (!EnhancedEndpoints::validate_api_key(req, res, api_key)) return;
         
@@ -614,6 +617,7 @@ void setup_enhanced_system_endpoints(httplib::Server &svr, const std::string& ap
             res.set_content("Server error: " + std::string(e.what()), "text/plain");
         }
     });
+    */
     
     // Legacy: Job status
     svr.Get(R"(/jobs/([a-fA-F0-9\\-]{36}))", [api_key](const httplib::Request& req, httplib::Response& res) {
@@ -670,6 +674,22 @@ void setup_enhanced_system_endpoints(httplib::Server &svr, const std::string& ap
             }
             
             std::string engine_id = request_json["engine_id"];
+            
+            // DEBUG OUTPUT
+            std::cout << "[assign_job] Request engine_id: " << engine_id << std::endl;
+            {
+                std::lock_guard<std::mutex> lock(state_mutex);
+                std::cout << "[assign_job] engines_db size: " << engines_db.size() << std::endl;
+                if (engines_db.contains(engine_id)) {
+                     std::cout << "[assign_job] Engine found in DB." << std::endl;
+                } else {
+                     std::cout << "[assign_job] Engine NOT found in DB." << std::endl;
+                     for (auto& [key, val] : engines_db.items()) {
+                         std::cout << "  - Available engine: " << key << std::endl;
+                     }
+                }
+            }
+            
             {
                 std::lock_guard<std::mutex> lock(state_mutex);
                 engines_db[engine_id] = request_json;
@@ -693,6 +713,15 @@ void setup_enhanced_system_endpoints(httplib::Server &svr, const std::string& ap
         try {
             nlohmann::json request_json = nlohmann::json::parse(req.body);
             std::string engine_id = request_json["engine_id"];
+            
+            {
+                std::lock_guard<std::mutex> lock(state_mutex);
+                if (engines_db.contains(engine_id)) {
+                     // Engine found
+                } else {
+                     // Engine not found
+                }
+            }
             
             {
                 std::lock_guard<std::mutex> lock(state_mutex);

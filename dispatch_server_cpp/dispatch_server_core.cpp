@@ -9,8 +9,13 @@
 #include <uuid/uuid.h>
 #include "httplib.h"
 #include "nlohmann/json.hpp"
-#include "dispatch_server_core.h" // Include the new header
+#include "dispatch_server_core.h"  // Include the new header
+#include "dispatch_server_constants.h"  // Include constants
 #include "enhanced_endpoints.h"
+#include "job_handlers.h"  // Include job handlers
+#include "request_handlers.h"  // Include base handlers
+
+using namespace Constants;  // For constants
 
 // In-memory storage for jobs and engines (for now)
 // In a real application, this would be a database
@@ -223,8 +228,8 @@ void DispatchServer::background_worker() {
             cleanup_stale_engines();
             handle_job_timeouts();
             
-            // Sleep for 30 seconds before next iteration
-            std::this_thread::sleep_for(std::chrono::seconds(30));
+            // Sleep between cleanup iterations
+            std::this_thread::sleep_for(BACKGROUND_WORKER_INTERVAL);
         } catch (const std::exception& e) {
             std::cerr << "Background worker error: " << e.what() << std::endl;
         }
@@ -243,7 +248,7 @@ void DispatchServer::cleanup_stale_engines() {
                 };
                 auto duration = std::chrono::duration_cast<std::chrono::minutes>(now - last_heartbeat);
                 
-                if (duration.count() > 5) { // 5 minutes timeout
+                if (duration > ENGINE_HEARTBEAT_TIMEOUT) {
                     std::cout << "Removing stale engine: " << it.key() << std::endl;
                     it = engines_db.erase(it);
                     async_save_state();
@@ -269,7 +274,7 @@ void DispatchServer::handle_job_timeouts() {
                 };
                 auto duration = std::chrono::duration_cast<std::chrono::minutes>(now - updated_at);
                 
-                if (duration.count() > 30) { // 30 minutes timeout
+                if (duration > JOB_TIMEOUT) {
                     std::cout << "Job " << job_id << " timed out, marking as failed" << std::endl;
                     job_data["status"] = "failed";
                     job_data["retries"] = job_data.value("retries", 0) + 1;
@@ -384,99 +389,19 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
         res.set_content("OK", "text/plain");
     });
     
+    // Create handlers - BEFORE enhanced endpoints to override legacy behavior
+    auto auth = std::make_shared<AuthMiddleware>(api_key);
+    auto job_submission_handler = std::make_shared<JobSubmissionHandler>(auth);
+    
+    // Endpoint to submit a new transcoding job - Now using handler!
+    // This must be registered BEFORE enhanced endpoints to override the legacy endpoint
+    svr.Post("/jobs/", [job_submission_handler](const httplib::Request& req, httplib::Response& res) {
+        job_submission_handler->handle(req, res);
+    });
+
     // Set up enhanced API v1 endpoints
     setup_enhanced_job_endpoints(svr, api_key);
     setup_enhanced_system_endpoints(svr, api_key);
-
-    // Endpoint to submit a new transcoding job
-    svr.Post("/jobs/", [api_key](const httplib::Request& req, httplib::Response& res) {
-        if (api_key != "") {
-            if (req.get_header_value("X-API-Key") == "") {
-                res.status = 401;
-                res.set_content("Unauthorized: Missing 'X-API-Key' header.", "text/plain");
-                return;
-            }
-            if (req.get_header_value("X-API-Key") != api_key) {
-                res.status = 401;
-                res.set_content("Unauthorized", "text/plain");
-                return;
-            }
-        }
-        try {
-            nlohmann::json request_json = nlohmann::json::parse(req.body);
-
-            if (!request_json.contains("source_url") || !request_json["source_url"].is_string()) {
-                res.status = 400;
-                res.set_content("Bad Request: 'source_url' is missing or not a string.", "text/plain");
-                return;
-            }
-            if (!request_json.contains("target_codec") || !request_json["target_codec"].is_string()) {
-                res.status = 400;
-                res.set_content("Bad Request: 'target_codec' is missing or not a string.", "text/plain");
-                return;
-            }
-            if (request_json.contains("job_size")) {
-                if (!request_json["job_size"].is_number()) {
-                    res.status = 400;
-                    res.set_content("Bad Request: 'job_size' must be a number.", "text/plain");
-                    return;
-                }
-                if (request_json["job_size"].is_number() && request_json["job_size"].get<double>() < 0) {
-                    res.status = 400;
-                    res.set_content("Bad Request: 'job_size' must be a non-negative number.", "text/plain");
-                    return;
-                }
-            }
-            if (request_json.contains("max_retries")) {
-                if (!request_json["max_retries"].is_number_integer()) {
-                    res.status = 400;
-                    res.set_content("Bad Request: 'max_retries' must be an integer.", "text/plain");
-                    return;
-                }
-                if (request_json["max_retries"].is_number_integer() && request_json["max_retries"].get<int>() < 0) {
-                    res.status = 400;
-                    res.set_content("Bad Request: 'max_retries' must be a non-negative integer.", "text/plain");
-                    return;
-                }
-            }
-
-            std::string job_id = generate_uuid();
-            
-            auto now = std::chrono::system_clock::now();
-            auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
-            
-            nlohmann::json job;
-            job["job_id"] = job_id;
-            job["source_url"] = request_json["source_url"];
-            job["target_codec"] = request_json["target_codec"];
-            job["job_size"] = request_json.value("job_size", 0.0);
-            job["status"] = "pending";
-            job["assigned_engine"] = nullptr;
-            job["output_url"] = nullptr;
-            job["retries"] = 0;
-            job["max_retries"] = request_json.value("max_retries", 3);
-            job["priority"] = request_json.value("priority", 0); // 0=normal, 1=high, 2=urgent
-            job["created_at"] = now_ms;
-            job["updated_at"] = now_ms;
-
-            {
-                std::lock_guard<std::mutex> lock(state_mutex);
-                jobs_db[job_id] = job;
-                save_state_unlocked();
-            }
-
-            res.set_content(job.dump(), "application/json");
-        } catch (const nlohmann::json::parse_error& e) {
-            res.status = 400;
-            res.set_content("Invalid JSON: " + std::string(e.what()), "text/plain");
-        } catch (const nlohmann::json::type_error& e) {
-            res.status = 400;
-            res.set_content("Bad Request: " + std::string(e.what()), "text/plain");
-        } catch (const std::exception& e) {
-            res.status = 500;
-            res.set_content("Server error: " + std::string(e.what()), "text/plain");
-        }
-    });
 
     // Endpoint to get job status
     svr.Get(R"(/jobs/(.+))", [api_key](const httplib::Request& req, httplib::Response& res) {
