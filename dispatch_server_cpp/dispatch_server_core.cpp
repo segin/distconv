@@ -393,6 +393,8 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
     auto auth = std::make_shared<AuthMiddleware>(api_key);
     auto job_submission_handler = std::make_shared<JobSubmissionHandler>(auth);
     
+    auto job_status_handler = std::make_shared<JobStatusHandler>(auth);
+
     // Endpoint to submit a new transcoding job - Now using handler!
     // This must be registered BEFORE enhanced endpoints to override the legacy endpoint
     svr.Post("/jobs/", [job_submission_handler](const httplib::Request& req, httplib::Response& res) {
@@ -404,27 +406,8 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
     setup_enhanced_system_endpoints(svr, api_key);
 
     // Endpoint to get job status
-    svr.Get(R"(/jobs/(.+))", [api_key](const httplib::Request& req, httplib::Response& res) {
-        if (api_key != "") {
-            if (req.get_header_value("X-API-Key") == "") {
-                res.status = 401;
-                res.set_content("Unauthorized: Missing 'X-API-Key' header.", "text/plain");
-                return;
-            }
-            if (req.get_header_value("X-API-Key") != api_key) {
-                res.status = 401;
-                res.set_content("Unauthorized", "text/plain");
-                return;
-            }
-        }
-        std::string job_id = req.matches[1];
-        std::lock_guard<std::mutex> lock(state_mutex);
-        if (jobs_db.contains(job_id)) {
-            res.set_content(jobs_db[job_id].dump(), "application/json");
-        } else {
-            res.status = 404;
-            res.set_content("Job not found", "text/plain");
-        }
+    svr.Get(R"(/jobs/(.+))", [job_status_handler](const httplib::Request& req, httplib::Response& res) {
+        job_status_handler->handle(req, res);
     });
 
     // Endpoint to list all jobs

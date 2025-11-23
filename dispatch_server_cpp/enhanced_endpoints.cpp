@@ -675,18 +675,12 @@ void setup_enhanced_system_endpoints(httplib::Server &svr, const std::string& ap
             
             std::string engine_id = request_json["engine_id"];
             
-            // DEBUG OUTPUT
-            std::cout << "[assign_job] Request engine_id: " << engine_id << std::endl;
             {
                 std::lock_guard<std::mutex> lock(state_mutex);
-                std::cout << "[assign_job] engines_db size: " << engines_db.size() << std::endl;
                 if (engines_db.contains(engine_id)) {
-                     std::cout << "[assign_job] Engine found in DB." << std::endl;
+                     // Engine found
                 } else {
-                     std::cout << "[assign_job] Engine NOT found in DB." << std::endl;
-                     for (auto& [key, val] : engines_db.items()) {
-                         std::cout << "  - Available engine: " << key << std::endl;
-                     }
+                     // Engine not found
                 }
             }
             
