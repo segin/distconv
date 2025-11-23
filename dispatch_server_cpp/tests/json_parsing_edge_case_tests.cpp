@@ -90,7 +90,10 @@ TEST_F(ApiTest, JsonParsingValidJobCompletionRequest) {
     ASSERT_EQ(res_heartbeat->status, 200);
     
     // Assign the job
-    auto res_assign = client->Post("/assign_job/", headers, "{}", "application/json");
+    nlohmann::json assign_payload = {
+        {"engine_id", "failure-test-engine"}
+    };
+    auto res_assign = client->Post("/assign_job/", headers, assign_payload.dump(), "application/json");
     ASSERT_EQ(res_assign->status, 200);
     
     // Test valid completion request
@@ -133,7 +136,10 @@ TEST_F(ApiTest, JsonParsingValidJobFailureRequest) {
     ASSERT_EQ(res_heartbeat->status, 200);
     
     // Assign the job
-    auto res_assign = client->Post("/assign_job/", headers, "{}", "application/json");
+    nlohmann::json assign_payload = {
+        {"engine_id", "failure-test-engine"}
+    };
+    auto res_assign = client->Post("/assign_job/", headers, assign_payload.dump(), "application/json");
     ASSERT_EQ(res_assign->status, 200);
     
     // Test valid failure request
@@ -333,7 +339,10 @@ TEST_F(ApiTest, ServerHandlesVeryLargeNumberOfEngines) {
     auto job_res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
     ASSERT_EQ(job_res->status, 200);
     
-    auto assign_res = client->Post("/assign_job/", headers, "{}", "application/json");
+    nlohmann::json assign_payload = {
+        {"engine_id", "engine_0"}
+    };
+    auto assign_res = client->Post("/assign_job/", headers, "{\"engine_id\": \"engine_0\"}", "application/json");
     ASSERT_EQ(assign_res->status, 200);
     
     // Verify server is still responsive
@@ -401,7 +410,10 @@ TEST_F(ApiTest, ServerHandlesHeartbeatForEngineAssignedJobThatNoLongerExists) {
     ASSERT_EQ(res_engine->status, 200);
     
     // Assign the job
-    auto res_assign = client->Post("/assign_job/", headers, "{}", "application/json");
+    nlohmann::json assign_payload = {
+        {"engine_id", "orphaned-engine"}
+    };
+    auto res_assign = client->Post("/assign_job/", headers, assign_payload.dump(), "application/json");
     ASSERT_EQ(res_assign->status, 200);
     
     // Manually remove the job from the database to simulate it no longer existing

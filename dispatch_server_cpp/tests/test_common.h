@@ -45,6 +45,8 @@ protected:
         
         port = find_available_port();
 
+        // Initialize API key for authentication
+        api_key = "test_api_key";
         server = new DispatchServer();
         server->set_api_key(api_key);
         server->start(port, false);
