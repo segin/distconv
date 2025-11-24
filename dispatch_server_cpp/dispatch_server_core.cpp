@@ -9,13 +9,18 @@
 #include <uuid/uuid.h>
 #include "httplib.h"
 #include "nlohmann/json.hpp"
-#include "dispatch_server_core.h"  // Include the new header
-#include "dispatch_server_constants.h"  // Include constants
+#include "dispatch_server_core.h"
+#include "dispatch_server_constants.h"
+#include "request_handlers.h"
+#include "job_handlers.h"
+#include "engine_handlers.h"
+#include "job_action_handlers.h"
+#include "assignment_handler.h"
+#include "api_middleware.h"
 #include "enhanced_endpoints.h"
-#include "job_handlers.h"  // Include job handlers
-#include "request_handlers.h"  // Include base handlers
 
 using namespace Constants;  // For constants
+
 
 // In-memory storage for jobs and engines (for now)
 // In a real application, this would be a database
@@ -418,335 +423,46 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
     });
 
     // Endpoint to list all engines
-    svr.Get("/engines/", [api_key](const httplib::Request& req, httplib::Response& res) {
-        if (api_key != "") {
-            if (req.get_header_value("X-API-Key") == "") {
-                res.status = 401;
-                res.set_content("Unauthorized: Missing 'X-API-Key' header.", "text/plain");
-                return;
-            }
-            if (req.get_header_value("X-API-Key") != api_key) {
-                res.status = 401;
-                res.set_content("Unauthorized", "text/plain");
-                return;
-            }
-        }
-        nlohmann::json all_engines = nlohmann::json::array();
-        {
-            std::lock_guard<std::mutex> lock(state_mutex);
-            if (!engines_db.empty()) {
-                for (auto const& [key, val] : engines_db.items()) {
-                    all_engines.push_back(val);
-                }
-            }
-        }
-        res.set_content(all_engines.dump(), "application/json");
+    auto engine_list_handler = std::make_shared<EngineListHandler>(auth);
+    svr.Get("/engines/", [engine_list_handler](const httplib::Request& req, httplib::Response& res) {
+        engine_list_handler->handle(req, res);
     });
 
     // Endpoint for engine heartbeat
-    svr.Post("/engines/heartbeat", [api_key](const httplib::Request& req, httplib::Response& res) {
-        if (api_key != "") {
-            if (req.get_header_value("X-API-Key") == "") {
-                res.status = 401;
-                res.set_content("Unauthorized: Missing 'X-API-Key' header.", "text/plain");
-                return;
-            }
-            if (req.get_header_value("X-API-Key") != api_key) {
-                res.status = 401;
-                res.set_content("Unauthorized", "text/plain");
-                return;
-            }
-        }
-        try {
-            nlohmann::json request_json = nlohmann::json::parse(req.body);
-            if (!request_json.contains("engine_id")) {
-                res.status = 400;
-                res.set_content("Bad Request: 'engine_id' is missing.", "text/plain");
-                return;
-            }
-            if (!request_json["engine_id"].is_string()) {
-                res.status = 400;
-                res.set_content("Bad Request: 'engine_id' must be a string.", "text/plain");
-                return;
-            }
-            std::string engine_id = request_json["engine_id"];
-            if (request_json.contains("storage_capacity_gb")) {
-                if (!request_json["storage_capacity_gb"].is_number()) {
-                    res.status = 400;
-                    res.set_content("Bad Request: 'storage_capacity_gb' must be a number.", "text/plain");
-                    return;
-                }
-                if (request_json["storage_capacity_gb"].is_number() && request_json["storage_capacity_gb"].get<double>() < 0) {
-                    res.status = 400;
-                    res.set_content("Bad Request: 'storage_capacity_gb' must be a non-negative number.", "text/plain");
-                    return;
-                }
-            }
-            if (request_json.contains("streaming_support") && !request_json["streaming_support"].is_boolean()) {
-                res.status = 400;
-                res.set_content("Bad Request: 'streaming_support' must be a boolean.", "text/plain");
-                return;
-            }
-            {
-                std::lock_guard<std::mutex> lock(state_mutex);
-                engines_db[engine_id] = request_json;
-                save_state_unlocked();
-            }
-            res.set_content("Heartbeat received from engine " + engine_id, "text/plain");
-        } catch (const nlohmann::json::parse_error& e) {
-            res.status = 400;
-            res.set_content("Invalid JSON: " + std::string(e.what()), "text/plain");
-        } catch (const std::exception& e) {
-            res.status = 500;
-            res.set_content("Server error: " + std::string(e.what()), "text/plain");
-        }
+    auto engine_heartbeat_handler = std::make_shared<EngineHeartbeatHandler>(auth);
+    svr.Post("/engines/heartbeat", [engine_heartbeat_handler](const httplib::Request& req, httplib::Response& res) {
+        engine_heartbeat_handler->handle(req, res);
     });
+
 
     // Endpoint for benchmark results
-    svr.Post("/engines/benchmark_result", [api_key](const httplib::Request& req, httplib::Response& res) {
-        if (api_key != "") {
-            if (req.get_header_value("X-API-Key") == "") {
-                res.status = 401;
-                res.set_content("Unauthorized: Missing 'X-API-Key' header.", "text/plain");
-                return;
-            }
-            if (req.get_header_value("X-API-Key") != api_key) {
-                res.status = 401;
-                res.set_content("Unauthorized", "text/plain");
-                return;
-            }
-        }
-        try {
-            nlohmann::json request_json = nlohmann::json::parse(req.body);
-            std::string engine_id = request_json["engine_id"];
-            if (request_json.contains("benchmark_time")) {
-                if (!request_json["benchmark_time"].is_number()) {
-                    res.status = 400;
-                    res.set_content("Bad Request: 'benchmark_time' must be a number.", "text/plain");
-                    return;
-                }
-                if (request_json["benchmark_time"].is_number() && request_json["benchmark_time"].get<double>() < 0) {
-                    res.status = 400;
-                    res.set_content("Bad Request: 'benchmark_time' must be a non-negative number.", "text/plain");
-                    return;
-                }
-            }
-            {
-                std::lock_guard<std::mutex> lock(state_mutex);
-                if (engines_db.contains(engine_id)) {
-                    engines_db[engine_id]["benchmark_time"] = request_json["benchmark_time"];
-                } else {
-                    res.status = 404;
-                    res.set_content("Engine not found", "text/plain");
-                    return;
-                }
-            }
-            res.set_content("Benchmark result received from engine " + engine_id, "text/plain");
-        } catch (const nlohmann::json::parse_error& e) {
-            res.status = 400;
-            res.set_content("Invalid JSON: " + std::string(e.what()), "text/plain");
-        } catch (const std::exception& e) {
-            res.status = 500;
-            res.set_content("Server error: " + std::string(e.what()), "text/plain");
-        }
+    auto engine_benchmark_handler = std::make_shared<EngineBenchmarkHandler>(auth);
+    svr.Post("/engines/benchmark_result", [engine_benchmark_handler](const httplib::Request& req, httplib::Response& res) {
+        engine_benchmark_handler->handle(req, res);
     });
 
+
     // Endpoint to complete a job
-    svr.Post(R"(/jobs/([a-fA-F0-9\\-]{36})/complete)", [api_key](const httplib::Request& req, httplib::Response& res) {
-        if (api_key != "") {
-            if (req.get_header_value("X-API-Key") == "") {
-                res.status = 401;
-                res.set_content("Unauthorized: Missing 'X-API-Key' header.", "text/plain");
-                return;
-            }
-            if (req.get_header_value("X-API-Key") != api_key) {
-                res.status = 401;
-                res.set_content("Unauthorized", "text/plain");
-                return;
-            }
-        }
-        std::string job_id = req.matches[1];
-        try {
-            nlohmann::json request_json = nlohmann::json::parse(req.body);
-            if (!request_json.contains("output_url") || !request_json["output_url"].is_string()) {
-                res.status = 400;
-                res.set_content("Bad Request: 'output_url' must be a string.", "text/plain");
-                return;
-            }
-            {
-                std::lock_guard<std::mutex> lock(state_mutex);
-                if (jobs_db.contains(job_id)) {
-                    jobs_db[job_id]["status"] = "completed";
-                    jobs_db[job_id]["output_url"] = request_json["output_url"];
-                    
-                    // Free up the engine that was working on this job
-                    if (jobs_db[job_id].contains("assigned_engine") && !jobs_db[job_id]["assigned_engine"].is_null()) {
-                        std::string engine_id = jobs_db[job_id]["assigned_engine"];
-                        if (engines_db.contains(engine_id)) {
-                            engines_db[engine_id]["status"] = "idle";
-                        }
-                    }
-                    save_state_unlocked();
-                } else {
-                    res.status = 404;
-                    res.set_content("Job not found", "text/plain");
-                    return;
-                }
-            }
-            res.set_content("Job " + job_id + " marked as completed", "text/plain");
-        } catch (const nlohmann::json::parse_error& e) {
-            res.status = 400;
-            res.set_content("Invalid JSON: " + std::string(e.what()), "text/plain");
-        } catch (const std::exception& e) {
-            res.status = 500;
-            res.set_content("Server error: " + std::string(e.what()), "text/plain");
-        }
+    auto job_completion_handler = std::make_shared<JobCompletionHandler>(auth);
+    svr.Post(R"(/jobs/([a-fA-F0-9\\-]{36})/complete)", [job_completion_handler](const httplib::Request& req, httplib::Response& res) {
+        job_completion_handler->handle(req, res);
     });
 
     // Endpoint to fail a job
-    svr.Post(R"(/jobs/([a-fA-F0-9\\-]{36})/fail)", [api_key](const httplib::Request& req, httplib::Response& res) {
-        if (api_key != "") {
-            if (req.get_header_value("X-API-Key") == "") {
-                res.status = 401;
-                res.set_content("Unauthorized: Missing 'X-API-Key' header.", "text/plain");
-                return;
-            }
-            if (req.get_header_value("X-API-Key") != api_key) {
-                res.status = 401;
-                res.set_content("Unauthorized", "text/plain");
-                return;
-            }
-        }
-        std::string job_id = req.matches[1];
-        try {
-            nlohmann::json request_json = nlohmann::json::parse(req.body);
-            if (!request_json.contains("error_message")) {
-                res.status = 400;
-                res.set_content("Bad Request: 'error_message' is missing.", "text/plain");
-                return;
-            }
-            {
-                std::lock_guard<std::mutex> lock(state_mutex);
-                if (jobs_db.contains(job_id)) {
-                    if (jobs_db[job_id]["status"] == "completed" || jobs_db[job_id]["status"] == "failed_permanently") {
-                        res.status = 400;
-                        res.set_content("Bad Request: Job is already in a final state.", "text/plain");
-                        return;
-                    }
-                    jobs_db[job_id]["retries"] = jobs_db[job_id].value("retries", 0) + 1;
-                    if (jobs_db[job_id]["retries"] < jobs_db[job_id].value("max_retries", 3)) {
-                        jobs_db[job_id]["status"] = "pending"; // Re-queue
-                        jobs_db[job_id]["error_message"] = request_json["error_message"];
-                        res.set_content("Job " + job_id + " re-queued", "text/plain");
-                    } else {
-                        jobs_db[job_id]["status"] = "failed_permanently";
-                        jobs_db[job_id]["error_message"] = request_json["error_message"];
-                        res.set_content("Job " + job_id + " failed permanently", "text/plain");
-                    }
-                    save_state_unlocked();
-                } else {
-                    res.status = 404;
-                    res.set_content("Job not found", "text/plain");
-                    return;
-                }
-            }
-        } catch (const nlohmann::json::parse_error& e) {
-            res.status = 400;
-            res.set_content("Invalid JSON: " + std::string(e.what()), "text/plain");
-        } catch (const std::exception& e) {
-            res.status = 500;
-            res.set_content("Server error: " + std::string(e.what()), "text/plain");
-        }
+    auto job_failure_handler = std::make_shared<JobFailureHandler>(auth);
+    svr.Post(R"(/jobs/([a-fA-F0-9\\-]{36})/fail)", [job_failure_handler](const httplib::Request& req, httplib::Response& res) {
+        job_failure_handler->handle(req, res);
     });
+
+
 
     // Endpoint to assign a job (for engines to poll)
-    svr.Post("/assign_job/", [api_key](const httplib::Request& req, httplib::Response& res) {
-        if (api_key != "") {
-            if (req.get_header_value("X-API-Key") == "") {
-                res.status = 401;
-                res.set_content("Unauthorized: Missing 'X-API-Key' header.", "text/plain");
-                return;
-            }
-            if (req.get_header_value("X-API-Key") != api_key) {
-                res.status = 401;
-                res.set_content("Unauthorized", "text/plain");
-                return;
-            }
-        }
-        
-        std::lock_guard<std::mutex> lock(state_mutex);
-
-        nlohmann::json pending_job = nullptr;
-        for (auto const& [job_key, job_val] : jobs_db.items()) {
-            if (job_val["status"] == "pending" && job_val["assigned_engine"].is_null()) {
-                pending_job = job_val;
-                break;
-            }
-        }
-
-        if (pending_job.is_null()) {
-            res.status = 204; // No Content
-            return;
-        }
-
-        // Find an idle engine with benchmarking data
-        nlohmann::json selected_engine = nullptr;
-        std::vector<nlohmann::json> available_engines;
-        for (auto const& [eng_id, eng_data] : engines_db.items()) {
-            if (eng_data["status"] == "idle" && eng_data.contains("benchmark_time")) {
-                available_engines.push_back(eng_data);
-            }
-        }
-
-        if (available_engines.empty()) {
-            res.status = 204; // No Content
-            return;
-        }
-        
-        // Sort engines by benchmark_time (faster engines first)
-        std::sort(available_engines.begin(), available_engines.end(), [](const nlohmann::json& a, const nlohmann::json& b) {
-            return a["benchmark_time"] < b["benchmark_time"];
-        });
-
-        double job_size = pending_job.value("job_size", 0.0);
-        double large_job_threshold = 100.0;
-
-        if (job_size >= large_job_threshold) {
-            nlohmann::json streaming_capable_engine = nullptr;
-            for (const auto& eng : available_engines) {
-                if (eng.value("streaming_support", false)) {
-                    streaming_capable_engine = eng;
-                    break;
-                }
-            }
-            if (!streaming_capable_engine.is_null()) {
-                selected_engine = streaming_capable_engine;
-            } else {
-                selected_engine = available_engines[0]; // Fastest available
-            }
-        } else {
-            double small_job_threshold = 50.0;
-            if (job_size < small_job_threshold) {
-                selected_engine = available_engines.back(); // Slowest
-            } else {
-                selected_engine = available_engines[0]; // Fastest
-            }
-        }
-
-        if (selected_engine.is_null()) {
-            res.status = 204; // No Content
-            return;
-        }
-
-        // Assign the job
-        jobs_db[pending_job["job_id"].get<std::string>()]["status"] = "assigned";
-        jobs_db[pending_job["job_id"].get<std::string>()]["assigned_engine"] = selected_engine["engine_id"];
-        engines_db[selected_engine["engine_id"].get<std::string>()]["status"] = "busy";
-        
-        save_state_unlocked();
-
-        res.set_content(jobs_db[pending_job["job_id"].get<std::string>()].dump(), "application/json");
+    auto job_assignment_handler = std::make_shared<JobAssignmentHandler>(auth);
+    svr.Post("/assign_job/", [job_assignment_handler](const httplib::Request& req, httplib::Response& res) {
+        job_assignment_handler->handle(req, res);
     });
+
+
 
     // Placeholder for storage pool configuration (to be implemented later)
     svr.Get("/storage_pools/", [api_key](const httplib::Request& req, httplib::Response& res) {

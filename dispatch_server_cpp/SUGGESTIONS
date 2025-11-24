@@ -30,11 +30,11 @@ This checklist contains 100 specific suggestions for improving the dispatch serv
 - [ ] The server should handle the case where an engine takes a job but then crashes before completing it. A timeout mechanism is needed on the server side for assigned jobs.
 
 ## API & Endpoints
-- [ ] Add an `/api/v1` prefix to all endpoints.
-- [ ] Validate `Content-Type` header: The `/jobs/` endpoint should check that the `Content-Type` is `application/json`.
-- [ ] Add a `/version` endpoint to return the server's build version and commit hash.
-- [ ] Add a `/status` endpoint for a simple health check.
-- [ ] Endpoint for engine de-registration: Add an endpoint for an engine to signal it's shutting down, so the server can remove it from the pool.
+- [x] Add an `/api/v1` prefix to all endpoints.
+- [x] Validate `Content-Type` header: The `/jobs/` endpoint should check that the `Content-Type` is `application/json`.
+- [x] Add a `/version` endpoint to return the server's build version and commit hash.
+- [x] Add a `/status` endpoint for a simple health check.
+- [x] Endpoint for engine de-registration: Add an endpoint for an engine to signal it's shutting down, so the server can remove it from the pool.
 - [ ] Add endpoint to update a job's parameters after submission.
 - [ ] Add endpoint to get a list of jobs assigned to a specific engine.
 - [ ] The `/jobs/{id}/complete` and `/fail` endpoints should probably be a single `/jobs/{id}/status` endpoint using `PUT` or `PATCH`.
