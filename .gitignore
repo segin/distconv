@@ -32,3 +32,5 @@ test_results.xml
 
 # Test state files
 dispatch_server_state_*.json
+
+Testing/Temporary/
