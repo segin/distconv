@@ -355,6 +355,7 @@ void setup_enhanced_job_endpoints(httplib::Server &svr, const std::string& api_k
         }
     });
     
+    /*
     // Legacy endpoint: Job completion (for backward compatibility)
     svr.Post(R"(/jobs/([a-fA-F0-9\\-]{36})/complete)", [api_key](const httplib::Request& req, httplib::Response& res) {
         if (!EnhancedEndpoints::validate_api_key(req, res, api_key)) return;
@@ -470,6 +471,7 @@ void setup_enhanced_job_endpoints(httplib::Server &svr, const std::string& api_k
             res.set_content("Server error: " + std::string(e.what()), "text/plain");
         }
     });
+    */
 }
 
 // Enhanced system endpoints
@@ -649,6 +651,7 @@ void setup_enhanced_system_endpoints(httplib::Server &svr, const std::string& ap
     });
     */
     
+    /*
     // Legacy: All engines
     svr.Get("/engines/", [api_key](const httplib::Request& req, httplib::Response& res) {
         if (!EnhancedEndpoints::validate_api_key(req, res, api_key)) return;
@@ -819,8 +822,8 @@ void setup_enhanced_system_endpoints(httplib::Server &svr, const std::string& ap
                 }
             }
             
+            // No jobs pending
             res.status = 204;
-            res.set_content("No pending jobs", "text/plain");
             
         } catch (const nlohmann::json::parse_error& e) {
             res.status = 400;
@@ -830,4 +833,5 @@ void setup_enhanced_system_endpoints(httplib::Server &svr, const std::string& ap
             res.set_content("Server error: " + std::string(e.what()), "text/plain");
         }
     });
+    */
 }
