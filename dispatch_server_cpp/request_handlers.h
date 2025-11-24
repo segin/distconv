@@ -11,7 +11,7 @@ public:
     explicit AuthMiddleware(const std::string& api_key);
     
     // Returns true if authenticated, false otherwise (and sets error response)
-    bool authenticate(const httplib::Request& req, httplib::Response& res) const;
+    virtual bool authenticate(const httplib::Request& req, httplib::Response& res) const;
     
 private:
     std::string api_key_;
