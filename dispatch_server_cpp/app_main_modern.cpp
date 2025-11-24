@@ -39,12 +39,11 @@ int main(int argc, char* argv[]) {
     
     try {
         // Create repositories with dependency injection
-        auto job_repo = std::make_unique<SqliteJobRepository>(database_path);
-        auto engine_repo = std::make_unique<SqliteEngineRepository>(database_path);
+        auto job_repo = std::make_shared<SqliteJobRepository>(database_path);
+        auto engine_repo = std::make_shared<SqliteEngineRepository>(database_path);
         
         // Create server with injected dependencies
-        DispatchServer server(std::move(job_repo), std::move(engine_repo));
-        server.set_api_key(api_key);
+        DispatchServer server(job_repo, engine_repo, api_key);
         
         std::cout << "Starting server on port " << port << " with database: " << database_path << std::endl;
         std::cout << "API key authentication enabled" << std::endl;

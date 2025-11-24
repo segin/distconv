@@ -1,0 +1,27 @@
+[  6%] Building CXX object CMakeFiles/dispatch_server_core.dir/repositories.cpp.o
+[  6%] Building CXX object CMakeFiles/dispatch_server_core.dir/api_middleware.cpp.o
+[  6%] Building CXX object CMakeFiles/dispatch_server_core.dir/enhanced_endpoints.cpp.o
+[  8%] Building CXX object CMakeFiles/dispatch_server_core.dir/dispatch_server_core.cpp.o
+[ 13%] Building CXX object CMakeFiles/dispatch_server_core.dir/job_handlers.cpp.o
+[ 13%] Building CXX object CMakeFiles/dispatch_server_core.dir/engine_handlers.cpp.o
+[ 15%] Building CXX object CMakeFiles/dispatch_server_core.dir/request_handlers.cpp.o
+[ 19%] Building CXX object CMakeFiles/dispatch_server_core.dir/assignment_handler.cpp.o
+[ 19%] Building CXX object _deps/googletest-build/googletest/CMakeFiles/gtest.dir/src/gtest-all.cc.o
+[ 21%] Building CXX object CMakeFiles/dispatch_server_core.dir/job_action_handlers.cpp.o
+[ 23%] Building CXX object CMakeFiles/dispatch_server_core.dir/storage_pool_handler.cpp.o
+[ 26%] Building CXX object CMakeFiles/dispatch_server_core.dir/job_update_handler.cpp.o
+make[2]: *** [CMakeFiles/dispatch_server_core.dir/build.make:93: CMakeFiles/dispatch_server_core.dir/api_middleware.cpp.o] Interrupt
+make[2]: *** [_deps/googletest-build/googletest/CMakeFiles/gtest.dir/build.make:79: _deps/googletest-build/googletest/CMakeFiles/gtest.dir/src/gtest-all.cc.o] Interrupt
+make[2]: *** [CMakeFiles/dispatch_server_core.dir/build.make:107: CMakeFiles/dispatch_server_core.dir/repositories.cpp.o] Interrupt
+make[2]: *** [CMakeFiles/dispatch_server_core.dir/build.make:149: CMakeFiles/dispatch_server_core.dir/job_handlers.cpp.o] Interrupt
+make[2]: *** [CMakeFiles/dispatch_server_core.dir/build.make:121: CMakeFiles/dispatch_server_core.dir/enhanced_endpoints.cpp.o] Interrupt
+make[2]: *** [CMakeFiles/dispatch_server_core.dir/build.make:163: CMakeFiles/dispatch_server_core.dir/engine_handlers.cpp.o] Interrupt
+make[2]: *** [CMakeFiles/dispatch_server_core.dir/build.make:79: CMakeFiles/dispatch_server_core.dir/dispatch_server_core.cpp.o] Interrupt
+make[2]: *** [CMakeFiles/dispatch_server_core.dir/build.make:135: CMakeFiles/dispatch_server_core.dir/request_handlers.cpp.o] Interrupt
+make[2]: *** [CMakeFiles/dispatch_server_core.dir/build.make:191: CMakeFiles/dispatch_server_core.dir/assignment_handler.cpp.o] Interrupt
+make[2]: *** [CMakeFiles/dispatch_server_core.dir/build.make:177: CMakeFiles/dispatch_server_core.dir/job_action_handlers.cpp.o] Interrupt
+make[2]: *** [CMakeFiles/dispatch_server_core.dir/build.make:219: CMakeFiles/dispatch_server_core.dir/storage_pool_handler.cpp.o] Interrupt
+make[1]: *** [CMakeFiles/Makefile2:360: _deps/googletest-build/googletest/CMakeFiles/gtest.dir/all] Interrupt
+make[2]: *** [CMakeFiles/dispatch_server_core.dir/build.make:205: CMakeFiles/dispatch_server_core.dir/job_update_handler.cpp.o] Interrupt
+make[1]: *** [CMakeFiles/Makefile2:165: CMakeFiles/dispatch_server_core.dir/all] Interrupt
+make: *** [Makefile:146: all] Interrupt

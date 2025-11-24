@@ -16,7 +16,10 @@ constexpr std::chrono::minutes ENGINE_HEARTBEAT_TIMEOUT{5};
 constexpr std::chrono::minutes JOB_TIMEOUT{30};
 
 // Default retry limits
+// Default retry limits
 constexpr int DEFAULT_MAX_RETRIES = 3;
+constexpr int MAX_RETRIES = 5; // Hard limit or default if not specified
+constexpr int RETRY_DELAY_BASE_SECONDS = 30;
 
 // Default persistent storage file
 inline const std::string DEFAULT_STATE_FILE = "dispatch_server_state.json";

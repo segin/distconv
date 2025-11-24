@@ -1,0 +1,229 @@
+make: Entering directory '/home/segin/distconv/dispatch_server_cpp/build'
+[  5%] Built target gtest
+[ 36%] Built target dispatch_server_core
+[ 42%] Built target gtest_main
+[ 52%] Building CXX object CMakeFiles/dispatch_server_tests.dir/tests/thread_safety_tests.cpp.o
+[ 52%] Building CXX object CMakeFiles/dispatch_server_tests.dir/tests/command_line_tests.cpp.o
+[ 52%] Building CXX object CMakeFiles/dispatch_server_tests.dir/tests/scheduling_logic_tests.cpp.o
+[ 52%] Building CXX object CMakeFiles/dispatch_server_tests.dir/tests/job_state_transition_tests.cpp.o
+[ 55%] Building CXX object CMakeFiles/dispatch_server_tests.dir/tests/final_edge_case_tests.cpp.o
+[ 57%] Building CXX object CMakeFiles/dispatch_server_tests.dir/tests/job_handlers_tests.cpp.o
+[ 60%] Building CXX object CMakeFiles/dispatch_server_tests.dir/tests/engine_handlers_tests.cpp.o
+[ 63%] Building CXX object CMakeFiles/dispatch_server_tests.dir/tests/thread_safety_improvements_tests.cpp.o
+[ 65%] Building CXX object CMakeFiles/dispatch_server_tests.dir/tests/api_test_definitions.cpp.o
+[ 68%] Building CXX object CMakeFiles/dispatch_server_tests.dir/tests/json_parsing_edge_case_tests.cpp.o
+[ 71%] Building CXX object CMakeFiles/dispatch_server_tests.dir/tests/api_endpoint_tests.cpp.o
+[ 73%] Building CXX object CMakeFiles/dispatch_server_tests.dir/tests/job_management_tests.cpp.o
+[ 76%] Building CXX object CMakeFiles/dispatch_server_tests.dir/tests/error_handling_tests.cpp.o
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:1:10: error: universal character \u003c is not valid in an identifier
+    1 | #include \u003cgtest/gtest.h\u003e
+      |          ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:1:10: error: ‘#include’ expects ‘"FILENAME"’ or ‘<FILENAME>’
+    1 | #include \u003cgtest/gtest.h\u003e
+      |          ^~~~~~~~~~~
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:1:28: error: universal character \u003e is not valid in an identifier
+    1 | #include \u003cgtest/gtest.h\u003e
+      |                            ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:6:10: error: universal character \u003c is not valid in an identifier
+    6 | #include \u003cregex\u003e
+      |          ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:6:10: error: universal character \u003e is not valid in an identifier
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:6:10: error: ‘#include’ expects ‘"FILENAME"’ or ‘<FILENAME>’
+    6 | #include \u003cregex\u003e
+      |          ^~~~~~~~~~~~~~~~~
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:10:26: error: universal character \u003c is not valid in an identifier
+   10 |     auto job_repo = std::make_shared\u003cInMemoryJobRepository\u003e();
+      |                          ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:10:26: error: universal character \u003e is not valid in an identifier
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:18:14: error: universal character \u003e is not valid in an identifier
+   18 |     job_repo-\u003esave_job("test-job-1", job);
+      |              ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:24:26: error: universal character \u003e is not valid in an identifier
+   24 |     ASSERT_TRUE(job_repo-\u003eupdate_job("test-job-1", updates));
+      |                          ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:26:43: error: universal character \u003e is not valid in an identifier
+   26 |     nlohmann::json updated_job = job_repo-\u003eget_job("test-job-1");
+      |                                           ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:33:26: error: universal character \u003c is not valid in an identifier
+   33 |     auto job_repo = std::make_shared\u003cInMemoryJobRepository\u003e();
+      |                          ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:33:26: error: universal character \u003e is not valid in an identifier
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:49:14: error: universal character \u003e is not valid in an identifier
+   49 |     job_repo-\u003esave_job("job-1", job1);
+      |              ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:50:14: error: universal character \u003e is not valid in an identifier
+   50 |     job_repo-\u003esave_job("job-2", job2);
+      |              ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:51:14: error: universal character \u003e is not valid in an identifier
+   51 |     job_repo-\u003esave_job("job-3", job3);
+      |              ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:54:10: error: universal character \u003c is not valid in an identifier
+   54 |     std::vector\u003cnlohmann::json\u003e engine1_jobs = job_repo-\u003eget_jobs_by_engine("engine-1");
+      |          ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:54:32: error: universal character \u003e is not valid in an identifier
+   54 |     std::vector\u003cnlohmann::json\u003e engine1_jobs = job_repo-\u003eget_jobs_by_engine("engine-1");
+      |                                ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:54:67: error: universal character \u003e is not valid in an identifier
+   54 |     std::vector\u003cnlohmann::json\u003e engine1_jobs = job_repo-\u003eget_jobs_by_engine("engine-1");
+      |                                                                   ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:58:28: error: universal character \u0026 is not valid in an identifier
+   58 |         [](const nlohmann::json\u0026 j) { return j["job_id"] == "job-1"; }));
+      |                            ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:60:28: error: universal character \u0026 is not valid in an identifier
+   60 |         [](const nlohmann::json\u0026 j) { return j["job_id"] == "job-3"; }));
+      |                            ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:65:26: error: universal character \u003c is not valid in an identifier
+   65 |     auto job_repo = std::make_shared\u003cInMemoryJobRepository\u003e();
+      |                          ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:65:26: error: universal character \u003e is not valid in an identifier
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:71:14: error: universal character \u003e is not valid in an identifier
+   71 |     job_repo-\u003esave_job("test-job-1", job);
+      |              ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:74:26: error: universal character \u003e is not valid in an identifier
+   74 |     ASSERT_TRUE(job_repo-\u003eupdate_job_progress("test-job-1", 50, "Processing video"));
+      |                          ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:76:43: error: universal character \u003e is not valid in an identifier
+   76 |     nlohmann::json updated_job = job_repo-\u003eget_job("test-job-1");
+      |                                           ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:83:30: error: universal character \u003c is not valid in an identifier
+   83 |     auto storage_repo = std::make_shared\u003cInMemoryStorageRepository\u003e();
+      |                              ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:83:30: error: universal character \u003e is not valid in an identifier
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:91:18: error: universal character \u003e is not valid in an identifier
+   91 |     storage_repo-\u003esave_pool("pool-1", pool);
+      |                  ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:94:50: error: universal character \u003e is not valid in an identifier
+   94 |     nlohmann::json retrieved_pool = storage_repo-\u003eget_pool("pool-1");
+      |                                                  ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:100:18: error: universal character \u003e is not valid in an identifier
+  100 |     storage_repo-\u003esave_pool("pool-1", retrieved_pool);
+      |                  ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:101:48: error: universal character \u003e is not valid in an identifier
+  101 |     nlohmann::json updated_pool = storage_repo-\u003eget_pool("pool-1");
+      |                                                ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:108:18: error: universal character \u003e is not valid in an identifier
+  108 |     storage_repo-\u003esave_pool("pool-2", pool2);
+      |                  ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:110:10: error: universal character \u003c is not valid in an identifier
+  110 |     std::vector\u003cnlohmann::json\u003e all_pools = storage_repo-\u003eget_all_pools();
+      |          ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:110:32: error: universal character \u003e is not valid in an identifier
+  110 |     std::vector\u003cnlohmann::json\u003e all_pools = storage_repo-\u003eget_all_pools();
+      |                                ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:110:68: error: universal character \u003e is not valid in an identifier
+  110 |     std::vector\u003cnlohmann::json\u003e all_pools = storage_repo-\u003eget_all_pools();
+      |                                                                    ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:114:18: error: universal character \u003e is not valid in an identifier
+  114 |     storage_repo-\u003eremove_pool("pool-1");
+      |                  ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:115:31: error: universal character \u003e is not valid in an identifier
+  115 |     EXPECT_FALSE(storage_repo-\u003epool_exists("pool-1"));
+      |                               ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:116:30: error: universal character \u003e is not valid in an identifier
+  116 |     EXPECT_TRUE(storage_repo-\u003epool_exists("pool-2"));
+      |                              ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:121:25: error: universal character \u003c is not valid in an identifier
+  121 |    auto job_repo = std::make_shared\u003cInMemoryJobRepository\u003e();
+      |                         ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:121:25: error: universal character \u003e is not valid in an identifier
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:129:14: error: universal character \u003e is not valid in an identifier
+  129 |     job_repo-\u003esave_job("test-job-1", job);
+      |              ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:136:14: error: universal character \u003e is not valid in an identifier
+  136 |     job_repo-\u003eupdate_job("test-job-1", updates);
+      |              ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:138:43: error: universal character \u003e is not valid in an identifier
+  138 |     nlohmann::json updated_job = job_repo-\u003eget_job("test-job-1");
+      |                                           ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:144:26: error: universal character \u003c is not valid in an identifier
+  144 |     auto job_repo = std::make_shared\u003cInMemoryJobRepository\u003e();
+      |                          ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:144:26: error: universal character \u003e is not valid in an identifier
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:152:14: error: universal character \u003e is not valid in an identifier
+  152 |     job_repo-\u003esave_job("test-job-1", job);
+      |              ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:157:44: error: universal character \u003c is not valid in an identifier
+  157 |     int64_t retry_timestamp = std::chrono::duration_cast\u003cstd::chrono::milliseconds\u003e(
+      |                                            ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:157:76: error: universal character \u003e is not valid in an identifier
+  157 |     int64_t retry_timestamp = std::chrono::duration_cast\u003cstd::chrono::milliseconds\u003e(
+      |                                                                            ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:160:14: error: universal character \u003e is not valid in an identifier
+  160 |     job_repo-\u003emark_job_as_failed_retry("test-job-1", retry_timestamp);
+      |              ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:162:43: error: universal character \u003e is not valid in an identifier
+  162 |     nlohmann::json updated_job = job_repo-\u003eget_job("test-job-1");
+      |                                           ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:9:5: error: expected constructor, destructor, or type conversion before ‘(’ token
+    9 | TEST(APIEndpointsTest, UpdateJobPriority) {
+      |     ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:32:5: error: expected constructor, destructor, or type conversion before ‘(’ token
+   32 | TEST(APIEndpointsTest, GetJobsByEngine) {
+      |     ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:64:5: error: expected constructor, destructor, or type conversion before ‘(’ token
+   64 | TEST(APIEndpointsTest, UpdateJobProgress) {
+      |     ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:82:5: error: expected constructor, destructor, or type conversion before ‘(’ token
+   82 | TEST(APIEndpointsTest, StoragePoolCRUD) {
+      |     ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:120:5: error: expected constructor, destructor, or type conversion before ‘(’ token
+  120 | TEST(APIEndpointsTest, UnifiedStatusComplete) {
+      |     ^
+/home/segin/distconv/dispatch_server_cpp/tests/api_endpoint_tests.cpp:143:5: error: expected constructor, destructor, or type conversion before ‘(’ token
+  143 | TEST(APIEndpointsTest, FailedJobRetryLogic) {
+      |     ^
+/home/segin/distconv/dispatch_server_cpp/tests/job_handlers_tests.cpp: In member function ‘virtual void JobHandlersTest_JobAssignmentSuccess_Test::TestBody()’:
+/home/segin/distconv/dispatch_server_cpp/tests/job_handlers_tests.cpp:197:38: error: no matching function for call to ‘JobAssignmentHandler::JobAssignmentHandler(std::shared_ptr<AuthMiddleware>&)’
+  197 |     JobAssignmentHandler handler(auth);
+      |                                      ^
+/home/segin/distconv/dispatch_server_cpp/tests/job_handlers_tests.cpp:197:38: note: there are 3 candidates
+In file included from /home/segin/distconv/dispatch_server_cpp/tests/job_handlers_tests.cpp:8:
+/home/segin/distconv/dispatch_server_cpp/assignment_handler.h:12:14: note: candidate 1: ‘JobAssignmentHandler::JobAssignmentHandler(std::shared_ptr<AuthMiddleware>, std::shared_ptr<IJobRepository>)’
+   12 |     explicit JobAssignmentHandler(std::shared_ptr<AuthMiddleware> auth, std::shared_ptr<IJobRepository> job_repo);
+      |              ^~~~~~~~~~~~~~~~~~~~
+/home/segin/distconv/dispatch_server_cpp/assignment_handler.h:12:14: note: candidate expects 2 arguments, 1 provided
+/home/segin/distconv/dispatch_server_cpp/assignment_handler.h:10:7: note: candidate 2: ‘JobAssignmentHandler::JobAssignmentHandler(const JobAssignmentHandler&)’
+   10 | class JobAssignmentHandler : public IRequestHandler {
+      |       ^~~~~~~~~~~~~~~~~~~~
+/home/segin/distconv/dispatch_server_cpp/assignment_handler.h:10:7: note: no known conversion for argument 1 from ‘std::shared_ptr<AuthMiddleware>’ to ‘const JobAssignmentHandler&’
+/home/segin/distconv/dispatch_server_cpp/assignment_handler.h:10:7: note: candidate 3: ‘JobAssignmentHandler::JobAssignmentHandler(JobAssignmentHandler&&)’
+/home/segin/distconv/dispatch_server_cpp/assignment_handler.h:10:7: note: no known conversion for argument 1 from ‘std::shared_ptr<AuthMiddleware>’ to ‘JobAssignmentHandler&&’
+/home/segin/distconv/dispatch_server_cpp/tests/job_management_tests.cpp: In member function ‘virtual void JobManagementTest_PriorityAssignment_Test::TestBody()’:
+/home/segin/distconv/dispatch_server_cpp/tests/job_management_tests.cpp:38:38: error: no matching function for call to ‘JobAssignmentHandler::JobAssignmentHandler(std::shared_ptr<AuthMiddleware>&)’
+   38 |     JobAssignmentHandler handler(auth);
+      |                                      ^
+/home/segin/distconv/dispatch_server_cpp/tests/job_management_tests.cpp:38:38: note: there are 3 candidates
+In file included from /home/segin/distconv/dispatch_server_cpp/tests/job_management_tests.cpp:5:
+/home/segin/distconv/dispatch_server_cpp/assignment_handler.h:12:14: note: candidate 1: ‘JobAssignmentHandler::JobAssignmentHandler(std::shared_ptr<AuthMiddleware>, std::shared_ptr<IJobRepository>)’
+   12 |     explicit JobAssignmentHandler(std::shared_ptr<AuthMiddleware> auth, std::shared_ptr<IJobRepository> job_repo);
+      |              ^~~~~~~~~~~~~~~~~~~~
+/home/segin/distconv/dispatch_server_cpp/assignment_handler.h:12:14: note: candidate expects 2 arguments, 1 provided
+/home/segin/distconv/dispatch_server_cpp/assignment_handler.h:10:7: note: candidate 2: ‘JobAssignmentHandler::JobAssignmentHandler(const JobAssignmentHandler&)’
+   10 | class JobAssignmentHandler : public IRequestHandler {
+      |       ^~~~~~~~~~~~~~~~~~~~
+/home/segin/distconv/dispatch_server_cpp/assignment_handler.h:10:7: note: no known conversion for argument 1 from ‘std::shared_ptr<AuthMiddleware>’ to ‘const JobAssignmentHandler&’
+/home/segin/distconv/dispatch_server_cpp/assignment_handler.h:10:7: note: candidate 3: ‘JobAssignmentHandler::JobAssignmentHandler(JobAssignmentHandler&&)’
+/home/segin/distconv/dispatch_server_cpp/assignment_handler.h:10:7: note: no known conversion for argument 1 from ‘std::shared_ptr<AuthMiddleware>’ to ‘JobAssignmentHandler&&’
+/home/segin/distconv/dispatch_server_cpp/tests/job_management_tests.cpp: In member function ‘virtual void JobManagementTest_StorageRequirement_Test::TestBody()’:
+/home/segin/distconv/dispatch_server_cpp/tests/job_management_tests.cpp:80:38: error: no matching function for call to ‘JobAssignmentHandler::JobAssignmentHandler(std::shared_ptr<AuthMiddleware>&)’
+   80 |     JobAssignmentHandler handler(auth);
+      |                                      ^
+/home/segin/distconv/dispatch_server_cpp/tests/job_management_tests.cpp:80:38: note: there are 3 candidates
+/home/segin/distconv/dispatch_server_cpp/assignment_handler.h:12:14: note: candidate 1: ‘JobAssignmentHandler::JobAssignmentHandler(std::shared_ptr<AuthMiddleware>, std::shared_ptr<IJobRepository>)’
+   12 |     explicit JobAssignmentHandler(std::shared_ptr<AuthMiddleware> auth, std::shared_ptr<IJobRepository> job_repo);
+      |              ^~~~~~~~~~~~~~~~~~~~
+/home/segin/distconv/dispatch_server_cpp/assignment_handler.h:12:14: note: candidate expects 2 arguments, 1 provided
+/home/segin/distconv/dispatch_server_cpp/assignment_handler.h:10:7: note: candidate 2: ‘JobAssignmentHandler::JobAssignmentHandler(const JobAssignmentHandler&)’
+   10 | class JobAssignmentHandler : public IRequestHandler {
+      |       ^~~~~~~~~~~~~~~~~~~~
+/home/segin/distconv/dispatch_server_cpp/assignment_handler.h:10:7: note: no known conversion for argument 1 from ‘std::shared_ptr<AuthMiddleware>’ to ‘const JobAssignmentHandler&’
+/home/segin/distconv/dispatch_server_cpp/assignment_handler.h:10:7: note: candidate 3: ‘JobAssignmentHandler::JobAssignmentHandler(JobAssignmentHandler&&)’
+/home/segin/distconv/dispatch_server_cpp/assignment_handler.h:10:7: note: no known conversion for argument 1 from ‘std::shared_ptr<AuthMiddleware>’ to ‘JobAssignmentHandler&&’
+make[3]: *** [CMakeFiles/dispatch_server_tests.dir/build.make:345: CMakeFiles/dispatch_server_tests.dir/tests/api_endpoint_tests.cpp.o] Error 1
+make[3]: *** Waiting for unfinished jobs....
+make[3]: *** [CMakeFiles/dispatch_server_tests.dir/build.make:331: CMakeFiles/dispatch_server_tests.dir/tests/job_management_tests.cpp.o] Error 1
+make[3]: *** [CMakeFiles/dispatch_server_tests.dir/build.make:303: CMakeFiles/dispatch_server_tests.dir/tests/job_handlers_tests.cpp.o] Error 1
+make[2]: *** [CMakeFiles/Makefile2:263: CMakeFiles/dispatch_server_tests.dir/all] Error 2
+make[1]: *** [CMakeFiles/Makefile2:270: CMakeFiles/dispatch_server_tests.dir/rule] Error 2
+make: *** [Makefile:218: dispatch_server_tests] Error 2
+make: Leaving directory '/home/segin/distconv/dispatch_server_cpp/build'

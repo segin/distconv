@@ -26,7 +26,7 @@ void JobSubmissionHandler::handle(const httplib::Request& req, httplib::Response
     try {
         request_json = nlohmann::json::parse(req.body);
     } catch (const nlohmann::json::parse_error& e) {
-        set_error_response(res, "Invalid JSON: " + std::string(e.what()), 400);
+        set_json_error_response(res, "Invalid JSON in request body", "json_parse_error", 400, e.what());
         return;
     }
     
@@ -50,9 +50,9 @@ void JobSubmissionHandler::handle(const httplib::Request& req, httplib::Response
         set_json_response(res, job, 200);
         
     } catch (const nlohmann::json::type_error& e) {
-        set_error_response(res, "Bad Request: " + std::string(e.what()), 400);
+        set_json_error_response(res, "Bad Request", "validation_error", 400, e.what());
     } catch (const std::exception& e) {
-        set_error_response(res, "Server error: " + std::string(e.what()), 500);
+        set_json_error_response(res, "Internal server error", "server_error", 500, e.what());
     }
 }
 
@@ -60,28 +60,24 @@ bool JobSubmissionHandler::validate_job_input(const nlohmann::json& input,
                                                 httplib::Response& res) {
     // Validate source_url
     if (!input.contains("source_url") || !input["source_url"].is_string()) {
-        set_error_response(res, 
-            "Bad Request: 'source_url' is missing or not a string.", 400);
+        set_json_error_response(res, "Bad Request: 'source_url' is missing or not a string.", "validation_error", 400);
         return false;
     }
     
     // Validate target_codec
     if (!input.contains("target_codec") || !input["target_codec"].is_string()) {
-        set_error_response(res, 
-            "Bad Request: 'target_codec' is missing or not a string.", 400);
+        set_json_error_response(res, "Bad Request: 'target_codec' is missing or not a string.", "validation_error", 400);
         return false;
     }
     
     // Validate job_size if present
     if (input.contains("job_size")) {
         if (!input["job_size"].is_number()) {
-            set_error_response(res, 
-                "Bad Request: 'job_size' must be a number.", 400);
+            set_json_error_response(res, "Bad Request: 'job_size' must be a number.", "validation_error", 400);
             return false;
         }
         if (input["job_size"].get<double>() < 0) {
-            set_error_response(res, 
-                "Bad Request: 'job_size' must be a non-negative number.", 400);
+            set_json_error_response(res, "Bad Request: 'job_size' must be a non-negative number.", "validation_error", 400);
             return false;
         }
     }
@@ -89,13 +85,11 @@ bool JobSubmissionHandler::validate_job_input(const nlohmann::json& input,
     // Validate max_retries if present
     if (input.contains("max_retries")) {
         if (!input["max_retries"].is_number_integer()) {
-            set_error_response(res, 
-                "Bad Request: 'max_retries' must be an integer.", 400);
+            set_json_error_response(res, "Bad Request: 'max_retries' must be an integer.", "validation_error", 400);
             return false;
         }
         if (input["max_retries"].get<int>() < 0) {
-            set_error_response(res, 
-                "Bad Request: 'max_retries' must be a non-negative integer.", 400);
+            set_json_error_response(res, "Bad Request: 'max_retries' must be a non-negative integer.", "validation_error", 400);
             return false;
         }
     }
@@ -103,8 +97,7 @@ bool JobSubmissionHandler::validate_job_input(const nlohmann::json& input,
     // Validate priority if present
     if (input.contains("priority")) {
         if (!input["priority"].is_number_integer()) {
-             set_error_response(res, 
-                "Bad Request: 'priority' must be an integer.", 400);
+             set_json_error_response(res, "Bad Request: 'priority' must be an integer.", "validation_error", 400);
             return false;
         }
     }
@@ -149,7 +142,7 @@ void JobStatusHandler::handle(const httplib::Request& req, httplib::Response& re
     // 2. Get Job ID
     // Note: req.matches is populated by httplib when using regex paths
     if (req.matches.size() < 2) {
-        set_error_response(res, "Internal Server Error: Job ID not found in path", 500);
+        set_json_error_response(res, "Internal Server Error: Job ID not found in path", "server_error", 500);
         return;
     }
     std::string job_id = req.matches[1];
@@ -197,7 +190,7 @@ void JobRetryHandler::handle(const httplib::Request& req, httplib::Response& res
     if (!auth_->authenticate(req, res)) return;
 
     if (req.matches.size() < 2) {
-        set_error_response(res, "Internal Server Error: Job ID not found in path", 500);
+        set_json_error_response(res, "Internal Server Error: Job ID not found in path", "server_error", 500);
         return;
     }
     std::string job_id = req.matches[1];
@@ -216,7 +209,7 @@ void JobRetryHandler::handle(const httplib::Request& req, httplib::Response& res
             save_state_unlocked();
             set_json_response(res, jobs_db[job_id], 200);
         } else {
-            set_error_response(res, "Job is not in a failed or cancelled state", 400);
+            set_json_error_response(res, "Job is not in a failed or cancelled state", "validation_error", 400, "Job ID: " + job_id);
         }
     } else {
         res.status = 404;
@@ -233,7 +226,7 @@ void JobCancelHandler::handle(const httplib::Request& req, httplib::Response& re
     if (!auth_->authenticate(req, res)) return;
 
     if (req.matches.size() < 2) {
-        set_error_response(res, "Internal Server Error: Job ID not found in path", 500);
+        set_json_error_response(res, "Internal Server Error: Job ID not found in path", "server_error", 500);
         return;
     }
     std::string job_id = req.matches[1];
@@ -260,7 +253,7 @@ void JobCancelHandler::handle(const httplib::Request& req, httplib::Response& re
             save_state_unlocked();
             set_json_response(res, jobs_db[job_id], 200);
         } else {
-            set_error_response(res, "Job cannot be cancelled in current state: " + status, 400);
+            set_json_error_response(res, "Job cannot be cancelled in current state", "validation_error", 400, "Current status: " + status);
         }
     } else {
         res.status = 404;

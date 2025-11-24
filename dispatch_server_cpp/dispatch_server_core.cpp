@@ -482,12 +482,18 @@ Engine* DispatchServer::find_best_engine_for_job(const Job& job) {
 }
 
 // Constructor with dependency injection
-DispatchServer::DispatchServer(std::unique_ptr<IJobRepository> job_repo, 
-                               std::unique_ptr<IEngineRepository> engine_repo) 
-    : job_repo_(std::move(job_repo)), 
-      engine_repo_(std::move(engine_repo)),
-      use_legacy_storage_(false) {
-    // Endpoints will be set up when set_api_key is called
+// Constructor with dependency injection
+DispatchServer::DispatchServer(std::shared_ptr<IJobRepository> job_repo, 
+                               std::shared_ptr<IEngineRepository> engine_repo,
+                               const std::string& api_key) 
+    : job_repo_(job_repo), 
+      engine_repo_(engine_repo),
+      use_legacy_storage_(false),
+      api_key_(api_key) {
+    // Endpoints will be set up when set_api_key is called or immediately if key is provided
+    if (!api_key_.empty()) {
+        setup_endpoints();
+    }
 }
 
 // Default constructor (for backward compatibility)
@@ -885,7 +891,7 @@ void DispatchServer::setup_job_endpoints() {
     svr.Post(R"(/jobs/(.+)/cancel)", [job_cancel_handler](const httplib::Request& req, httplib::Response& res) {
         job_cancel_handler->handle(req, res);
     });
-}
+
 
 
     // New endpoint registrations
@@ -913,6 +919,7 @@ void DispatchServer::setup_job_endpoints() {
     svr.Get(R"(/engines/(.+)/jobs)", [engine_jobs_handler](const httplib::Request& req, httplib::Response& res) {
         engine_jobs_handler->handle(req, res);
     });
+}
 
 void DispatchServer::setup_engine_endpoints() {
     // POST /engines/heartbeat - Engine registration/heartbeat

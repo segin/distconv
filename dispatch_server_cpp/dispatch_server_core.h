@@ -67,8 +67,9 @@ struct Engine {
 class DispatchServer {
 public:
     // Constructor with dependency injection
-    DispatchServer(std::unique_ptr<IJobRepository> job_repo, 
-                   std::unique_ptr<IEngineRepository> engine_repo);
+    DispatchServer(std::shared_ptr<IJobRepository> job_repo, 
+                   std::shared_ptr<IEngineRepository> engine_repo,
+                   const std::string& api_key = "");
     
     // Default constructor (for backward compatibility)
     DispatchServer();
@@ -93,8 +94,9 @@ private:
     std::future<void> state_save_future_;
     
     // Injected dependencies
-    std::unique_ptr<IJobRepository> job_repo_;
-    std::unique_ptr<IEngineRepository> engine_repo_;
+    // Injected dependencies
+    std::shared_ptr<IJobRepository> job_repo_;
+    std::shared_ptr<IEngineRepository> engine_repo_;
     
     // Whether to use legacy global state or repositories
     bool use_legacy_storage_;

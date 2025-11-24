@@ -4,6 +4,7 @@
 #include "job_handlers.h"
 #include "assignment_handler.h"
 #include "nlohmann/json.hpp"
+#include "repositories.h"
 #include <thread>
 #include <chrono>
 
@@ -34,8 +35,9 @@ protected:
 
 TEST_F(JobManagementTest, PriorityAssignment) {
     // Setup: 1 high priority job, 1 normal priority job
+    auto job_repo = std::make_shared<InMemoryJobRepository>();
     auto auth = std::make_shared<AuthMiddleware>("test-key");
-    JobAssignmentHandler handler(auth);
+    JobAssignmentHandler handler(auth, job_repo);
     
     // Create jobs directly in DB
     nlohmann::json job_normal;
@@ -45,6 +47,7 @@ TEST_F(JobManagementTest, PriorityAssignment) {
     job_normal["created_at"] = 1000;
     job_normal["assigned_engine"] = nullptr;
     jobs_db["job_normal"] = job_normal;
+    job_repo->save_job("job_normal", job_normal);
     
     nlohmann::json job_high;
     job_high["job_id"] = "job_high";
@@ -53,6 +56,7 @@ TEST_F(JobManagementTest, PriorityAssignment) {
     job_high["created_at"] = 2000; // Created later, but higher priority
     job_high["assigned_engine"] = nullptr;
     jobs_db["job_high"] = job_high;
+    job_repo->save_job("job_high", job_high);
     
     // Register engine
     nlohmann::json engine;
@@ -76,8 +80,9 @@ TEST_F(JobManagementTest, PriorityAssignment) {
 }
 
 TEST_F(JobManagementTest, StorageRequirement) {
+    auto job_repo = std::make_shared<InMemoryJobRepository>();
     auto auth = std::make_shared<AuthMiddleware>("test-key");
-    JobAssignmentHandler handler(auth);
+    JobAssignmentHandler handler(auth, job_repo);
     
     // Job requires 500MB (0.5GB)
     nlohmann::json job;
@@ -86,6 +91,7 @@ TEST_F(JobManagementTest, StorageRequirement) {
     job["job_size"] = 500.0; 
     job["assigned_engine"] = nullptr;
     jobs_db["job1"] = job;
+    job_repo->save_job("job1", job);
     
     // Engine has only 0.1GB
     nlohmann::json engine;

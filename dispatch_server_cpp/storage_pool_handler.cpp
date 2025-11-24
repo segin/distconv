@@ -53,18 +53,18 @@ void StoragePoolCreateHandler::handle(const httplib::Request& req, httplib::Resp
     try {
         request_json = nlohmann::json::parse(req.body);
     } catch (...) {
-        set_error_response(res, "Invalid JSON", 400);
+        set_json_error_response(res, "Invalid JSON in request body", "json_parse_error", 400);
         return;
     }
 
     // Validate required fields
     if (!request_json.contains("name") || !request_json["name"].is_string()) {
-        set_error_response(res, "Missing or invalid 'name' field", 400);
+        set_json_error_response(res, "Missing or invalid 'name' field", "validation_error", 400);
         return;
     }
 
     if (!request_json.contains("capacity_gb") || !request_json["capacity_gb"].is_number()) {
-        set_error_response(res, "Missing or invalid 'capacity_gb' field", 400);
+        set_json_error_response(res, "Missing or invalid 'capacity_gb' field", "validation_error", 400);
         return;
     }
 
@@ -120,14 +120,14 @@ void StoragePoolUpdateHandler::handle(const httplib::Request& req, httplib::Resp
 
     // Extract pool ID from URL
     if (req.matches.size() < 2) {
-        set_error_response(res, "Invalid pool ID", 400);
+        set_json_error_response(res, "Invalid or missing pool ID in URL", "validation_error", 400);
         return;
     }
     std::string pool_id = req.matches[1];
 
     // Check if pool exists
     if (!storage_repo_->pool_exists(pool_id)) {
-        set_error_response(res, "Storage pool not found", 404);
+        set_json_error_response(res, "Storage pool not found", "not_found", 404, "Pool ID: " + pool_id);
         return;
     }
 
@@ -136,7 +136,7 @@ void StoragePoolUpdateHandler::handle(const httplib::Request& req, httplib::Resp
     try {
         request_json = nlohmann::json::parse(req.body);
     } catch (...) {
-        set_error_response(res, "Invalid JSON", 400);
+        set_json_error_response(res, "Invalid JSON in request body", "json_parse_error", 400);
         return;
     }
 
@@ -175,14 +175,14 @@ void StoragePoolDeleteHandler::handle(const httplib::Request& req, httplib::Resp
 
     // Extract pool ID from URL
     if (req.matches.size() < 2) {
-        set_error_response(res, "Invalid pool ID", 400);
+        set_json_error_response(res, "Invalid or missing pool ID in URL", "validation_error", 400);
         return;
     }
     std::string pool_id = req.matches[1];
 
     // Check if pool exists
     if (!storage_repo_->pool_exists(pool_id)) {
-        set_error_response(res, "Storage pool not found", 404);
+        set_json_error_response(res, "Storage pool not found", "not_found", 404, "Pool ID: " + pool_id);
         return;
     }
 

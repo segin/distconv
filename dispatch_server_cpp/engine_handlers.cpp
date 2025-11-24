@@ -36,29 +36,29 @@ EngineHeartbeatHandler::EngineHeartbeatHandler(std::shared_ptr<AuthMiddleware> a
 bool EngineHeartbeatHandler::validate_heartbeat_input(const nlohmann::json& input, httplib::Response& res) {
     // Validate engine_id
     if (!input.contains("engine_id")) {
-        set_error_response(res, "Bad Request: 'engine_id' is missing.", 400);
+        set_json_error_response(res, "Bad Request: 'engine_id' is missing.", "validation_error", 400);
         return false;
     }
     if (!input["engine_id"].is_string()) {
-        set_error_response(res, "Bad Request: 'engine_id' must be a string.", 400);
+        set_json_error_response(res, "Bad Request: 'engine_id' must be a string.", "validation_error", 400);
         return false;
     }
 
     // Validate storage_capacity_gb if present
     if (input.contains("storage_capacity_gb")) {
         if (!input["storage_capacity_gb"].is_number()) {
-            set_error_response(res, "Bad Request: 'storage_capacity_gb' must be a number.", 400);
+            set_json_error_response(res, "Bad Request: 'storage_capacity_gb' must be a number.", "validation_error", 400);
             return false;
         }
         if (input["storage_capacity_gb"].get<double>() < 0) {
-            set_error_response(res, "Bad Request: 'storage_capacity_gb' must be a non-negative number.", 400);
+            set_json_error_response(res, "Bad Request: 'storage_capacity_gb' must be a non-negative number.", "validation_error", 400);
             return false;
         }
     }
 
     // Validate streaming_support if present
     if (input.contains("streaming_support") && !input["streaming_support"].is_boolean()) {
-        set_error_response(res, "Bad Request: 'streaming_support' must be a boolean.", 400);
+        set_json_error_response(res, "Bad Request: 'streaming_support' must be a boolean.", "validation_error", 400);
         return false;
     }
 
@@ -76,7 +76,7 @@ void EngineHeartbeatHandler::handle(const httplib::Request& req, httplib::Respon
     try {
         request_json = nlohmann::json::parse(req.body);
     } catch (const nlohmann::json::parse_error& e) {
-        set_error_response(res, "Invalid JSON: " + std::string(e.what()), 400);
+        set_json_error_response(res, "Invalid JSON in request body", "json_parse_error", 400, e.what());
         return;
     }
 
@@ -92,7 +92,7 @@ void EngineHeartbeatHandler::handle(const httplib::Request& req, httplib::Respon
         engines_db[engine_id] = request_json;
         save_state_unlocked();
     } catch (const std::exception& e) {
-        set_error_response(res, "Server error: " + std::string(e.what()), 500);
+        set_json_error_response(res, "Internal server error", "server_error", 500, e.what());
         return;
     }
 
@@ -116,13 +116,13 @@ void EngineBenchmarkHandler::handle(const httplib::Request& req, httplib::Respon
     try {
         request_json = nlohmann::json::parse(req.body);
     } catch (const nlohmann::json::parse_error& e) {
-        set_error_response(res, "Invalid JSON: " + std::string(e.what()), 400);
+        set_json_error_response(res, "Invalid JSON in request body", "json_parse_error", 400, e.what());
         return;
     }
 
     // 3. Validate engine_id
     if (!request_json.contains("engine_id")) {
-        set_error_response(res, "Bad Request: 'engine_id' is missing.", 400);
+        set_json_error_response(res, "Bad Request: 'engine_id' is missing.", "validation_error", 400);
         return;
     }
     std::string engine_id = request_json["engine_id"];
@@ -130,11 +130,11 @@ void EngineBenchmarkHandler::handle(const httplib::Request& req, httplib::Respon
     // 4. Validate benchmark_time if present
     if (request_json.contains("benchmark_time")) {
         if (!request_json["benchmark_time"].is_number()) {
-            set_error_response(res, "Bad Request: 'benchmark_time' must be a number.", 400);
+            set_json_error_response(res, "Bad Request: 'benchmark_time' must be a number.", "validation_error", 400);
             return;
         }
         if (request_json["benchmark_time"].get<double>() < 0) {
-            set_error_response(res, "Bad Request: 'benchmark_time' must be a non-negative number.", 400);
+            set_json_error_response(res, "Bad Request: 'benchmark_time' must be a non-negative number.", "validation_error", 400);
             return;
         }
     }
@@ -150,7 +150,7 @@ void EngineBenchmarkHandler::handle(const httplib::Request& req, httplib::Respon
             return;
         }
     } catch (const std::exception& e) {
-        set_error_response(res, "Server error: " + std::string(e.what()), 500);
+        set_json_error_response(res, "Internal server error", "server_error", 500, e.what());
         return;
     }
 

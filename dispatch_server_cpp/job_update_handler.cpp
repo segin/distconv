@@ -17,14 +17,14 @@ void JobUpdateHandler::handle(const httplib::Request& req, httplib::Response& re
 
     // Extract job ID from URL
     if (req.matches.size() < 2) {
-        set_error_response(res, "Invalid job ID", 400);
+        set_json_error_response(res, "Invalid or missing job ID in URL", "validation_error", 400);
         return;
     }
     std::string job_id = req.matches[1];
 
     // Check if job exists
     if (!job_repo_->job_exists(job_id)) {
-        set_error_response(res, "Job not found", 404);
+        set_json_error_response(res, "Job not found", "not_found", 404, "Job ID: " + job_id);
         return;
     }
 
@@ -42,7 +42,7 @@ void JobUpdateHandler::handle(const httplib::Request& req, httplib::Response& re
         nlohmann::json updated_job = job_repo_->get_job(job_id);
         set_json_response(res, updated_job, 200);
     } else {
-        set_error_response(res, "Failed to update job", 500);
+        set_json_error_response(res, "Failed to update job", "update_error", 500, "Job ID: " + job_id);
     }
 }
 
@@ -58,7 +58,7 @@ void EngineJobsHandler::handle(const httplib::Request& req, httplib::Response& r
 
     // Extract engine ID from URL
     if (req.matches.size() < 2) {
-        set_error_response(res, "Invalid engine ID", 400);
+        set_json_error_response(res, "Invalid or missing engine ID in URL", "validation_error", 400);
         return;
     }
     std::string engine_id = req.matches[1];
@@ -86,14 +86,14 @@ void JobUnifiedStatusHandler::handle(const httplib::Request& req, httplib::Respo
 
     // Extract job ID from URL
     if (req.matches.size() < 2) {
-        set_error_response(res, "Invalid job ID", 400);
+        set_json_error_response(res, "Invalid or missing job ID in URL", "validation_error", 400);
         return;
     }
     std::string job_id = req.matches[1];
 
     // Check if job exists
     if (!job_repo_->job_exists(job_id)) {
-        set_error_response(res, "Job not found", 404);
+        set_json_error_response(res, "Job not found", "not_found", 404, "Job ID: " + job_id);
         return;
     }
 
@@ -108,13 +108,13 @@ void JobUnifiedStatusHandler::handle(const httplib::Request& req, httplib::Respo
 
     // Validate status field
     if (!request_json.contains("status") || !request_json["status"].is_string()) {
-        set_error_response(res, "Missing or invalid 'status' field", 400);
+        set_json_error_response(res, "Missing or invalid 'status' field", "validation_error", 400);
         return;
     }
 
     std::string new_status = request_json["status"];
     if (new_status != "completed" && new_status != "failed") {
-        set_error_response(res, "Status must be 'completed' or 'failed'", 400);
+        set_json_error_response(res, "Status must be 'completed' or 'failed'", "validation_error", 400);
         return;
     }
 
@@ -166,14 +166,14 @@ void JobProgressHandler::handle(const httplib::Request& req, httplib::Response& 
 
     // Extract job ID from URL
     if (req.matches.size() < 2) {
-        set_error_response(res, "Invalid job ID", 400);
+        set_json_error_response(res, "Invalid or missing job ID in URL", "validation_error", 400);
         return;
     }
     std::string job_id = req.matches[1];
 
     // Check if job exists
     if (!job_repo_->job_exists(job_id)) {
-        set_error_response(res, "Job not found", 404);
+        set_json_error_response(res, "Job not found", "not_found", 404, "Job ID: " + job_id);
         return;
     }
 
@@ -188,13 +188,13 @@ void JobProgressHandler::handle(const httplib::Request& req, httplib::Response& 
 
     // Validate progress field
     if (!request_json.contains("progress") || !request_json["progress"].is_number()) {
-        set_error_response(res, "Missing or invalid 'progress' field", 400);
+        set_json_error_response(res, "Missing or invalid 'progress' field", "validation_error", 400);
         return;
     }
 
     int progress = request_json["progress"];
     if (progress < 0 || progress > 100) {
-        set_error_response(res, "Progress must be between 0 and 100", 400);
+        set_json_error_response(res, "Progress must be between 0 and 100", "validation_error", 400);
         return;
     }
 
@@ -208,6 +208,6 @@ void JobProgressHandler::handle(const httplib::Request& req, httplib::Response& 
         response["message"] = message;
         set_json_response(res, response, 200);
     } else {
-        set_error_response(res, "Failed to update progress", 500);
+        set_json_error_response(res, "Failed to update progress", "update_error", 500, "Job ID: " + job_id);
     }
 }

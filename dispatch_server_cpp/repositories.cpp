@@ -208,6 +208,7 @@ nlohmann::json SqliteJobRepository::get_next_pending_job_by_priority(const std::
     // Reuse the same query as get_next_pending_job which already orders by priority and created_at
     return get_next_pending_job(capable_engines);
 }
+nlohmann::json SqliteJobRepository::get_next_pending_job(const std::vector<std::string>& capable_engines) {
     std::lock_guard<std::mutex> lock(mutex_);
     
     // Logic: Find the highest priority pending job that is not in a backoff period (retry_after < now)
@@ -341,69 +342,11 @@ bool SqliteJobRepository::update_job_progress(const std::string& job_id, int pro
 }
 
 
-bool SqliteJobRepository::update_job(const std::string& job_id, const nlohmann::json& updates) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    
-    if (!job_exists(job_id)) {
-        return false;
-    }
-    
-    nlohmann::json job = get_job(job_id);
-    
-    // Update only allowed fields
-    if (updates.contains("priority")) {
-        job["priority"] = updates["priority"];
-    }
-    if (updates.contains("max_retries")) {
-        job["max_retries"] = updates["max_retries"];
-    }
-    if (updates.contains("resource_requirements")) {
-        job["resource_requirements"] = updates["resource_requirements"];
-    }
-    
-    job["updated_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()).count();
-    
-    save_job(job_id, job);
-    return true;
-}
 
-std::vector<nlohmann::json> SqliteJobRepository::get_jobs_by_engine(const std::string& engine_id) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    
-    std::string sql = "SELECT job_data FROM jobs WHERE json_extract(job_data, '$.assigned_engine') = '" + engine_id + "'";
-    nlohmann::json result = execute_query(sql);
-    
-    std::vector<nlohmann::json> jobs;
-    for (const auto& row : result) {
-        if (row.contains("job_data")) {
-            try {
-                jobs.push_back(nlohmann::json::parse(row["job_data"].get<std::string>()));
-            } catch (...) {
-                // Skip invalid JSON
-            }
-        }
-    }
-    
-    return jobs;
-}
 
-bool SqliteJobRepository::update_job_progress(const std::string& job_id, int progress, const std::string& message) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    
-    if (!job_exists(job_id)) {
-        return false;
-    }
-    
-    nlohmann::json job = get_job(job_id);
-    job["progress"] = progress;
-    job["progress_message"] = message;
-    job["updated_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()).count();
-    
-    save_job(job_id, job);
-    return true;
-}
+
+
+
 
 // SqliteEngineRepository implementation
 SqliteEngineRepository::SqliteEngineRepository(const std::string& db_path) : db_path_(db_path) {

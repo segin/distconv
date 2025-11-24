@@ -1,6 +1,7 @@
 #include "job_action_handlers.h"
 #include "dispatch_server_core.h"
 #include <mutex>
+#include <regex>
 
 // ==================== JobCompletionHandler ====================
 
@@ -15,7 +16,7 @@ void JobCompletionHandler::handle(const httplib::Request& req, httplib::Response
 
     // 2. Get Job ID from path
     if (req.matches.size() < 2) {
-        set_error_response(res, "Internal Server Error: Job ID not found in path", 500);
+        set_json_error_response(res, "Internal Server Error: Job ID not found in path", "server_error", 500);
         return;
     }
     std::string job_id = req.matches[1];
@@ -25,13 +26,20 @@ void JobCompletionHandler::handle(const httplib::Request& req, httplib::Response
     try {
         request_json = nlohmann::json::parse(req.body);
     } catch (const nlohmann::json::parse_error& e) {
-        set_error_response(res, "Invalid JSON: " + std::string(e.what()), 400);
+        set_json_error_response(res, "Invalid JSON in request body", "json_parse_error", 400, e.what());
         return;
     }
 
     // 4. Validate output_url
     if (!request_json.contains("output_url") || !request_json["output_url"].is_string()) {
-        set_error_response(res, "Bad Request: 'output_url' must be a string.", 400);
+        set_json_error_response(res, "Bad Request: 'output_url' must be a string.", "validation_error", 400);
+        return;
+    }
+    
+    std::string output_url = request_json["output_url"];
+    std::regex url_regex(R"(^https?://.+)");
+    if (!std::regex_match(output_url, url_regex)) {
+        set_json_error_response(res, "Bad Request: 'output_url' must be a valid URL starting with http:// or https://", "validation_error", 400);
         return;
     }
 
@@ -56,7 +64,7 @@ void JobCompletionHandler::handle(const httplib::Request& req, httplib::Response
             return;
         }
     } catch (const std::exception& e) {
-        set_error_response(res, "Server error: " + std::string(e.what()), 500);
+        set_json_error_response(res, "Internal server error", "server_error", 500, e.what());
         return;
     }
 
@@ -77,7 +85,7 @@ void JobFailureHandler::handle(const httplib::Request& req, httplib::Response& r
 
     // 2. Get Job ID from path
     if (req.matches.size() < 2) {
-        set_error_response(res, "Internal Server Error: Job ID not found in path", 500);
+        set_json_error_response(res, "Internal Server Error: Job ID not found in path", "server_error", 500);
         return;
     }
     std::string job_id = req.matches[1];
@@ -87,13 +95,13 @@ void JobFailureHandler::handle(const httplib::Request& req, httplib::Response& r
     try {
         request_json = nlohmann::json::parse(req.body);
     } catch (const nlohmann::json::parse_error& e) {
-        set_error_response(res, "Invalid JSON: " + std::string(e.what()), 400);
+        set_json_error_response(res, "Invalid JSON in request body", "json_parse_error", 400, e.what());
         return;
     }
 
     // 4. Validate error_message
     if (!request_json.contains("error_message")) {
-        set_error_response(res, "Bad Request: 'error_message' is missing.", 400);
+        set_json_error_response(res, "Bad Request: 'error_message' is missing.", "validation_error", 400);
         return;
     }
 
@@ -103,7 +111,7 @@ void JobFailureHandler::handle(const httplib::Request& req, httplib::Response& r
         if (jobs_db.contains(job_id)) {
             // Check if job is already in a final state
             if (jobs_db[job_id]["status"] == "completed" || jobs_db[job_id]["status"] == "failed_permanently") {
-                set_error_response(res, "Bad Request: Job is already in a final state.", 400);
+                set_json_error_response(res, "Bad Request: Job is already in a final state.", "validation_error", 400, "Job ID: " + job_id);
                 return;
             }
 
@@ -133,7 +141,7 @@ void JobFailureHandler::handle(const httplib::Request& req, httplib::Response& r
             return;
         }
     } catch (const std::exception& e) {
-        set_error_response(res, "Server error: " + std::string(e.what()), 500);
+        set_json_error_response(res, "Internal server error", "server_error", 500, e.what());
         return;
     }
 }

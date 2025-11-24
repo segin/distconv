@@ -6,6 +6,8 @@
 #include "request_handlers.h"
 #include "job_action_handlers.h"
 #include "assignment_handler.h"
+#include "assignment_handler.h"
+#include "repositories.h"
 #include <regex>
 
 
@@ -175,6 +177,8 @@ TEST(JobHandlersTest, JobCompletionHandlerSuccess) {
 
 TEST(JobHandlersTest, JobAssignmentSuccess) {
     // Setup pending job and idle engine
+    auto job_repo = std::make_shared<InMemoryJobRepository>();
+    
     {
         std::lock_guard<std::mutex> lock(state_mutex);
         jobs_db.clear();
@@ -184,7 +188,12 @@ TEST(JobHandlersTest, JobAssignmentSuccess) {
         job["job_id"] = "job-assign-1";
         job["status"] = "pending";
         job["job_size"] = 10.0;
+        job["priority"] = 0;
+        job["created_at"] = 1000;
         jobs_db["job-assign-1"] = job;
+        
+        // Also save to repo because handler uses repo to find job
+        job_repo->save_job("job-assign-1", job);
         
         nlohmann::json engine;
         engine["engine_id"] = "engine-idle";
@@ -194,9 +203,13 @@ TEST(JobHandlersTest, JobAssignmentSuccess) {
     }
     
     auto auth = std::make_shared<AuthMiddleware>("");
-    JobAssignmentHandler handler(auth);
+    JobAssignmentHandler handler(auth, job_repo);
     httplib::Response res;
     httplib::Request req;
+    
+    nlohmann::json body;
+    body["engine_id"] = "engine-idle";
+    req.body = body.dump();
     
     handler.handle(req, res);
     EXPECT_EQ(res.status, 200);
