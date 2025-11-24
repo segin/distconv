@@ -5,19 +5,19 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 ## I. Core Logic & State (50 Tests)
 
 ### A. Initialization & Configuration
-1.  [x] Test: Engine starts with default configuration values.
-2.  [x] Test: Engine correctly parses `--ca-cert` command-line argument.
-3.  [x] Test: Engine correctly parses `--dispatch-url` command-line argument.
-4.  [x] Test: Engine correctly parses `--api-key` command-line argument.
-5.  [x] Test: Engine correctly parses `--hostname` command-line argument.
-6.  [x] Test: Engine ignores unknown command-line arguments.
-7.  [x] Test: `engineId` is generated and is not empty.
-8.  [x] Test: `engineId` is reasonably unique on subsequent runs.
-9.  [x] Test: `getHostname` returns a non-empty string.
-10. [x] Test: `init_sqlite` creates the database file if it doesn't exist.
-11. [x] Test: `init_sqlite` creates the `jobs` table if it doesn't exist.
-12. [x] Test: `init_sqlite` handles an existing database and table without error.
-13. [x] Test: `get_jobs_from_db` returns an empty vector when the database is new.
+1.  [ ] Test: Engine starts with default configuration values.
+2.  [ ] Test: Engine correctly parses `--ca-cert` command-line argument.
+3.  [ ] Test: Engine correctly parses `--dispatch-url` command-line argument.
+4.  [ ] Test: Engine correctly parses `--api-key` command-line argument.
+5.  [ ] Test: Engine correctly parses `--hostname` command-line argument.
+6.  [ ] Test: Engine ignores unknown command-line arguments.
+7.  [ ] Test: `engineId` is generated and is not empty.
+8.  [ ] Test: `engineId` is reasonably unique on subsequent runs.
+9.  [ ] Test: `getHostname` returns a non-empty string.
+10. [ ] Test: `init_sqlite` creates the database file if it doesn't exist.
+11. [ ] Test: `init_sqlite` creates the `jobs` table if it doesn't exist.
+12. [ ] Test: `init_sqlite` handles an existing database and table without error.
+13. [ ] Test: `get_jobs_from_db` returns an empty vector when the database is new.
 
 ### B. Main Loop & Job Polling
 14. [ ] Test: `getJob` function is called periodically in the main loop.
@@ -135,36 +135,36 @@ This document outlines the unit tests to be implemented for the C++ Transcoding 
 ## III. C++ Idioms, Mocks, & Refactoring (50 Tests)
 
 ### A. `cJSON` to `nlohmann/json` Migration
-101. [x] Test: (Refactor) `sendHeartbeat` payload is built using `nlohmann::json`.
-102. [x] Test: (Refactor) `localJobQueue` in heartbeat is a JSON array, not a string.
-103. [x] Test: (Refactor) `getJob` response is parsed using `nlohmann::json`.
-104. [x] Test: (Refactor) `nlohmann::json::parse` handles an invalid job JSON from the server.
-105. [x] Test: (Refactor) `nlohmann::json::value` is used for safe access to optional fields.
-106. [x] Test: Remove `cJSON` dependency from `CMakeLists.txt`.
-107. [x] Test: Remove `#include "cjson/cJSON.h"`.
+101. [ ] Test: (Refactor) `sendHeartbeat` payload is built using `nlohmann::json`.
+102. [ ] Test: (Refactor) `localJobQueue` in heartbeat is a JSON array, not a string.
+103. [ ] Test: (Refactor) `getJob` response is parsed using `nlohmann::json`.
+104. [ ] Test: (Refactor) `nlohmann::json::parse` handles an invalid job JSON from the server.
+105. [ ] Test: (Refactor) `nlohmann::json::value` is used for safe access to optional fields.
+106. [ ] Test: Remove `cJSON` dependency from `CMakeLists.txt`.
+107. [ ] Test: Remove `#include "cjson/cJSON.h"`.
 
 ### B. `libcurl` to `cpr` Migration
-108. [x] Test: (Refactor) `makeHttpRequest` is replaced with `cpr` calls.
-109. [x] Test: (Refactor) `sendHeartbeat` uses `cpr::Post`.
-110. [x] Test: (Refactor) `getJob` uses `cpr::Post`.
-111. [x] Test: (Refactor) `downloadFile` uses `cpr::Download`.
-112. [x] Test: (Refactor) `cpr` calls correctly set the API key header.
-113. [x] Test: (Refactor) `cpr` calls correctly set the request body.
-114. [x] Test: (Refactor) `cpr` calls handle server errors (e.g., 500) correctly.
-115. [x] Test: (Refactor) `cpr` calls handle transport errors (e.g., no connection) correctly.
-116. [x] Test: (Refactor) `cpr` calls use `cpr::VerifySsl(false)` when no CA path is given.
-117. [x] Test: (Refactor) `cpr` calls use `cpr::SslOptions` when a CA path is given.
-118. [x] Test: Remove `libcurl` dependency from `CMakeLists.txt`.
-119. [x] Test: Remove `#include <curl/curl.h>`.
+108. [ ] Test: (Refactor) `makeHttpRequest` is replaced with `cpr` calls.
+109. [ ] Test: (Refactor) `sendHeartbeat` uses `cpr::Post`.
+110. [ ] Test: (Refactor) `getJob` uses `cpr::Post`.
+111. [ ] Test: (Refactor) `downloadFile` uses `cpr::Download`.
+112. [ ] Test: (Refactor) `cpr` calls correctly set the API key header.
+113. [ ] Test: (Refactor) `cpr` calls correctly set the request body.
+114. [ ] Test: (Refactor) `cpr` calls handle server errors (e.g., 500) correctly.
+115. [ ] Test: (Refactor) `cpr` calls handle transport errors (e.g., no connection) correctly.
+116. [ ] Test: (Refactor) `cpr` calls use `cpr::VerifySsl(false)` when no CA path is given.
+117. [ ] Test: (Refactor) `cpr` calls use `cpr::SslOptions` when a CA path is given.
+118. [ ] Test: Remove `libcurl` dependency from `CMakeLists.txt`.
+119. [ ] Test: Remove `#include <curl/curl.h>`.
 
 ### C. `system()` to Secure Subprocess Replacement
-120. [x] Test: (Refactor) `performTranscoding` uses a subprocess library instead of `system()`.
-121. [x] Test: (Refactor) `ffmpeg` arguments are passed as a vector, not a single string.
-122. [x] Test: (Refactor) `ffmpeg` process can be terminated.
-123. [x] Test: (Refactor) `ffmpeg` `stdout` and `stderr` can be captured.
-124. [x] Test: (Refactor) `getFFmpegCapabilities` uses the subprocess library.
-125. [x] Test: (Refactor) The subprocess library correctly finds the `ffmpeg` executable.
-126. [x] Test: (Refactor) The subprocess library handles `ffmpeg` not being in the PATH.
+120. [ ] Test: (Refactor) `performTranscoding` uses a subprocess library instead of `system()`.
+121. [ ] Test: (Refactor) `ffmpeg` arguments are passed as a vector, not a single string.
+122. [ ] Test: (Refactor) `ffmpeg` process can be terminated.
+123. [ ] Test: (Refactor) `ffmpeg` `stdout` and `stderr` can be captured.
+124. [ ] Test: (Refactor) `getFFmpegCapabilities` uses the subprocess library.
+125. [ ] Test: (Refactor) The subprocess library correctly finds the `ffmpeg` executable.
+126. [ ] Test: (Refactor) The subprocess library handles `ffmpeg` not being in the PATH.
 
 ### D. Mocking & Testability
 127. [ ] Test: `performTranscoding` can be tested without actual file I/O (mock `downloadFile`, `uploadFile`).
