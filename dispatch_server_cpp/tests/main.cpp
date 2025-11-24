@@ -7,6 +7,8 @@
 
 #include "test_common.h" // Include for ApiTest static members
 
+using namespace distconv::DispatchServer;
+
 // Define static members outside the class
 
 

@@ -6,6 +6,9 @@
 #include "cjson/cJSON.h"
 #include <sqlite3.h>
 
+namespace distconv {
+namespace TranscodingEngine {
+
 // Global SQLite database handle
 extern sqlite3 *db;
 
@@ -32,5 +35,8 @@ std::vector<std::string> get_jobs_from_db();
 
 // Main application function
 int run_transcoding_engine(int argc, char* argv[]);
+
+} // namespace TranscodingEngine
+} // namespace distconv
 
 #endif // TRANSCODING_ENGINE_CORE_H

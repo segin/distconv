@@ -4,7 +4,8 @@
 #include <string>
 #include <map>
 
-namespace transcoding_engine {
+namespace distconv {
+namespace TranscodingEngine {
 
 struct HttpResponse {
     int status_code;
@@ -46,6 +47,7 @@ public:
     virtual void set_timeout(int timeout_seconds) = 0;
 };
 
-} // namespace transcoding_engine
+} // namespace TranscodingEngine
+} // namespace distconv
 
 #endif // HTTP_CLIENT_INTERFACE_H

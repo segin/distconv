@@ -4,6 +4,9 @@
 #include <random>
 #include "../transcoding_engine_core.h"
 
+namespace distconv {
+namespace TranscodingEngine {
+
 bool is_valid_json(const std::string& json_str) {
     if (json_str.empty()) {
         return false;
@@ -135,3 +138,6 @@ bool verify_sqlite_schema(const std::string& db_path) {
     sqlite3_close(db);
     return false;
 }
+
+} // namespace TranscodingEngine
+} // namespace distconv

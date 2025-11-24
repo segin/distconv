@@ -5,6 +5,9 @@
 #include "nlohmann/json.hpp"
 #include <string>
 
+namespace distconv {
+namespace DispatchServer {
+
 // Handler for POST /jobs/ - Job submission
 class JobSubmissionHandler : public IRequestHandler {
 public:
@@ -60,5 +63,8 @@ public:
 private:
     std::shared_ptr<AuthMiddleware> auth_;
 };
+
+} // namespace DispatchServer
+} // namespace distconv
 
 #endif  // JOB_HANDLERS_H

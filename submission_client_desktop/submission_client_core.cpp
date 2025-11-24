@@ -11,6 +11,9 @@
 #include "cpr/cpr.h"
 #include "nlohmann/json.hpp"
 
+namespace distconv {
+namespace SubmissionsClient {
+
 // Dispatch Server URL and API Key
 // Global configuration (will be set via UI/command line)
 std::string g_dispatchServerUrl = "http://localhost:8080";
@@ -342,3 +345,6 @@ int run_submission_client(int argc, char* argv[]) {
     wxApp::SetInstance(new MyApp());
     return wxEntry(argc, argv);
 }
+
+} // namespace SubmissionsClient
+} // namespace distconv

@@ -10,6 +10,10 @@
 #include <curl/curl.h> // Include libcurl header
 #include <sqlite3.h> // Include SQLite3 header
 #include "transcoding_engine_core.h"
+#include <unistd.h> // For gethostname
+
+namespace distconv {
+namespace TranscodingEngine {
 
 sqlite3 *db; // Global SQLite database handle
 
@@ -168,10 +172,6 @@ std::string getFFmpegHWAccels() {
     pclose(pipe);
     return result;
 }
-
-// Function to send heartbeat to dispatch server
-// Function to send heartbeat to dispatch server
-#include <unistd.h> // For gethostname
 
 // Function to get the hostname
 std::string getHostname() {
@@ -487,3 +487,6 @@ int run_transcoding_engine(int argc, char* argv[]) {
     sqlite3_close(db); // Close SQLite database on shutdown
     return 0;
 }
+
+} // namespace TranscodingEngine
+} // namespace distconv

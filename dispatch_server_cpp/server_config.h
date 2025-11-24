@@ -4,6 +4,9 @@
 #include <string>
 #include <vector>
 
+namespace distconv {
+namespace DispatchServer {
+
 struct ServerConfig {
     std::string api_key = "";
     std::string database_path = "dispatch_server.db";
@@ -14,5 +17,8 @@ struct ServerConfig {
 };
 
 ServerConfig parse_arguments(int argc, char* argv[]);
+
+} // namespace DispatchServer
+} // namespace distconv
 
 #endif // SERVER_CONFIG_H

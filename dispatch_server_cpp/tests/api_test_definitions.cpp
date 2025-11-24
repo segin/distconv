@@ -1,5 +1,7 @@
 #include "test_common.h"
 
+using namespace distconv::DispatchServer;
+
 // Define static members outside the class
 DispatchServer* ApiTest::server = nullptr;
 httplib::Client* ApiTest::client = nullptr;

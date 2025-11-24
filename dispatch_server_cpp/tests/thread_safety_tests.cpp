@@ -6,6 +6,8 @@
 #include <vector>
 #include <future>
 
+using namespace distconv::DispatchServer;
+
 TEST_F(ApiTest, SubmitMultipleJobsConcurrently) {
     const int num_jobs = 100;
     std::vector<std::future<void>> futures;

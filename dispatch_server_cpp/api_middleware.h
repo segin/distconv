@@ -5,6 +5,9 @@
 #include <string>
 #include <functional>
 
+namespace distconv {
+namespace DispatchServer {
+
 class ApiMiddleware {
 public:
     // Type alias for endpoint handlers
@@ -24,5 +27,8 @@ private:
     // Check if API key is valid
     static bool is_api_key_valid(const httplib::Request& req, const std::string& api_key);
 };
+
+} // namespace DispatchServer
+} // namespace distconv
 
 #endif // API_MIDDLEWARE_H

@@ -9,6 +9,8 @@
 
 #include "test_common.h" // For ApiTest fixture and clear_db()
 
+using namespace distconv::DispatchServer;
+
 TEST_F(ApiTest, UpdateJobStatusValid) {
     // Create a dummy job for testing
     nlohmann::json request_body;

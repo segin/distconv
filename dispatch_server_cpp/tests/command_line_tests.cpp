@@ -4,6 +4,8 @@
 #include "../dispatch_server_core.h"
 #include "test_common.h"
 
+using namespace distconv::DispatchServer;
+
 // Test fixture for command-line argument tests
 class CommandLineTest : public ::testing::Test {
 protected:

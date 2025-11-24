@@ -7,6 +7,9 @@
 #include <mutex>
 #include <chrono>
 
+namespace distconv {
+namespace DispatchServer {
+
 class JobScheduler {
 public:
     JobScheduler();
@@ -61,5 +64,8 @@ private:
     double calculate_engine_score(const std::string& engine_id, const std::string& job_id);
     std::chrono::minutes calculate_retry_delay(int retry_count);
 };
+
+} // namespace DispatchServer
+} // namespace distconv
 
 #endif // JOB_SCHEDULER_H

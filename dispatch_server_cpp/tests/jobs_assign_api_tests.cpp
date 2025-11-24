@@ -9,6 +9,8 @@
 
 #include "test_common.h"
 
+using namespace distconv::DispatchServer;
+
 TEST_F(ApiTest, AssignJobWithPendingJobsAndIdleEngines) {
     // Test 48: Request a job when jobs are pending and engines are idle. Expect HTTP 200 and a job object.
     

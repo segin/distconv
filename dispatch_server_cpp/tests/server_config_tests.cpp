@@ -1,6 +1,8 @@
 #include "gtest/gtest.h"
 #include "../server_config.h"
 
+using namespace distconv::DispatchServer;
+
 class ServerConfigTest : public ::testing::Test {
 protected:
     // Helper to create argv

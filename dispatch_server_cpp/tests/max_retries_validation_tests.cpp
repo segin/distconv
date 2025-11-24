@@ -4,6 +4,8 @@
 #include "job_handlers.h"
 #include "dispatch_server_core.h" // For global state if needed, though we mock auth
 
+using namespace distconv::DispatchServer;
+
 // Mock AuthMiddleware to always return true
 class MockAuthMiddleware : public AuthMiddleware {
 public:

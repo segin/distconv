@@ -6,6 +6,8 @@
 #include "request_handlers.h"
 #include <regex>
 
+using namespace distconv::DispatchServer;
+
 TEST(EngineHandlersTest, EngineListHandlerEmpty) {
     // Ensure DB is empty
     {

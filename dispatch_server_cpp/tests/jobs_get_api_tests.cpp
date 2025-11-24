@@ -9,6 +9,8 @@
 
 #include "test_common.h" 
 
+using namespace distconv::DispatchServer;
+
 TEST_F(ApiTest, GetJobStatusValid) {
     // Create a dummy job for testing
     nlohmann::json request_body;

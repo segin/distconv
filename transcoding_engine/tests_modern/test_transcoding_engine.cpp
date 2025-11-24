@@ -12,7 +12,7 @@
 #include <vector>
 #include <cstdint>
 
-using namespace transcoding_engine;
+using namespace distconv::TranscodingEngine;
 
 class TranscodingEngineTest : public ::testing::Test {
 protected:

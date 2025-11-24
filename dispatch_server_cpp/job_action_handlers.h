@@ -5,6 +5,9 @@
 #include "nlohmann/json.hpp"
 #include <string>
 
+namespace distconv {
+namespace DispatchServer {
+
 // Handler for POST /jobs/{id}/complete - Mark job as completed
 class JobCompletionHandler : public IRequestHandler {
 public:
@@ -24,5 +27,8 @@ public:
 private:
     std::shared_ptr<AuthMiddleware> auth_;
 };
+
+} // namespace DispatchServer
+} // namespace distconv
 
 #endif  // JOB_ACTION_HANDLERS_H

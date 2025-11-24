@@ -2,6 +2,8 @@
 #include <filesystem>
 #include <fstream>
 
+using namespace distconv::TranscodingEngine;
+
 class TranscodingProcessTest : public TranscodingEngineTest {
 protected:
     void SetUp() override {

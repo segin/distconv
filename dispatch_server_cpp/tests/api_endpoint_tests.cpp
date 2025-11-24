@@ -5,6 +5,8 @@
 #include "httplib.h"
 #include <regex>
 
+using namespace distconv::DispatchServer;
+
 // Test job update functionality
 TEST(APIEndpointsTest, UpdateJobPriority) {
     auto job_repo = std::make_shared<InMemoryJobRepository>();

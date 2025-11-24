@@ -10,6 +10,8 @@
 
 #include "test_common.h"
 
+using namespace distconv::DispatchServer;
+
 TEST_F(ApiTest, JsonParsingValidJobSubmission) {
     // Test 118: JSON parsing of a valid job submission request.
     

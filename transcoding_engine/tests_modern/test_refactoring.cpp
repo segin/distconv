@@ -12,7 +12,7 @@
 #include <filesystem>
 #include <algorithm>
 
-using namespace transcoding_engine;
+using namespace distconv::TranscodingEngine;
 
 class RefactoringTest : public ::testing::Test {
 protected:

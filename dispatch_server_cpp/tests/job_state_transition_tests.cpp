@@ -9,6 +9,8 @@
 
 #include "test_common.h"
 
+using namespace distconv::DispatchServer;
+
 TEST_F(ApiTest, JobIsPendingAfterSubmission) {
     // Test 51: Job is `pending` after submission.
     

@@ -4,6 +4,9 @@
 #include <chrono>
 #include <mutex>
 
+namespace distconv {
+namespace DispatchServer {
+
 // External globals (from dispatch_server_core.cpp)
 extern nlohmann::json jobs_db;
 extern std::mutex state_mutex;
@@ -260,3 +263,6 @@ void JobCancelHandler::handle(const httplib::Request& req, httplib::Response& re
         res.set_content("Job not found", "text/plain");
     }
 }
+
+} // namespace DispatchServer
+} // namespace distconv

@@ -2,6 +2,9 @@
 #include <iostream>
 #include <stdexcept>
 
+namespace distconv {
+namespace DispatchServer {
+
 ServerConfig parse_arguments(int argc, char* argv[]) {
     ServerConfig config;
     
@@ -27,3 +30,6 @@ ServerConfig parse_arguments(int argc, char* argv[]) {
     
     return config;
 }
+
+} // namespace DispatchServer
+} // namespace distconv

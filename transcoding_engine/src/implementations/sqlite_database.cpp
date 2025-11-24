@@ -3,7 +3,8 @@
 #include <iostream>
 #include <filesystem>
 
-namespace transcoding_engine {
+namespace distconv {
+namespace TranscodingEngine {
 
 class SqliteDatabase::Impl {
 public:
@@ -232,4 +233,5 @@ bool SqliteDatabase::is_connected() const {
     return pimpl_->db_ != nullptr;
 }
 
-} // namespace transcoding_engine
+} // namespace TranscodingEngine
+} // namespace distconv

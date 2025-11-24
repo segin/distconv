@@ -9,6 +9,8 @@
 
 #include "test_common.h" // For ApiTest fixture and clear_db()
 
+using namespace distconv::DispatchServer;
+
 TEST_F(ApiTest, RegisterEngineValid) {
     nlohmann::json request_body;
     request_body["engine_id"] = "test_engine";
@@ -321,4 +323,3 @@ TEST_F(ApiTest, ListEnginesIncorrectApiKey) {
     nlohmann::json error_response = nlohmann::json::parse(res->body);
     ASSERT_EQ(error_response["error"]["message"], "Invalid API key");
 }
-

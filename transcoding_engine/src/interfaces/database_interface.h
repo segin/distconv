@@ -5,7 +5,8 @@
 #include <vector>
 #include <memory>
 
-namespace transcoding_engine {
+namespace distconv {
+namespace TranscodingEngine {
 
 class IDatabase {
 public:
@@ -22,6 +23,7 @@ public:
     virtual bool is_connected() const = 0;
 };
 
-} // namespace transcoding_engine
+} // namespace TranscodingEngine
+} // namespace distconv
 
 #endif // DATABASE_INTERFACE_H

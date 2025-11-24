@@ -5,6 +5,9 @@
 #include "nlohmann/json.hpp"
 #include <string>
 
+namespace distconv {
+namespace DispatchServer {
+
 // Handler for GET /engines/ - List all engines
 class EngineListHandler : public IRequestHandler {
 public:
@@ -35,5 +38,8 @@ public:
 private:
     std::shared_ptr<AuthMiddleware> auth_;
 };
+
+} // namespace DispatchServer
+} // namespace distconv
 
 #endif  // ENGINE_HANDLERS_H

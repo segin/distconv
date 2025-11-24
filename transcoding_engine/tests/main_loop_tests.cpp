@@ -3,6 +3,8 @@
 #include <chrono>
 #include <atomic>
 
+using namespace distconv::TranscodingEngine;
+
 class MainLoopTest : public TranscodingEngineTest {
 protected:
     void SetUp() override {

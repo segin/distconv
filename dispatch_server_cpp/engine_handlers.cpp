@@ -2,6 +2,9 @@
 #include "dispatch_server_core.h"
 #include <mutex>
 
+namespace distconv {
+namespace DispatchServer {
+
 // ==================== EngineListHandler ====================
 
 EngineListHandler::EngineListHandler(std::shared_ptr<AuthMiddleware> auth)
@@ -157,3 +160,6 @@ void EngineBenchmarkHandler::handle(const httplib::Request& req, httplib::Respon
     // 6. Return Success
     res.set_content("Benchmark result received from engine " + engine_id, "text/plain");
 }
+
+} // namespace DispatchServer
+} // namespace distconv

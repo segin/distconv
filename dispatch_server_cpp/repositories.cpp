@@ -4,6 +4,9 @@
 #include <sstream>
 #include <stdexcept>
 
+namespace distconv {
+namespace DispatchServer {
+
 // SqliteJobRepository implementation
 SqliteJobRepository::SqliteJobRepository(const std::string& db_path) : db_path_(db_path) {
     initialize_database();
@@ -743,3 +746,6 @@ void InMemoryEngineRepository::clear_all_engines() {
     std::lock_guard<std::mutex> lock(mutex_);
     engines_.clear();
 }
+
+} // namespace DispatchServer
+} // namespace distconv

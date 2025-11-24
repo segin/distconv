@@ -12,7 +12,8 @@
 #include <thread>
 #include <optional>
 
-namespace transcoding_engine {
+namespace distconv {
+namespace TranscodingEngine {
 
 struct EngineConfig {
     std::string dispatch_server_url = "http://localhost:8080";
@@ -111,6 +112,7 @@ private:
     bool is_recoverable_error(const std::string& error_message);
 };
 
-} // namespace transcoding_engine
+} // namespace TranscodingEngine
+} // namespace distconv
 
 #endif // TRANSCODING_ENGINE_H

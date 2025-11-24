@@ -5,6 +5,9 @@
 #include "nlohmann/json.hpp"
 #include <string>
 
+namespace distconv {
+namespace DispatchServer {
+
 // Authentication middleware
 class AuthMiddleware {
 public:
@@ -32,5 +35,8 @@ void set_error_response(httplib::Response& res, const std::string& message,
 void set_json_error_response(httplib::Response& res, const std::string& error_message,
                              const std::string& error_type, int status,
                              const std::string& details = "");
+
+} // namespace DispatchServer
+} // namespace distconv
 
 #endif  // REQUEST_HANDLERS_H

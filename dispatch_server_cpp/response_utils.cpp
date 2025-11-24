@@ -1,6 +1,8 @@
 #include "response_utils.h"
 #include <regex>
 
+namespace distconv {
+namespace DispatchServer {
 namespace ResponseUtils {
     
     void success_response(httplib::Response& res, const nlohmann::json& data, int status_code) {
@@ -83,3 +85,5 @@ namespace ResponseUtils {
         return false;
     }
 }
+} // namespace DispatchServer
+} // namespace distconv

@@ -8,7 +8,8 @@
 #include <sstream>
 #include <optional>
 
-namespace transcoding_engine {
+namespace distconv {
+namespace TranscodingEngine {
 
 TranscodingEngine::TranscodingEngine(std::unique_ptr<IHttpClient> http_client,
                                    std::unique_ptr<IDatabase> database,
@@ -584,4 +585,5 @@ bool TranscodingEngine::is_recoverable_error(const std::string& error_message) {
     return false;
 }
 
-} // namespace transcoding_engine
+} // namespace TranscodingEngine
+} // namespace distconv

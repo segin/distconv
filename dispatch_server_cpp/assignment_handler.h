@@ -6,6 +6,9 @@
 #include "repositories.h"
 #include <string>
 
+namespace distconv {
+namespace DispatchServer {
+
 // Handler for POST /assign_job/ - Assign a job to an engine
 class JobAssignmentHandler : public IRequestHandler {
 public:
@@ -16,5 +19,8 @@ private:
     std::shared_ptr<AuthMiddleware> auth_;
     std::shared_ptr<IJobRepository> job_repo_;
 };
+
+} // namespace DispatchServer
+} // namespace distconv
 
 #endif  // ASSIGNMENT_HANDLER_H

@@ -6,6 +6,8 @@
 #include "repositories.h"
 #include "server_config.h"
 
+using namespace distconv::DispatchServer;
+
 int main(int argc, char* argv[]) {
     std::cout << "Modern Dispatch Server Application Starting..." << std::endl;
     

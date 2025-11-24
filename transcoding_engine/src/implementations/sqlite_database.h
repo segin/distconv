@@ -5,7 +5,8 @@
 #include <memory>
 #include <mutex>
 
-namespace transcoding_engine {
+namespace distconv {
+namespace TranscodingEngine {
 
 class SqliteDatabase : public IDatabase {
 public:
@@ -28,6 +29,7 @@ private:
     mutable std::mutex mutex_;
 };
 
-} // namespace transcoding_engine
+} // namespace TranscodingEngine
+} // namespace distconv
 
 #endif // SQLITE_DATABASE_H

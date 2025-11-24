@@ -2,6 +2,9 @@
 #include <algorithm>
 #include <cmath>
 
+namespace distconv {
+namespace DispatchServer {
+
 extern nlohmann::json jobs_db;
 extern nlohmann::json engines_db;
 extern std::mutex state_mutex;
@@ -215,3 +218,6 @@ std::chrono::minutes JobScheduler::calculate_retry_delay(int retry_count) {
     int delay_minutes = std::min(static_cast<int>(std::pow(2, retry_count)), 30);
     return std::chrono::minutes(delay_minutes);
 }
+
+} // namespace DispatchServer
+} // namespace distconv
