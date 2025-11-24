@@ -5,51 +5,51 @@ This document outlines the unit tests to be implemented for the C++ wxWidgets Su
 ## I. Core API Client Logic (50 Tests)
 
 ### A. `submitJob`
-1.  [x] Test: `submitJob` sends a POST request to the correct URL (`/jobs/`).
-2.  [x] Test: `submitJob` correctly serializes the JSON payload with `source_url`.
-3.  [x] Test: `submitJob` correctly serializes the JSON payload with `target_codec`.
-4.  [x] Test: `submitJob` correctly serializes the JSON payload with `job_size`.
-5.  [x] Test: `submitJob` correctly serializes the JSON payload with `max_retries`.
-6.  [x] Test: `submitJob` includes the `X-API-Key` header.
-7.  [x] Test: `submitJob` includes the `Content-Type: application/json` header.
-8.  [x] Test: `submitJob` handles a successful (HTTP 200) response.
-9.  [x] Test: `submitJob` handles a server error (e.g., HTTP 500) response.
-10. [x] Test: `submitJob` handles a client error (e.g., HTTP 400) response.
-11. [x] Test: `submitJob` handles a transport error (e.g., connection refused).
-12. [x] Test: `submitJob` correctly parses the job ID from a successful response.
-13. [x] Test: `submitJob` calls `saveJobId` on success.
-14. [x] Test: `submitJob` uses SSL verification when a CA path is provided.
-15. [x] Test: `submitJob` disables SSL verification when no CA path is provided.
+1.  [ ] Test: `submitJob` sends a POST request to the correct URL (`/jobs/`).
+2.  [ ] Test: `submitJob` correctly serializes the JSON payload with `source_url`.
+3.  [ ] Test: `submitJob` correctly serializes the JSON payload with `target_codec`.
+4.  [ ] Test: `submitJob` correctly serializes the JSON payload with `job_size`.
+5.  [ ] Test: `submitJob` correctly serializes the JSON payload with `max_retries`.
+6.  [ ] Test: `submitJob` includes the `X-API-Key` header.
+7.  [ ] Test: `submitJob` includes the `Content-Type: application/json` header.
+8.  [ ] Test: `submitJob` handles a successful (HTTP 200) response.
+9.  [ ] Test: `submitJob` handles a server error (e.g., HTTP 500) response.
+10. [ ] Test: `submitJob` handles a client error (e.g., HTTP 400) response.
+11. [ ] Test: `submitJob` handles a transport error (e.g., connection refused).
+12. [ ] Test: `submitJob` correctly parses the job ID from a successful response.
+13. [ ] Test: `submitJob` calls `saveJobId` on success.
+14. [ ] Test: `submitJob` uses SSL verification when a CA path is provided.
+15. [ ] Test: `submitJob` disables SSL verification when no CA path is provided.
 
 ### B. `getJobStatus`
-16. [x] Test: `getJobStatus` sends a GET request to the correct URL (`/jobs/{job_id}`).
-17. [x] Test: `getJobStatus` includes the `X-API-Key` header.
-18. [x] Test: `getJobStatus` handles a successful (HTTP 200) response.
-19. [x] Test: `getJobStatus` handles a not found (HTTP 404) response.
-20. [x] Test: `getJobStatus` handles a server error (e.g., HTTP 500) response.
-21. [x] Test: `getJobStatus` handles a transport error.
-22. [x] Test: `getJobStatus` correctly parses and returns the JSON response.
-23. [x] Test: `getJobStatus` uses SSL verification when a CA path is provided.
-24. [x] Test: `getJobStatus` disables SSL verification when no CA path is provided.
+16. [ ] Test: `getJobStatus` sends a GET request to the correct URL (`/jobs/{job_id}`).
+17. [ ] Test: `getJobStatus` includes the `X-API-Key` header.
+18. [ ] Test: `getJobStatus` handles a successful (HTTP 200) response.
+19. [ ] Test: `getJobStatus` handles a not found (HTTP 404) response.
+20. [ ] Test: `getJobStatus` handles a server error (e.g., HTTP 500) response.
+21. [ ] Test: `getJobStatus` handles a transport error.
+22. [ ] Test: `getJobStatus` correctly parses and returns the JSON response.
+23. [ ] Test: `getJobStatus` uses SSL verification when a CA path is provided.
+24. [ ] Test: `getJobStatus` disables SSL verification when no CA path is provided.
 
 ### C. `listAllJobs`
-25. [x] Test: `listAllJobs` sends a GET request to the correct URL (`/jobs/`).
-26. [x] Test: `listAllJobs` includes the `X-API-Key` header.
-27. [x] Test: `listAllJobs` handles a successful (HTTP 200) response.
-28. [x] Test: `listAllJobs` handles a server error (e.g., HTTP 500) response.
-29. [x] Test: `listAllJobs` handles a transport error.
-30. [x] Test: `listAllJobs` correctly parses and returns the JSON array response.
+25. [ ] Test: `listAllJobs` sends a GET request to the correct URL (`/jobs/`).
+26. [ ] Test: `listAllJobs` includes the `X-API-Key` header.
+27. [ ] Test: `listAllJobs` handles a successful (HTTP 200) response.
+28. [ ] Test: `listAllJobs` handles a server error (e.g., HTTP 500) response.
+29. [ ] Test: `listAllJobs` handles a transport error.
+30. [ ] Test: `listAllJobs` correctly parses and returns the JSON array response.
 31. [ ] Test: `listAllJobs` uses SSL verification when a CA path is provided.
 32. [ ] Test: `listAllJobs` disables SSL verification when no CA path is provided.
 
 ### D. `listAllEngines`
-33. [x] Test: `listAllEngines` sends a GET request to the correct URL (`/engines/`).
-34. [x] Test: `listAllEngines` includes the `X-API-Key` header.
-35. [x] Test: `listAllEngines` handles a successful (HTTP 200) response.
-36. [x] Test: `listAllEngines` handles a server error (e.g., HTTP 500) response.
-37. [x] Test: `listAllEngines` handles a transport error.
-38. [x] Test: `listAllEngines` correctly parses and returns the JSON array response.
-39. [x] Test: `listAllEngines` uses SSL verification when a CA path is provided.
+33. [ ] Test: `listAllEngines` sends a GET request to the correct URL (`/engines/`).
+34. [ ] Test: `listAllEngines` includes the `X-API-Key` header.
+35. [ ] Test: `listAllEngines` handles a successful (HTTP 200) response.
+36. [ ] Test: `listAllEngines` handles a server error (e.g., HTTP 500) response.
+37. [ ] Test: `listAllEngines` handles a transport error.
+38. [ ] Test: `listAllEngines` correctly parses and returns the JSON array response.
+39. [ ] Test: `listAllEngines` uses SSL verification when a CA path is provided.
 40. [ ] Test: `listAllEngines` disables SSL verification when no CA path is provided.
 
 ### E. Local Job ID Storage
