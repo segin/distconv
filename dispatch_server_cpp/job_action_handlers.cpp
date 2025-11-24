@@ -69,6 +69,7 @@ void JobCompletionHandler::handle(const httplib::Request& req, httplib::Response
     }
 
     // 6. Return Success
+    res.status = 200;
     res.set_content("Job " + job_id + " marked as completed", "text/plain");
 }
 
@@ -127,12 +128,14 @@ void JobFailureHandler::handle(const httplib::Request& req, httplib::Response& r
                 jobs_db[job_id]["status"] = "pending";
                 jobs_db[job_id]["error_message"] = request_json["error_message"];
                 save_state_unlocked();
+                res.status = 200;
                 res.set_content("Job " + job_id + " re-queued", "text/plain");
             } else {
                 // Fail permanently
                 jobs_db[job_id]["status"] = "failed_permanently";
                 jobs_db[job_id]["error_message"] = request_json["error_message"];
                 save_state_unlocked();
+                res.status = 200;
                 res.set_content("Job " + job_id + " failed permanently", "text/plain");
             }
         } else {
