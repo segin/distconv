@@ -3,7 +3,8 @@
 #include <fstream>
 #include <iostream>
 
-namespace transcoding_engine {
+namespace distconv {
+namespace TranscodingEngine {
 
 class CprHttpClient::Impl {
 public:
@@ -151,4 +152,5 @@ void CprHttpClient::set_timeout(int timeout_seconds) {
     pimpl_->timeout_seconds_ = timeout_seconds;
 }
 
-} // namespace transcoding_engine
+} // namespace TranscodingEngine
+} // namespace distconv

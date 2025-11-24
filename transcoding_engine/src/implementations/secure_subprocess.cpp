@@ -8,7 +8,8 @@
 #include <chrono>
 #include <thread>
 
-namespace transcoding_engine {
+namespace distconv {
+namespace TranscodingEngine {
 
 class SecureSubprocess::Impl {
 public:
@@ -263,4 +264,5 @@ std::string SecureSubprocess::find_executable_path(const std::string& executable
     return pimpl_->find_executable_path_impl(executable);
 }
 
-} // namespace transcoding_engine
+} // namespace TranscodingEngine
+} // namespace distconv

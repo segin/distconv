@@ -4,6 +4,8 @@
 #include <random>
 #include <sqlite3.h>
 
+using namespace distconv::TranscodingEngine;
+
 class InitializationTest : public TranscodingEngineTest {
 protected:
     void SetUp() override {

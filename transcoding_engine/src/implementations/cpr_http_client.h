@@ -4,7 +4,8 @@
 #include "../interfaces/http_client_interface.h"
 #include <memory>
 
-namespace transcoding_engine {
+namespace distconv {
+namespace TranscodingEngine {
 
 class CprHttpClient : public IHttpClient {
 public:
@@ -34,6 +35,7 @@ private:
     std::unique_ptr<Impl> pimpl_;
 };
 
-} // namespace transcoding_engine
+} // namespace TranscodingEngine
+} // namespace distconv
 
 #endif // CPR_HTTP_CLIENT_H

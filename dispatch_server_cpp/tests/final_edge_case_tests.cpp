@@ -10,6 +10,8 @@
 
 #include "test_common.h"
 
+using namespace distconv::DispatchServer;
+
 TEST_F(ApiTest, ServerHandlesJobSubmissionWithNegativeJobSize) {
     // Test 131: Server handles a job submission with a negative job_size.
     

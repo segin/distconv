@@ -10,6 +10,7 @@
 #include "repositories.h"
 #include <regex>
 
+using namespace distconv::DispatchServer;
 
 // Helper to create a request with path match
 static httplib::Request make_request(const std::string& job_id) {

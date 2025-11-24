@@ -3,6 +3,9 @@
 #include <mutex>
 #include <regex>
 
+namespace distconv {
+namespace DispatchServer {
+
 // ==================== JobCompletionHandler ====================
 
 JobCompletionHandler::JobCompletionHandler(std::shared_ptr<AuthMiddleware> auth)
@@ -148,3 +151,6 @@ void JobFailureHandler::handle(const httplib::Request& req, httplib::Response& r
         return;
     }
 }
+
+} // namespace DispatchServer
+} // namespace distconv

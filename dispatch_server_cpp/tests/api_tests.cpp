@@ -9,6 +9,8 @@
 
 #include "test_common.h" // For ApiTest fixture and clear_db()
 
+using namespace distconv::DispatchServer;
+
 // Test fixture for API tests
 class ApiTest : public ::testing::Test {
 protected:
@@ -662,4 +664,7 @@ TEST_F(ApiTest, HttplibServerInstanceCanBeAccessed) {
 
     // Stop the server
     server.stop();
+    if (server_thread.joinable()) {
+        server_thread.join();
+    }
 }

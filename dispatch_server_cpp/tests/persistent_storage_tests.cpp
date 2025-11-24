@@ -10,6 +10,8 @@
 
 #include "test_common.h"
 
+using namespace distconv::DispatchServer;
+
 TEST_F(ApiTest, SaveStateWritesJobsAndEngines) {
     // 1. Create a job
     nlohmann::json job_payload = {

@@ -5,6 +5,8 @@
 #include "nlohmann/json.hpp"
 #include <string>
 
+namespace distconv {
+namespace DispatchServer {
 namespace ResponseUtils {
     // Standard response creation functions
     void success_response(httplib::Response& res, const nlohmann::json& data, int status_code = 200);
@@ -25,5 +27,7 @@ namespace ResponseUtils {
     // Job state validation
     bool is_valid_job_state_transition(const std::string& current_state, const std::string& new_state);
 }
+} // namespace DispatchServer
+} // namespace distconv
 
 #endif // RESPONSE_UTILS_H

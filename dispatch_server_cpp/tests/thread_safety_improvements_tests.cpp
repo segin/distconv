@@ -7,6 +7,8 @@
 #include "dispatch_server_core.h"
 #include "test_common.h"
 
+using namespace distconv::DispatchServer;
+
 class ThreadSafetyImprovementsTest : public ApiTest {
 protected:
     void SetUp() override {

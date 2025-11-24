@@ -11,6 +11,8 @@
 using ::testing::_;
 using ::testing::Return;
 
+using namespace distconv::DispatchServer;
+
 // Helper to create a dummy request
 httplib::Request create_request(const std::string& body, const std::string& api_key = "test-key") {
     httplib::Request req;
@@ -159,5 +161,3 @@ TEST_F(JobManagementTest, CancelJob) {
     EXPECT_EQ(res.status, 200);
     EXPECT_EQ(jobs_db["job1"]["status"], "cancelled");
 }
-
-

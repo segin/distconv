@@ -7,6 +7,9 @@
 
 #include "cpr/cpr.h"
 
+namespace distconv {
+namespace SubmissionsClient {
+
 class CprApi {
 public:
     virtual ~CprApi() = default;
@@ -45,5 +48,8 @@ std::vector<std::string> loadJobIds();
 
 // Main application function
 int run_submission_client(int argc, char* argv[]);
+
+} // namespace SubmissionsClient
+} // namespace distconv
 
 #endif // SUBMISSION_CLIENT_CORE_H

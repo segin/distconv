@@ -21,6 +21,9 @@
 #include "api_middleware.h"
 #include "enhanced_endpoints.h"
 
+namespace distconv {
+namespace DispatchServer {
+
 using namespace Constants;  // For constants
 
 
@@ -479,7 +482,7 @@ void DispatchServer::async_save_state() {
     }
     
     if (!state_save_future_.valid()) {
-        state_save_future_ = std::async(std::launch::async, ::async_save_state);
+        state_save_future_ = std::async(std::launch::async, ::distconv::DispatchServer::async_save_state);
     }
 }
 
@@ -523,7 +526,7 @@ void DispatchServer::set_api_key(const std::string& key) {
     api_key_ = key;
     // Re-setup endpoints with the new API key
     if (use_legacy_storage_) {
-        ::setup_endpoints(svr, api_key_);
+        ::distconv::DispatchServer::setup_endpoints(svr, api_key_);
     } else {
         setup_endpoints();
     }
@@ -1034,3 +1037,6 @@ void DispatchServer::setup_engine_endpoints() {
             }
         }));
 }
+
+} // namespace DispatchServer
+} // namespace distconv

@@ -6,7 +6,7 @@
 #include <fstream>
 #include <ctime>
 
-using namespace transcoding_engine;
+using namespace distconv::TranscodingEngine;
 
 class ImplementationTest : public ::testing::Test {
 protected:

@@ -9,6 +9,8 @@
 
 #include "test_common.h"
 
+using namespace distconv::DispatchServer;
+
 TEST_F(ApiTest, FailedJobHasRetriesCountIncremented) {
     // 1. Create a job
     nlohmann::json job_payload = {

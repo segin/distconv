@@ -6,6 +6,9 @@
 #include <algorithm>
 #include <iostream>
 
+namespace distconv {
+namespace DispatchServer {
+
 // External globals (from dispatch_server_core.cpp)
 // We need to access the repositories. Since they are in DispatchServer, and we don't have easy access to the server instance here without dependency injection refactor,
 // we will assume for now we can access the repositories if they were global or passed in.
@@ -136,3 +139,6 @@ void JobAssignmentHandler::handle(const httplib::Request& req, httplib::Response
     // 5. Return Assigned Job
     set_json_response(res, jobs_db[job_id], 200);
 }
+
+} // namespace DispatchServer
+} // namespace distconv

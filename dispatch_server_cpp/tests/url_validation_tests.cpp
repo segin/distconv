@@ -4,7 +4,7 @@
 #include "nlohmann/json.hpp"
 #include "dispatch_server_core.h" // For global state if needed, though we try to avoid it
 
-
+using namespace distconv::DispatchServer;
 
 class URLValidationTest : public ::testing::Test {
 protected:

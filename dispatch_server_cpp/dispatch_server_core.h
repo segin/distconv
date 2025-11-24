@@ -13,6 +13,9 @@
 #include "repositories.h"
 #include "api_middleware.h"
 
+namespace distconv {
+namespace DispatchServer {
+
 // Legacy global state (for backward compatibility with tests)
 extern nlohmann::json jobs_db;
 extern nlohmann::json engines_db;
@@ -132,5 +135,8 @@ std::string generate_uuid();
 void setup_endpoints(httplib::Server &svr, const std::string& api_key);
 DispatchServer* run_dispatch_server(int argc, char* argv[], DispatchServer* server_instance);
 DispatchServer* run_dispatch_server(DispatchServer* server_instance);
+
+} // namespace DispatchServer
+} // namespace distconv
 
 #endif // DISPATCH_SERVER_CORE_H

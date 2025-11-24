@@ -6,6 +6,9 @@
 #include "nlohmann/json.hpp"
 #include <memory>
 
+namespace distconv {
+namespace DispatchServer {
+
 // Handler for PUT /jobs/{id} - Update job parameters
 class JobUpdateHandler : public IRequestHandler {
 public:
@@ -49,5 +52,8 @@ private:
     std::shared_ptr<AuthMiddleware> auth_;
     std::shared_ptr<IJobRepository> job_repo_;
 };
+
+} // namespace DispatchServer
+} // namespace distconv
 
 #endif  // JOB_UPDATE_HANDLER_H

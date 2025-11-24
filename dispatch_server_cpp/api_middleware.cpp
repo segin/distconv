@@ -1,6 +1,9 @@
 #include "api_middleware.h"
 #include <iostream>
 
+namespace distconv {
+namespace DispatchServer {
+
 void ApiMiddleware::validate_api_key(const httplib::Request& req, httplib::Response& res, 
                                    const std::string& api_key, Handler next_handler) {
     // Skip validation if no API key is configured
@@ -37,3 +40,6 @@ bool ApiMiddleware::is_api_key_valid(const httplib::Request& req, const std::str
     std::string provided_key = req.get_header_value("X-API-Key");
     return provided_key == api_key;
 }
+
+} // namespace DispatchServer
+} // namespace distconv

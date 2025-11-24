@@ -1,6 +1,9 @@
 #include "request_handlers.h"
 #include <iostream>
 
+namespace distconv {
+namespace DispatchServer {
+
 // AuthMiddleware implementation
 AuthMiddleware::AuthMiddleware(const std::string& api_key) 
     : api_key_(api_key) {}
@@ -55,3 +58,6 @@ void set_json_error_response(httplib::Response& res, const std::string& error_me
     error_obj["status"] = status;
     res.set_content(error_obj.dump(), "application/json");
 }
+
+} // namespace DispatchServer
+} // namespace distconv

@@ -3,6 +3,9 @@
 #include "dispatch_server_constants.h"
 #include <uuid/uuid.h>
 
+namespace distconv {
+namespace DispatchServer {
+
 using namespace Constants;
 
 // InMemoryStorageRepository implementation
@@ -193,3 +196,6 @@ void StoragePoolDeleteHandler::handle(const httplib::Request& req, httplib::Resp
     response["pool_id"] = pool_id;
     set_json_response(res, response, 200);
 }
+
+} // namespace DispatchServer
+} // namespace distconv

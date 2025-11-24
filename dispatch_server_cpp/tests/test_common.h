@@ -11,6 +11,8 @@
 #include <chrono>
 #include <random>
 
+using namespace distconv::DispatchServer;
+
 // Helper function to clear the database before each test
 inline void clear_db() {
     std::lock_guard<std::mutex> lock(state_mutex);

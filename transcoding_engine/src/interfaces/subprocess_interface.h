@@ -4,7 +4,8 @@
 #include <string>
 #include <vector>
 
-namespace transcoding_engine {
+namespace distconv {
+namespace TranscodingEngine {
 
 struct SubprocessResult {
     int exit_code;
@@ -31,6 +32,7 @@ public:
     virtual std::string find_executable_path(const std::string& executable) = 0;
 };
 
-} // namespace transcoding_engine
+} // namespace TranscodingEngine
+} // namespace distconv
 
 #endif // SUBPROCESS_INTERFACE_H

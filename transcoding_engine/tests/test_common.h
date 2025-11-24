@@ -9,6 +9,8 @@
 #include <fstream>
 #include "../transcoding_engine_core.h"
 
+using namespace distconv::TranscodingEngine;
+
 class TranscodingEngineTest : public ::testing::Test {
 protected:
     void SetUp() override {

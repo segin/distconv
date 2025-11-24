@@ -13,6 +13,8 @@ FetchContent_Declare(
   googletest
   URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
 )
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 add_library(dispatch_server_core STATIC 
@@ -28,13 +30,14 @@ add_library(dispatch_server_core STATIC
     job_update_handler.cpp job_update_handler.h
     storage_pool_handler.cpp storage_pool_handler.h
     server_config.cpp server_config.h
+    response_utils.cpp response_utils.h
     dispatch_server_constants.h
 )
 
 # Include directories for httplib and nlohmann/json
 target_include_directories(dispatch_server_core PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    /home/segin/distconv/third_party/json/single_include
+    ${CMAKE_SOURCE_DIR}/../third_party/json/single_include
 )
 
 # Find UUID library
@@ -47,22 +50,22 @@ target_link_libraries(dispatch_server_core pthread sqlite3 ${UUID_LIBRARIES})
 add_executable(dispatch_server_app app_main.cpp)
 target_link_libraries(dispatch_server_app dispatch_server_core)
 target_include_directories(dispatch_server_app PRIVATE
-    /home/segin/distconv/third_party/json/single_include
+    ${CMAKE_SOURCE_DIR}/../third_party/json/single_include
 )
 
 # Modern app with dependency injection
 add_executable(dispatch_server_modern app_main_modern.cpp)
 target_link_libraries(dispatch_server_modern dispatch_server_core)
 target_include_directories(dispatch_server_modern PRIVATE
-    /home/segin/distconv/third_party/json/single_include
+    ${CMAKE_SOURCE_DIR}/../third_party/json/single_include
 )
 
 # Unit Tests
 add_executable(dispatch_server_tests tests/main.cpp tests/jobs_post_api_tests.cpp tests/jobs_get_api_tests.cpp tests/engines_api_tests.cpp tests/jobs_status_update_tests.cpp tests/job_resubmission_tests.cpp tests/scheduling_logic_tests.cpp tests/persistent_storage_tests.cpp tests/jobs_assign_api_tests.cpp tests/job_state_transition_tests.cpp tests/command_line_tests.cpp tests/thread_safety_tests.cpp tests/api_test_definitions.cpp tests/json_parsing_edge_case_tests.cpp tests/final_edge_case_tests.cpp tests/thread_safety_improvements_tests.cpp tests/job_handlers_tests.cpp tests/engine_handlers_tests.cpp tests/job_management_tests.cpp tests/api_endpoint_tests.cpp tests/error_handling_tests.cpp tests/url_validation_tests.cpp tests/server_config_tests.cpp tests/max_retries_validation_tests.cpp)
-target_link_libraries(dispatch_server_tests dispatch_server_core gtest_main)
+target_link_libraries(dispatch_server_tests dispatch_server_core gtest gmock)
 target_include_directories(dispatch_server_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    /home/segin/distconv/third_party/json/single_include
+    ${CMAKE_SOURCE_DIR}/../third_party/json/single_include
     ${CMAKE_CURRENT_SOURCE_DIR}/tests
 )
 

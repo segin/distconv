@@ -7,6 +7,9 @@
 #include <mutex>
 #include <map>
 
+namespace distconv {
+namespace DispatchServer {
+
 // Simple in-memory storage repository for storage pools
 class IStorageRepository {
 public:
@@ -74,5 +77,8 @@ private:
     std::shared_ptr<AuthMiddleware> auth_;
     std::shared_ptr<IStorageRepository> storage_repo_;
 };
+
+} // namespace DispatchServer
+} // namespace distconv
 
 #endif  // STORAGE_POOL_HANDLER_H

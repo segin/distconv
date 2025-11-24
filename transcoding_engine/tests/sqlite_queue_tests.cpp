@@ -2,6 +2,8 @@
 #include <algorithm>
 #include <cmath>
 
+using namespace distconv::TranscodingEngine;
+
 class SQLiteQueueTest : public TranscodingEngineTest {
 protected:
     void SetUp() override {

@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-
+using namespace distconv::SubmissionsClient;
 
 // Test fixture for the Submission Client
 class SubmissionClientTest : public ::testing::Test {

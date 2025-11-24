@@ -3,6 +3,9 @@
 #include "dispatch_server_constants.h"
 #include <regex>
 
+namespace distconv {
+namespace DispatchServer {
+
 using namespace Constants;
 
 // JobUpdateHandler implementation
@@ -211,3 +214,6 @@ void JobProgressHandler::handle(const httplib::Request& req, httplib::Response& 
         set_json_error_response(res, "Failed to update progress", "update_error", 500, "Job ID: " + job_id);
     }
 }
+
+} // namespace DispatchServer
+} // namespace distconv

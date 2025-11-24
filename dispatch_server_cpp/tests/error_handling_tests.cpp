@@ -2,6 +2,8 @@
 #include "request_handlers.h"
 #include "httplib.h"
 
+using namespace distconv::DispatchServer;
+
 // Test JSON error response format
 TEST(ErrorHandlingTest, JSONErrorResponseFormat) {
     httplib::Response res;

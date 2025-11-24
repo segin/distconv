@@ -7,6 +7,9 @@
 #include <memory>
 #include <mutex>
 
+namespace distconv {
+namespace DispatchServer {
+
 // Abstract interface for job repository
 class IJobRepository {
 public:
@@ -132,5 +135,8 @@ public:
     void remove_engine(const std::string& engine_id) override;
     void clear_all_engines() override;
 };
+
+} // namespace DispatchServer
+} // namespace distconv
 
 #endif // REPOSITORIES_H

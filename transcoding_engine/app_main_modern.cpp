@@ -6,8 +6,9 @@
 #include <memory>
 #include <csignal>
 #include <atomic>
+#include <thread>
 
-using namespace transcoding_engine;
+using namespace distconv::TranscodingEngine;
 
 std::atomic<bool> should_stop{false};
 

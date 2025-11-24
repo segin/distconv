@@ -6,6 +6,8 @@
 #include <thread>
 #include <chrono>
 
+using namespace distconv::DispatchServer;
+
 TEST_F(ApiTest, SubmitValidJob) {
     nlohmann::json job_payload;
     job_payload["source_url"] = "http://example.com/video.mp4";
@@ -259,5 +261,3 @@ TEST_F(ApiTest, SubmitJobNonIntegerMaxRetries) {
     ASSERT_EQ(res->status, 400);
     ASSERT_EQ(res->body, "Bad Request: 'max_retries' must be an integer.");
 }
-
-

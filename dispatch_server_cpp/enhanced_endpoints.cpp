@@ -1,6 +1,9 @@
 #include "dispatch_server_core.h"
 #include <regex>
 
+namespace distconv {
+namespace DispatchServer {
+
 // Enhanced endpoint implementations with improved validation and features
 
 namespace EnhancedEndpoints {
@@ -835,3 +838,6 @@ void setup_enhanced_system_endpoints(httplib::Server &svr, const std::string& ap
     });
     */
 }
+
+} // namespace DispatchServer
+} // namespace distconv

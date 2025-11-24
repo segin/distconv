@@ -4,6 +4,8 @@
 #include <chrono>
 #include <string>
 
+namespace distconv {
+namespace DispatchServer {
 namespace Constants {
 
 // Background worker intervals
@@ -34,5 +36,7 @@ constexpr double JOB_SIZE_SMALL_THRESHOLD = 50.0;
 constexpr double JOB_SIZE_MEDIUM_THRESHOLD = 100.0;
 
 }  // namespace Constants
+}  // namespace DispatchServer
+}  // namespace distconv
 
 #endif  // DISPATCH_SERVER_CONSTANTS_H
