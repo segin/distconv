@@ -6,91 +6,19 @@ This document provides a comprehensive list of suggestions to enhance the archit
 
 #### A. Core Architecture & Decoupling
 
- 1. **Introduce a Message Queue:** Replace direct HTTP calls for job assignment with a robust message queue (e.g., RabbitMQ, NATS, Kafka) to decouple the Dispatch Server from Transcoding Engines.
-
- 2. **Service-Oriented Architecture:** Formally break down the Dispatch Server into smaller, independent services (e.g., Job Service, Engine Management Service, File Service).
-
- 3. **Plugin-Based Engine:** Re-architect the Transcoding Engine to support plugins for different transcoding tools (not just ffmpeg) or resource monitors.
-
- 4. **Abstract Storage Layer:** Create an abstract storage interface on the Dispatch Server to support different backends (local filesystem, S3, GCS, etc.) instead of hardcoding file paths.
-
- 5. **State Machine Implementation:** Formally implement a finite state machine (FSM) for managing job states (e.g., `pending`, `assigning`, `transcoding`, `completing`, `failed`, `completed`) to ensure predictable transitions.
-
- 6. **Adopt gRPC:** Migrate the internal communication protocol from a REST API to gRPC with Protocol Buffers for higher performance, streaming, and strongly-typed contracts.
-
- 7. **Configuration Service:** Implement a centralized configuration service or use a distributed configuration store (like etcd or Consul) instead of command-line arguments and hardcoded values.
-
- 8. **Separate API Gateway:** Introduce an API Gateway to handle external client requests, authentication, and rate-limiting, separating it from the core internal dispatch logic.
-
- 9. **Event-Driven Architecture:** Move towards an event-driven model where components react to events (e.g., `JobSubmitted`, `EngineHeartbeat`, `JobCompleted`) rather than polling.
-
-10. **Idempotency in API:** Ensure all POST/PUT/PATCH endpoints are idempotent to safely handle retries from clients or engines.
+(Items 1-10 moved to ACTIONPLAN.md)
 
 #### B. Scalability & Performance
 
-11. **Horizontal Scaling for Dispatch Server:** Design the Dispatch Server to be stateless so multiple instances can be run behind a load balancer.
-
-12. **Database Read Replicas:** If using a SQL database, plan for read replicas to handle high volumes of read requests (e.g., `/jobs` and `/engines` listings).
-
-13. **Connection Pooling:** Implement database connection pooling on the Dispatch Server to reduce latency and resource usage.
-
-14. **Caching Layer:** Introduce a caching layer (e.g., Redis, Memcached) for frequently accessed data like engine capabilities or job statuses.
-
-15. **Content Delivery Network (CDN):** Plan for integrating a CDN for distributing final transcoded videos to reduce load on the Dispatch Server.
-
-16. **Sharding the Jobs Database:** Plan a strategy for sharding the jobs database by user, date, or some other key as the number of jobs grows.
-
-17. **Use `io_uring`:** For high-performance I/O on Linux-based components (Server, Engine), investigate using `io_uring` instead of standard blocking I/O or `epoll`.
-
-18. **Offload SSL/TLS Termination:** In a production environment, offload TLS termination for the Dispatch Server to a dedicated load balancer or reverse proxy like `nginx`. The server itself should only handle plain HTTP. Clients (Transcoding Engine, Submission Client) should support and use TLS for secure communication.
-
-19. **Optimize JSON Parsing:** Investigate faster JSON libraries than `nlohmann/json` if parsing becomes a bottleneck (e.g., `simdjson`).
-
-20. **Asynchronous I/O in C++ Components:** Refactor C++ components to use asynchronous I/O frameworks (like Boost.Asio or Seastar) instead of a thread-per-request model.
+(Items 11-20 moved to ACTIONPLAN.md)
 
 #### C. Transcoding Engine Design
 
-21. **Isolate `ffmpeg` Process:** Run each `ffmpeg` process in a container (Docker, Podman) or a sandbox (`bwrap`, `chroot`) to isolate it from the host system.
-
-22. **Local Job Queue Persistence:** The `README` mentions this, but it's crucial. The engine's SQLite queue should be robust enough to survive engine restarts.
-
-23. **Engine Self-Registration:** Allow engines to self-register with the dispatch server, perhaps with an initial registration token, simplifying deployment.
-
-24. **Graceful Shutdown for Engines:** Engines should handle `SIGTERM` to finish the current job, report its status, and then exit.
-
-25. **Engine Self-Update Mechanism:** Design a mechanism for the Dispatch Server to trigger a self-update of the Transcoding Engine software.
-
-26. **Backpressure Handling:** The engine should stop accepting jobs if its local resources (disk, CPU) are critically low and report a "busy" or "overloaded" status.
-
-27. **Off-Heap Storage:** For large video files, memory-map the files (`mmap`) instead of reading them entirely into RAM.
-
-28. **Hardware Affinity:** Allow the engine to be configured with CPU/GPU affinity to avoid resource contention on multi-purpose machines.
-
-29. **Dynamic Capability Reporting:** The engine should report its capabilities not just at startup but whenever they change (e.g., a new GPU is detected).
-
-30. **Streaming vs. File Transfer Logic:** The decision logic (streaming vs. full download) should be more sophisticated, considering network bandwidth and latency in addition to disk space.
+(Items 21-30 moved to ACTIONPLAN.md)
 
 #### D. Dispatch Server Design
 
-31. **Separate Job Scheduler:** Extract the job scheduling logic into its own component, separate from the API endpoint handling.
-
-32. **Fairness in Scheduling:** Implement fairness algorithms to prevent a single user or client from monopolizing all transcoding resources.
-
-33. **Job-Engine Affinity:** Allow jobs to request specific engine capabilities (e.g., "needs NVENC", "requires VMAF filter"), and have the scheduler match them.
-
-34. **Time-Based Job Expiration:** Automatically fail jobs that have been in the queue for too long without being picked up.
-
-35. **Webhook Support:** Add a webhook system to the Dispatch Server to notify external systems of job status changes.
-
-36. **API Versioning in URL:** Implement API versioning in the URL path (e.g., `/api/v1/jobs`).
-
-37. **Standardized Error Responses:** Use a standard error response format across the API (e.g., `{ "error": { "code": "NOT_FOUND", "message": "Job not found" } }`).
-
-38. **Pagination for List Endpoints:** Implement pagination for `/jobs` and `/engines` to handle large numbers of items.
-
-39. **Support for `HEAD` Requests:** Implement `HEAD` request handlers for all `GET` endpoints to allow clients to check for resource existence and size without downloading the body.
-
-40. **ETag Support:** Use ETags for caching, especially for job status and engine list endpoints, to reduce bandwidth.
+(Items 31-40 moved to ACTIONPLAN.md)
 
 #### E. Submission Client Design
 
