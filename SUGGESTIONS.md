@@ -22,13 +22,13 @@ This document provides a comprehensive list of suggestions to enhance the archit
 
 #### E. Submission Client Design
 
-41. **Decouple UI from Logic:** In the wxWidgets client, separate the UI code (the `MyFrame` class) from the API communication logic into a separate `ApiClient` class.
+41. **Decouple UI from Logic:** (Moved to SUBACTIONPLAN.md)
 
-42. **Asynchronous API Calls:** Make all API calls in the client asynchronous to prevent the UI from freezing. Use `wxThread` or `std::async`.
+42. **Asynchronous API Calls:** (Moved to SUBACTIONPLAN.md)
 
 43. **Local Job Cache:** Instead of just a list of IDs, maintain a local cache (e.g., in SQLite) of job details to provide a better offline experience.
 
-44. **Configuration File:** Use a configuration file (e.g., INI, JSON, YAML) for the server URL, API key, etc., instead of command-line arguments.
+44. **Configuration File:** (Moved to SUBACTIONPLAN.md)
 
 45. **Support for Multiple Profiles:** Allow the client to store and switch between multiple Dispatch Server profiles.
 
@@ -74,7 +74,7 @@ This document provides a comprehensive list of suggestions to enhance the archit
 79. **Resource Cleanup for Failed Jobs:** Ensure that partially downloaded or transcoded files are cleaned up when a job fails or is cancelled.
 80. **Database Schema Migrations:** Implement a database schema migration system (e.g., using Flyway or a similar tool) for the Dispatch Server's database.
 81. **Atomic File Operations:** When writing state files or video files, write to a temporary file first and then atomically rename it to the final destination to prevent corruption.
-82. **Eliminate Global State:** Refactor to remove global variables like `API_KEY`, `jobs_db`, and `engines_db`. Pass them as dependencies (e.g., in a context/application object).
+82. **Eliminate Global State:** (Moved to SUBACTIONPLAN.md)
 83. **Single Responsibility Principle:** Refactor large functions and classes (like `dispatch_server_cpp/main.cpp`) into smaller units with a single responsibility.
 84. **Use a Structured Logging Library:** Replace `std::cout` and `std::cerr` with a structured logging library (e.g., spdlog, glog) that supports levels, formatting, and different output sinks.
 85. **Separate Public and Private APIs:** Differentiate between the API for submission clients and the internal API for transcoding engines.
@@ -101,7 +101,7 @@ This document provides a comprehensive list of suggestions to enhance the archit
 103. **Use JWTs for API Authentication:** Use JSON Web Tokens (JWTs) for stateless API authentication between the client and server.
 104. **Harden TLS/SSL Configuration:** On the `SSLServer`, disable old, insecure TLS versions (allow only TLS 1.2/1.3) and use a strong cipher suite.
 105. **Certificate Pinning:** Consider implementing HTTP Public Key Pinning (HPKP) or certificate pinning in the clients to prevent man-in-the-middle attacks.
-106. **Never Use `system()` for `ffmpeg`:** The use of `system()` in the transcoding engine is a critical command injection vulnerability. Replace it with `exec`-family functions (`posix_spawn` or `CreateProcess`) after carefully validating all arguments.
+106. **Never Use `system()` for `ffmpeg`:** (Moved to SUBACTIONPLAN.md)
 107. **Sanitize All `ffmpeg` Arguments:** Before passing any arguments (like codecs, filters, or URLs) to an `ffmpeg` process, strictly validate them against an allowlist of safe values.
 108. **Validate Input URLs:** The server and engine must rigorously validate all `source_url` and `output_url` values to prevent Server-Side Request Forgery (SSRF) attacks.
 109. **Run Engine with Least Privilege:** Create a dedicated, unprivileged user for running the transcoding engine daemon.
@@ -114,7 +114,7 @@ This document provides a comprehensive list of suggestions to enhance the archit
 116. **Prevent Log Injection:** Sanitize all user-provided data before writing it to logs to prevent log injection attacks.
 117. **Dependency Scanning:** Integrate a dependency scanning tool (like `trivy`, `Snyk`, or GitHub's Dependabot) to find vulnerabilities in third-party libraries.
 118. **Disable `ffmpeg` Network Features:** Unless explicitly needed for a job, disable `ffmpeg`'s ability to make network requests using the `-probesize` and `-analyzeduration` flags on local files and potentially sandboxing rules.
-119. **Use Prepared Statements for Database:** When migrating to a SQL database, use prepared statements for all queries to prevent SQL injection.
+119. **Use Prepared Statements for Database:** (Moved to SUBACTIONPLAN.md)
 120. **Regular Security Audits:** Plan for regular third-party security audits and penetration tests.
 121. **Disable Directory Listing:** Ensure the file server functionality does not allow directory listing.
 122. **Add Security Headers:** Add security headers like `Content-Security-Policy`, `X-Content-Type-Options`, `X-Frame-Options`, and `Strict-Transport-Security` to all HTTP responses from the dispatch server.
@@ -153,26 +153,26 @@ The 100 specific suggestions for the dispatch server component have been moved t
 
 ## IV. Transcoding Engine (`transcoding_engine`) (75 Suggestions)
 
-251. **Critical: Replace `system()` and `popen()`**. As mentioned, these are insecure and inefficient. Use libraries like `boost.process`, `subprocess.h`, or platform-native APIs (`CreateProcess`, `posix_spawn`) to launch and manage the `ffmpeg` process securely.
-252. **Parse `ffmpeg` Progress:** Instead of letting `ffmpeg` run and waiting for it to finish, read its `stderr` output in real-time to parse progress information (frame number, fps, time) and report it to the dispatch server.
-253. **Use a C++ `ffmpeg` Wrapper Library:** For ultimate control, integrate directly with `libavcodec`, `libavformat`, etc. This avoids the overhead of the `ffmpeg` CLI and provides much finer-grained control and progress reporting.
-254. **Robust Process Management:** Implement a watchdog to monitor the `ffmpeg` process. If it hangs or consumes excessive resources, it should be terminated.
-255. **Refactor `main.cpp`:** Break the engine's logic into classes: `HeartbeatClient`, `JobPoller`, `Transcoder`, `ResourceManager`.
-256. **Don't use `cJSON` in C++:** It's a C library. Use `nlohmann/json` for consistency with the other C++ components and for type safety.
-257. **Don't use raw `libcurl`:** Use a modern C++ wrapper like `cpr` (which is already in the project for the client) for cleaner and safer HTTP requests.
-258. **Don't use `goto`:** The `main.cpp` file contains `goto cleanup`. This is bad practice and can be replaced with RAII or structured error handling. (Correction: I hallucinated the `goto`, it is not present. The suggestion remains to use structured error handling).
-259. **Proper SQLite Error Handling:** The SQLite calls check the return code but just print to `cerr`. An error should trigger a more robust failure state in the engine.
-260. **Prepared Statements for SQLite:** Replace `sqlite3_mprintf` with `sqlite3_prepare_v2` and `sqlite3_bind_*` to prevent any potential SQL injection issues.
-261. **Connection Management for SQLite:** The `db` handle is global. It should be encapsulated in a class that manages its lifecycle.
-262. **Don't Detach Threads:** The `heartbeatThread` and `benchmarkThread` are detached. This is risky. The main loop should manage their lifecycle and `join()` them on shutdown.
-263. **Use a Condition Variable for Job Polling:** Instead of `sleep`-ing for 1 second, the main loop should wait on a condition variable that is signaled when a job is completed, allowing it to immediately poll for a new one.
-264. **Make Heartbeat Interval Configurable.**
-265. **Make Benchmark Interval Configurable.**
-266. **Hostname should be passed, not rediscovered:** The hostname for the heartbeat should be a configuration option, as `gethostname()` might not be what's desired in a containerized environment. (Already done, good).
-267. **CPU Temperature reading is brittle:** Reading `/sys/class/thermal/thermal_zone0/temp` is not portable even across Linux systems. Use a library like `libsensors` on Linux.
-268. **Implement Windows/macOS CPU Temp:** The `README` mentions this; it needs to be implemented using WMI on Windows and `smc` on macOS.
-269. **Implement GPU Temperature/Utilization Monitoring:** Use `nvidia-smi` (for NVIDIA) or similar tools for other vendors to report GPU status.
-270. **Disk Space Monitoring:** The engine should monitor the available disk space in its working directory and report it in the heartbeat.
+251. **Critical: Replace `system()` and `popen()`**. (Moved to SUBACTIONPLAN.md)
+252. **Parse `ffmpeg` Progress:** (Moved to SUBACTIONPLAN.md)
+253. **Use a C++ `ffmpeg` Wrapper Library:** (Moved to SUBACTIONPLAN.md)
+254. **Robust Process Management:** (Moved to SUBACTIONPLAN.md)
+255. **Refactor `main.cpp`:** (Moved to SUBACTIONPLAN.md)
+256. **Don't use `cJSON` in C++:** (Moved to SUBACTIONPLAN.md)
+257. **Don't use raw `libcurl`:** (Moved to SUBACTIONPLAN.md)
+258. **Structured Error Handling:** (Moved to SUBACTIONPLAN.md)
+259. **Proper SQLite Error Handling:** (Moved to SUBACTIONPLAN.md)
+260. **Prepared Statements for SQLite:** (Moved to SUBACTIONPLAN.md)
+261. **Connection Management for SQLite:** (Moved to SUBACTIONPLAN.md)
+262. **Don't Detach Threads:** (Moved to SUBACTIONPLAN.md)
+263. **Use a Condition Variable for Job Polling:** (Moved to SUBACTIONPLAN.md)
+264. **Make Heartbeat Interval Configurable.** (Moved to SUBACTIONPLAN.md)
+265. **Make Benchmark Interval Configurable.** (Moved to SUBACTIONPLAN.md)
+266. **Hostname should be passed, not rediscovered:** (Moved to SUBACTIONPLAN.md)
+267. **CPU Temperature reading is brittle:** (Moved to SUBACTIONPLAN.md)
+268. **Implement Windows/macOS CPU Temp:** (Moved to SUBACTIONPLAN.md)
+269. **Implement GPU Temperature/Utilization Monitoring:** (Moved to SUBACTIONPLAN.md)
+270. **Disk Space Monitoring:** (Moved to SUBACTIONPLAN.md)
 271. **Sanitize Filenames:** The filenames `input_{job_id}.mp4` and `output_{job_id}.mp4` are created from a `job_id` that comes from the network. The `job_id` should be sanitized to prevent path traversal attacks.
 272. **Clean up temporary files:** The engine downloads an input file and creates an output file. It needs to reliably delete these after the job is completed or failed. Use a `scope_exit` guard for this.
 273. **Handle `downloadFile` failures robustly.**
@@ -232,26 +232,26 @@ The 100 specific suggestions for the dispatch server component have been moved t
 
 ## V. Submission Client (`submission_client_desktop`) (50 Suggestions)
 
-326. **Implement the full GUI as planned in the `README`:** Create the tabbed interface for "My Jobs", "All Jobs", and "Endpoints".
-327. **Separate UI from Logic:** Create an `ApiClient` class that handles all `cpr` calls. The `MyFrame` class should only call methods on this `ApiClient` and update the UI.
-328. **Use Asynchronous Calls:** All calls to the `ApiClient` should be asynchronous (e.g., using `wxThread` or `std::async`) to avoid freezing the GUI. The `ApiClient` can use callbacks or futures to return results to the UI thread.
-329. **Improve Output Log:** Instead of redirecting `cout`, the API client methods should return a result object (e.g., `struct { bool success; std::string data; std::string error; }`). The UI then formats and displays this.
-330. **Implement `wxDataViewListCtrl`:** For the job and engine lists, use a `wxDataViewListCtrl` instead of a simple `wxListBox` to show multiple columns (ID, Status, Progress, etc.).
-331. **Real-time Updates:** Use a `wxTimer` to periodically poll the server for updates to job and engine statuses, and refresh the lists.
-332. **Configuration Dialog:** Create a dialog to allow the user to set and save the Dispatch Server URL, API Key, and CA Certificate Path.
-333. **Store Configuration:** Save the configuration to a file (e.g., `~/.distconv/client.cfg`).
-334. **Drag and Drop Submission:** Allow users to drag video files onto the application to pre-fill the "Source URL" field (for local files, it would need an upload mechanism).
-335. **Better Input Validation:** The UI provides minimal validation. Add input validators (`wxValidator`) to the text controls to ensure, for example, that "Job Size" is a valid number.
-336. **Job Progress Bars:** In the job list, include a progress bar control for jobs that are currently transcoding (requires progress reporting from the server).
-337. **Context Menus:** Implement right-click context menus on the job and engine lists (e.g., "Get Status", "Cancel Job", "Deauthenticate Engine").
-338. **Detailed Info Panel:** When an item in a list is selected, show all its details in a separate panel.
-339. **Don't hardcode `your-super-secret-api-key`**. Load it from the configuration.
-340. **Improve `cpr` usage:** Set a timeout for all `cpr` requests.
-341. **Handle `cpr` errors:** The code checks `r.status_code` but should also check for transport errors (e.g., `r.error`).
-342. **Local Job ID storage is fragile.** The `submitted_job_ids.txt` could be replaced with a small SQLite database to store more metadata locally.
-343. **The console functions (`submitJob`, `getJobStatus`, etc.) should be part of the `ApiClient` class, not global functions.**
-344. **The `submitJob` function has too many parameters.** Pass a `JobOptions` struct instead.
-345. **The CMake file for the client is complex.** It adds `cpr` and `json` as subdirectories. It would be better to use a package manager or `FetchContent`.
+326. **Implement the full GUI as planned in the `README`:** (Moved to SUBACTIONPLAN.md)
+327. **Separate UI from Logic:** (Moved to SUBACTIONPLAN.md)
+328. **Use Asynchronous Calls:** (Moved to SUBACTIONPLAN.md)
+329. **Improve Output Log:** (Moved to SUBACTIONPLAN.md)
+330. **Implement `wxDataViewListCtrl`:** (Moved to SUBACTIONPLAN.md)
+331. **Real-time Updates:** (Moved to SUBACTIONPLAN.md)
+332. **Configuration Dialog:** (Moved to SUBACTIONPLAN.md)
+333. **Store Configuration:** (Moved to SUBACTIONPLAN.md)
+334. **Drag and Drop Submission:** (Moved to SUBACTIONPLAN.md)
+335. **Better Input Validation:** (Moved to SUBACTIONPLAN.md)
+336. **Job Progress Bars:** (Moved to SUBACTIONPLAN.md)
+337. **Context Menus:** (Moved to SUBACTIONPLAN.md)
+338. **Detailed Info Panel:** (Moved to SUBACTIONPLAN.md)
+339. **Don't hardcode `your-super-secret-api-key`**. (Moved to SUBACTIONPLAN.md)
+340. **Improve `cpr` usage:** (Moved to SUBACTIONPLAN.md)
+341. **Handle `cpr` errors:** (Moved to SUBACTIONPLAN.md)
+342. **Local Job ID storage is fragile.** (Moved to SUBACTIONPLAN.md)
+343. **The console functions (`submitJob`, `getJobStatus`, etc.) should be part of the `ApiClient` class, not global functions.** (Moved to SUBACTIONPLAN.md)
+344. **The `submitJob` function has too many parameters.** (Moved to SUBACTIONPLAN.md)
+345. **The CMake file for the client is complex.** (Moved to SUBACTIONPLAN.md)
 346. **Add an "About" dialog.**
 347. **Add a "Help" menu/dialog.**
 348. **The UI doesn't handle window resizing well.** Use sizers more effectively to create a responsive layout.

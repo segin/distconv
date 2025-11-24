@@ -15,7 +15,7 @@ This checklist contains 100 specific suggestions for improving the dispatch serv
 - [x] Separate the storage logic into a `Storage` class. (Repository pattern implemented)
 - [x] Create a `Job` struct/class to represent a job instead of manipulating raw `nlohmann::json` objects everywhere.
 - [x] Create an `Engine` struct/class.
-- [ ] Eliminate Global State: Refactor to remove global variables like `API_KEY`, `jobs_db`, and `engines_db`. Pass them as dependencies (e.g., in a context/application object).
+
 
 ## Job Management & Scheduling
 - [x] Improve Job Assignment Logic: The current logic just picks the first pending job and assigns it to a complexly-chosen engine. Improve this by considering job priority, job size, and engine load.
@@ -40,29 +40,30 @@ This checklist contains 100 specific suggestions for improving the dispatch serv
 - [x] The storage pool endpoint is a placeholder. It should be implemented to allow adding, removing, and querying storage locations.
 
 ## Error Handling & Validation
-- [ ] Better JSON error handling: The `try-catch` blocks are good, but provide more specific error messages to the client about what was wrong with their JSON payload.
-- [ ] The server doesn't validate the `output_url` provided by the engine. It should be checked for validity.
-- [ ] Handle exceptions from `std::to_string` or `stod`.
-- [ ] The `max_retries` value should be validated to be a non-negative integer.
-- [ ] When loading state, if the JSON is corrupt, the server currently just logs an error and starts with an empty state. It should perhaps exit or use a backup file.
+
+
+
+
+
 
 ## Engine Management
-- [ ] Heartbeat should update timestamp: The heartbeat should update a `last_seen` timestamp for the engine.
-- [ ] Stale engine cleanup: Implement a background task to remove engines that haven't sent a heartbeat in a configurable amount of time.
-- [ ] Engine selection in `/assign_job` can be optimized: The sorting of engines on every call is inefficient for a large number of engines. Maintain sorted lists or use a more efficient data structure.
-- [ ] Sort engine list: The `/engines/` endpoint should provide a sorted list, e.g., by hostname or last heartbeat.
-- [ ] The server should track `ffmpeg` versions of each engine and potentially refuse to assign jobs that require features not present in an engine's `ffmpeg` version.
-- [ ] Provide a way for an admin to put an engine in "maintenance mode", preventing it from being assigned new jobs.
-- [ ] The `/engines/` list should show the current job being processed by each busy engine.
-- [ ] There's no way to get historical performance data for an engine.
-- [ ] The server should track not just the assigned engine, but a history of all engines a job was assigned to.
+
+
+
+
+
+
+
+
+
 
 ## Performance & Scalability
-- [ ] Don't use `std::endl`: Replace `std::endl` with `\n` to avoid unnecessary buffer flushes, especially in logging.
-- [ ] Sort job list: The `/jobs/` endpoint should default to sorting by submission time.
-- [ ] Add filtering to list endpoints: e.g., `/jobs?status=pending`.
-- [ ] Add a proper thread pool for background tasks like cleaning up stale engines, instead of creating detached threads.
-- [ ] `main.cpp:115` - looping through all jobs to find a pending one is O(N). Use a separate queue of pending job IDs.
+
+
+
+
+
+
 - [ ] `main.cpp:125` - sorting engines on every request is O(M log M). This is very inefficient.
 - [ ] The server should support HTTP/2 for better performance. `httplib` can be configured for this.
 - [ ] Use `std::string_view` in function parameters to avoid unnecessary string copies.
