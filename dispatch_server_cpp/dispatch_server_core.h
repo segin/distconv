@@ -6,6 +6,7 @@
 #include <thread>
 #include <mutex>
 #include <atomic>
+#include <condition_variable>
 #include <future>
 #include "nlohmann/json.hpp"
 #include "httplib.h"
@@ -90,6 +91,8 @@ private:
     
     // Thread-safe background processing
     std::atomic<bool> shutdown_requested_{false};
+    std::condition_variable shutdown_cv_;
+    std::mutex shutdown_mutex_;
     std::thread background_worker_;
     std::future<void> state_save_future_;
     

@@ -237,8 +237,11 @@ void DispatchServer::background_worker() {
             requeue_failed_jobs();
             expire_pending_jobs();
             
-            // Sleep between cleanup iterations
-            std::this_thread::sleep_for(BACKGROUND_WORKER_INTERVAL);
+            // Sleep between cleanup iterations, but wake up immediately on shutdown
+            std::unique_lock<std::mutex> lock(shutdown_mutex_);
+            shutdown_cv_.wait_for(lock, BACKGROUND_WORKER_INTERVAL, [this] {
+                return shutdown_requested_.load();
+            });
         } catch (const std::exception& e) {
             std::cerr << "Background worker error: " << e.what() << std::endl;
         }
@@ -562,6 +565,7 @@ void DispatchServer::start(int port, bool block) {
 void DispatchServer::stop() {
     // Stop background worker
     shutdown_requested_.store(true);
+    shutdown_cv_.notify_all();  // Wake up the background worker immediately
     if (background_worker_.joinable()) {
         background_worker_.join();
     }
