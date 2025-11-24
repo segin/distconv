@@ -22,7 +22,6 @@ This checklist contains 100 specific suggestions for improving the dispatch serv
 - [x] Job re-submission logic is flawed: A failed job is just marked "pending". It should have a separate "failed_retry" state and a backoff delay before being re-queued.
 - [x] Handle `job_id` collisions: Using a millisecond timestamp as a job ID is not guaranteed to be unique under high load. Use a UUID or a database sequence.
 - [x] The server assumes all jobs are the same. Different transcoding tasks have different resource requirements. The scheduler should be aware of this.
-- [x] Time-Based Job Expiration: Automatically fail jobs that have been in the queue for too long without being picked up.
 - [x] The `/assign_job` endpoint is inefficient: It iterates all jobs every time. Use a dedicated queue or a database query to find the next pending job.
 - [x] The server should have a concept of job priority, settable at submission time.
 - [x] Add endpoint to manually re-submit a failed job.
@@ -30,7 +29,6 @@ This checklist contains 100 specific suggestions for improving the dispatch serv
 - [x] The server should handle the case where an engine takes a job but then crashes before completing it. A timeout mechanism is needed on the server side for assigned jobs.
 
 ## API & Endpoints
-- [x] Add an `/api/v1` prefix to all endpoints.
 - [x] Validate `Content-Type` header: The `/jobs/` endpoint should check that the `Content-Type` is `application/json`.
 - [x] Add a `/version` endpoint to return the server's build version and commit hash.
 - [x] Add a `/status` endpoint for a simple health check.
@@ -43,8 +41,6 @@ This checklist contains 100 specific suggestions for improving the dispatch serv
 
 ## Error Handling & Validation
 - [ ] Better JSON error handling: The `try-catch` blocks are good, but provide more specific error messages to the client about what was wrong with their JSON payload.
-- [ ] Centralize Response Creation: Create helper functions to generate standard JSON success and error responses to avoid code duplication.
-- [ ] API endpoints should return consistent JSON objects, even for errors.
 - [ ] The server doesn't validate the `output_url` provided by the engine. It should be checked for validity.
 - [ ] Handle exceptions from `std::to_string` or `stod`.
 - [ ] The `max_retries` value should be validated to be a non-negative integer.
@@ -63,8 +59,6 @@ This checklist contains 100 specific suggestions for improving the dispatch serv
 
 ## Performance & Scalability
 - [ ] Don't use `std::endl`: Replace `std::endl` with `\n` to avoid unnecessary buffer flushes, especially in logging.
-- [ ] Don't dump entire objects in responses: The `/jobs/` and `/engines/` endpoints dump the entire database. Implement pagination.
-- [ ] Add pagination to list endpoints: e.g., `/jobs?status=pending`.
 - [ ] Sort job list: The `/jobs/` endpoint should default to sorting by submission time.
 - [ ] Add filtering to list endpoints: e.g., `/jobs?status=pending`.
 - [ ] Add a proper thread pool for background tasks like cleaning up stale engines, instead of creating detached threads.
@@ -122,7 +116,6 @@ This checklist contains 100 specific suggestions for improving the dispatch serv
 ## REST API Design
 - [ ] The `/assign_job/` is a POST but doesn't create a resource. It should probably be a `GET` on a resource like `/queue/next_job`. This is a REST design issue.
 - [ ] Unnecessary JSON parsing: The `/assign_job/` endpoint parses a JSON body just to get the `engine_id`. This could be a query parameter.
-- [ ] The server should support conditional requests using `If-Match` or `If-Unmodified-Since` headers.
 - [ ] The server should return a `Retry-After` header when rate limiting a client.
 - [ ] The server should support chunked transfer encoding for large request/response bodies.
 - [ ] API documentation (Swagger/OpenAPI) should be auto-generated from the code or a spec file.
