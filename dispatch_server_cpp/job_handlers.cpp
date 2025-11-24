@@ -153,3 +153,27 @@ void JobStatusHandler::handle(const httplib::Request& req, httplib::Response& re
         res.set_content("Job not found", "text/plain");
     }
 }
+
+JobListHandler::JobListHandler(std::shared_ptr<AuthMiddleware> auth)
+    : auth_(auth) {}
+
+void JobListHandler::handle(const httplib::Request& req, httplib::Response& res) {
+    // 1. Authentication
+    if (!auth_->authenticate(req, res)) {
+        return;
+    }
+
+    // 2. Retrieve All Jobs
+    nlohmann::json all_jobs = nlohmann::json::array();
+    {
+        std::lock_guard<std::mutex> lock(state_mutex);
+        if (!jobs_db.empty()) {
+            for (auto const& [key, val] : jobs_db.items()) {
+                all_jobs.push_back(val);
+            }
+        }
+    }
+
+    // 3. Return Response
+    set_json_response(res, all_jobs, 200);
+}

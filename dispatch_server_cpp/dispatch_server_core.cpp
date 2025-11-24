@@ -410,30 +410,11 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
         job_status_handler->handle(req, res);
     });
 
+    auto job_list_handler = std::make_shared<JobListHandler>(auth);
+
     // Endpoint to list all jobs
-    svr.Get("/jobs/", [api_key](const httplib::Request& req, httplib::Response& res) {
-        if (api_key != "") {
-            if (req.get_header_value("X-API-Key") == "") {
-                res.status = 401;
-                res.set_content("Unauthorized: Missing 'X-API-Key' header.", "text/plain");
-                return;
-            }
-            if (req.get_header_value("X-API-Key") != api_key) {
-                res.status = 401;
-                res.set_content("Unauthorized", "text/plain");
-                return;
-            }
-        }
-        nlohmann::json all_jobs = nlohmann::json::array();
-        {
-            std::lock_guard<std::mutex> lock(state_mutex);
-            if (!jobs_db.empty()) {
-                for (auto const& [key, val] : jobs_db.items()) {
-                    all_jobs.push_back(val);
-                }
-            }
-        }
-        res.set_content(all_jobs.dump(), "application/json");
+    svr.Get("/jobs/", [job_list_handler](const httplib::Request& req, httplib::Response& res) {
+        job_list_handler->handle(req, res);
     });
 
     // Endpoint to list all engines

@@ -31,4 +31,14 @@ private:
     std::shared_ptr<AuthMiddleware> auth_;
 };
 
+// Handler for GET /jobs/ - List all jobs
+class JobListHandler : public IRequestHandler {
+public:
+    explicit JobListHandler(std::shared_ptr<AuthMiddleware> auth);
+    void handle(const httplib::Request& req, httplib::Response& res) override;
+    
+private:
+    std::shared_ptr<AuthMiddleware> auth_;
+};
+
 #endif  // JOB_HANDLERS_H

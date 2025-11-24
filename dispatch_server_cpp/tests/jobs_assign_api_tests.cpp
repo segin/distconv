@@ -140,6 +140,6 @@ TEST_F(ApiTest, AssignedJobIsNotReassigned) {
     ASSERT_EQ(res_assign->status, 200);
 
     // 4. Try to assign a job again
-    auto res_assign_again = client->Post("/assign_job/", admin_headers, nlohmann::json({}).dump(), "application/json");
+    auto res_assign_again = client->Post("/assign_job/", admin_headers, assign_payload.dump(), "application/json");
     ASSERT_EQ(res_assign_again->status, 204); // No Content, because the only job is assigned
 }

@@ -633,6 +633,7 @@ void setup_enhanced_system_endpoints(httplib::Server &svr, const std::string& ap
         }
     });
     
+    /*
     // Legacy: All jobs
     svr.Get("/jobs/", [api_key](const httplib::Request& req, httplib::Response& res) {
         if (!EnhancedEndpoints::validate_api_key(req, res, api_key)) return;
@@ -646,6 +647,7 @@ void setup_enhanced_system_endpoints(httplib::Server &svr, const std::string& ap
         }
         res.set_content(all_jobs.dump(), "application/json");
     });
+    */
     
     // Legacy: All engines
     svr.Get("/engines/", [api_key](const httplib::Request& req, httplib::Response& res) {
@@ -670,6 +672,27 @@ void setup_enhanced_system_endpoints(httplib::Server &svr, const std::string& ap
             if (!request_json.contains("engine_id") || !request_json["engine_id"].is_string()) {
                 res.status = 400;
                 res.set_content("Bad Request: 'engine_id' is missing or not a string.", "text/plain");
+                return;
+            }
+            
+            // Validate storage_capacity_gb if present
+            if (request_json.contains("storage_capacity_gb")) {
+                if (!request_json["storage_capacity_gb"].is_number()) {
+                    res.status = 400;
+                    res.set_content("Bad Request: 'storage_capacity_gb' must be a number.", "text/plain");
+                    return;
+                }
+                if (request_json["storage_capacity_gb"].get<double>() < 0) {
+                    res.status = 400;
+                    res.set_content("Bad Request: 'storage_capacity_gb' must be non-negative.", "text/plain");
+                    return;
+                }
+            }
+
+            // Validate can_stream if present
+            if (request_json.contains("can_stream") && !request_json["can_stream"].is_boolean()) {
+                res.status = 400;
+                res.set_content("Bad Request: 'can_stream' must be a boolean.", "text/plain");
                 return;
             }
             
@@ -707,6 +730,20 @@ void setup_enhanced_system_endpoints(httplib::Server &svr, const std::string& ap
         try {
             nlohmann::json request_json = nlohmann::json::parse(req.body);
             std::string engine_id = request_json["engine_id"];
+            
+            // Validate benchmark_time if present
+            if (request_json.contains("benchmark_time")) {
+                 if (!request_json["benchmark_time"].is_number()) {
+                    res.status = 400;
+                    res.set_content("Bad Request: 'benchmark_time' must be a number.", "text/plain");
+                    return;
+                }
+                if (request_json["benchmark_time"].get<double>() < 0) {
+                    res.status = 400;
+                    res.set_content("Bad Request: 'benchmark_time' must be non-negative.", "text/plain");
+                    return;
+                }
+            }
             
             {
                 std::lock_guard<std::mutex> lock(state_mutex);
@@ -756,6 +793,13 @@ void setup_enhanced_system_endpoints(httplib::Server &svr, const std::string& ap
             if (!engines_db.contains(engine_id)) {
                 res.status = 404;
                 res.set_content("Engine not found", "text/plain");
+                return;
+            }
+            
+            // Check if engine is busy
+            if (engines_db[engine_id].value("status", "idle") == "busy") {
+                res.status = 204;
+                res.set_content("Engine is busy", "text/plain");
                 return;
             }
             
