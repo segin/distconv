@@ -163,6 +163,18 @@ void load_state() {
             std::cout << "[load_state] Successfully loaded state: jobs=" << jobs_db.size() << ", engines=" << engines_db.size() << std::endl;
         } catch (const nlohmann::json::parse_error& e) {
             std::cerr << "[load_state] Error parsing persistent state file: " << e.what() << std::endl;
+            
+            // Rename corrupt file
+            auto now = std::chrono::system_clock::now();
+            auto timestamp = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
+            std::string backup_filename = PERSISTENT_STORAGE_FILE + ".corrupt." + std::to_string(timestamp);
+            
+            if (std::rename(PERSISTENT_STORAGE_FILE.c_str(), backup_filename.c_str()) == 0) {
+                std::cerr << "[load_state] Corrupt state file renamed to: " << backup_filename << std::endl;
+                std::cerr << "[load_state] Starting with empty state." << std::endl;
+            } else {
+                std::cerr << "[load_state] Failed to rename corrupt state file. Manual intervention required." << std::endl;
+            }
         }
         ifs.close();
     } else {
