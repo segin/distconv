@@ -189,7 +189,12 @@ bool SqliteJobRepository::job_exists(const std::string& job_id) {
     
     nlohmann::json result = execute_query("SELECT COUNT(*) as count FROM jobs WHERE job_id = '" + job_id + "'");
     if (!result.empty() && result[0].contains("count")) {
-        return std::stoi(result[0]["count"].get<std::string>()) > 0;
+        try {
+            return std::stoi(result[0]["count"].get<std::string>()) > 0;
+        } catch (const std::exception& e) {
+            std::cerr << "Error parsing job count: " << e.what() << std::endl;
+            return false;
+        }
     }
     return false;
 }
@@ -533,7 +538,12 @@ bool SqliteEngineRepository::engine_exists(const std::string& engine_id) {
     
     nlohmann::json result = execute_query("SELECT COUNT(*) as count FROM engines WHERE engine_id = '" + engine_id + "'");
     if (!result.empty() && result[0].contains("count")) {
-        return std::stoi(result[0]["count"].get<std::string>()) > 0;
+        try {
+            return std::stoi(result[0]["count"].get<std::string>()) > 0;
+        } catch (const std::exception& e) {
+            std::cerr << "Error parsing job count: " << e.what() << std::endl;
+            return false;
+        }
     }
     return false;
 }

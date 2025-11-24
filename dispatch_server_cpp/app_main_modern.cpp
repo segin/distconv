@@ -4,38 +4,37 @@
 #include <chrono>
 #include "dispatch_server_core.h"
 #include "repositories.h"
+#include "server_config.h"
 
 int main(int argc, char* argv[]) {
     std::cout << "Modern Dispatch Server Application Starting..." << std::endl;
     
     // Parse command line arguments
-    std::string api_key = "";
-    std::string database_path = "dispatch_server.db";
-    int port = 8080;
+    ServerConfig config = parse_arguments(argc, argv);
     
-    for (int i = 1; i < argc; ++i) {
-        std::string arg = argv[i];
-        if (arg == "--api-key" && i + 1 < argc) {
-            api_key = argv[++i];
-        } else if (arg == "--database" && i + 1 < argc) {
-            database_path = argv[++i];
-        } else if (arg == "--port" && i + 1 < argc) {
-            port = std::stoi(argv[++i]);
-        } else if (arg == "--help") {
-            std::cout << "Usage: " << argv[0] << " [OPTIONS]" << std::endl;
-            std::cout << "Options:" << std::endl;
-            std::cout << "  --api-key KEY     API key for authentication" << std::endl;
-            std::cout << "  --database PATH   SQLite database path (default: dispatch_server.db)" << std::endl;
-            std::cout << "  --port PORT       Server port (default: 8080)" << std::endl;
-            std::cout << "  --help            Show this help message" << std::endl;
-            return 0;
-        }
+    if (config.parse_error) {
+        std::cerr << "Error: " << config.error_message << std::endl;
+        return 1;
     }
     
-    if (api_key.empty()) {
+    if (config.show_help) {
+        std::cout << "Usage: " << argv[0] << " [OPTIONS]" << std::endl;
+        std::cout << "Options:" << std::endl;
+        std::cout << "  --api-key KEY     API key for authentication" << std::endl;
+        std::cout << "  --database PATH   SQLite database path (default: dispatch_server.db)" << std::endl;
+        std::cout << "  --port PORT       Server port (default: 8080)" << std::endl;
+        std::cout << "  --help            Show this help message" << std::endl;
+        return 0;
+    }
+    
+    if (config.api_key.empty()) {
         std::cerr << "Error: API key is required. Use --api-key to specify." << std::endl;
         return 1;
     }
+    
+    std::string database_path = config.database_path;
+    int port = config.port;
+    std::string api_key = config.api_key;
     
     try {
         // Create repositories with dependency injection
