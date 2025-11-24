@@ -41,3 +41,17 @@ void set_error_response(httplib::Response& res, const std::string& message, int 
     res.status = status;
     res.set_content(message, "text/plain");
 }
+
+void set_json_error_response(httplib::Response& res, const std::string& error_message, 
+                             const std::string& error_type, int status,
+                             const std::string& details) {
+    res.status = status;
+    nlohmann::json error_obj;
+    error_obj["error"] = error_message;
+    error_obj["error_type"] = error_type;
+    if (!details.empty()) {
+        error_obj["details"] = details;
+    }
+    error_obj["status"] = status;
+    res.set_content(error_obj.dump(), "application/json");
+}

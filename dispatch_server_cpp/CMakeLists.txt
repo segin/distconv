@@ -25,6 +25,8 @@ add_library(dispatch_server_core STATIC
     engine_handlers.cpp engine_handlers.h
     job_action_handlers.cpp job_action_handlers.h
     assignment_handler.cpp assignment_handler.h
+    job_update_handler.cpp job_update_handler.h
+    storage_pool_handler.cpp storage_pool_handler.h
     dispatch_server_constants.h
 )
 
@@ -55,7 +57,7 @@ target_include_directories(dispatch_server_modern PRIVATE
 )
 
 # Unit Tests
-add_executable(dispatch_server_tests tests/main.cpp tests/jobs_post_api_tests.cpp tests/jobs_get_api_tests.cpp tests/engines_api_tests.cpp tests/jobs_status_update_tests.cpp tests/job_resubmission_tests.cpp tests/scheduling_logic_tests.cpp tests/persistent_storage_tests.cpp tests/jobs_assign_api_tests.cpp tests/job_state_transition_tests.cpp tests/command_line_tests.cpp tests/thread_safety_tests.cpp tests/api_test_definitions.cpp tests/json_parsing_edge_case_tests.cpp tests/final_edge_case_tests.cpp tests/thread_safety_improvements_tests.cpp tests/job_handlers_tests.cpp tests/engine_handlers_tests.cpp)
+add_executable(dispatch_server_tests tests/main.cpp tests/jobs_post_api_tests.cpp tests/jobs_get_api_tests.cpp tests/engines_api_tests.cpp tests/jobs_status_update_tests.cpp tests/job_resubmission_tests.cpp tests/scheduling_logic_tests.cpp tests/persistent_storage_tests.cpp tests/jobs_assign_api_tests.cpp tests/job_state_transition_tests.cpp tests/command_line_tests.cpp tests/thread_safety_tests.cpp tests/api_test_definitions.cpp tests/json_parsing_edge_case_tests.cpp tests/final_edge_case_tests.cpp tests/thread_safety_improvements_tests.cpp tests/job_handlers_tests.cpp tests/engine_handlers_tests.cpp tests/job_management_tests.cpp tests/api_endpoint_tests.cpp)
 target_link_libraries(dispatch_server_tests dispatch_server_core gtest_main)
 target_include_directories(dispatch_server_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}

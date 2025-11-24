@@ -16,6 +16,8 @@
 #include "engine_handlers.h"
 #include "job_action_handlers.h"
 #include "assignment_handler.h"
+#include "job_update_handler.h"
+#include "storage_pool_handler.h"
 #include "api_middleware.h"
 #include "enhanced_endpoints.h"
 
@@ -232,6 +234,8 @@ void DispatchServer::background_worker() {
         try {
             cleanup_stale_engines();
             handle_job_timeouts();
+            requeue_failed_jobs();
+            expire_pending_jobs();
             
             // Sleep between cleanup iterations
             std::this_thread::sleep_for(BACKGROUND_WORKER_INTERVAL);
@@ -242,6 +246,47 @@ void DispatchServer::background_worker() {
 }
 
 void DispatchServer::cleanup_stale_engines() {
+    // Use repository if available (preferred), otherwise legacy
+    if (!use_legacy_storage_ && engine_repo_) {
+        auto engines = engine_repo_->get_all_engines();
+        auto now = std::chrono::system_clock::now();
+        
+        for (const auto& engine : engines) {
+            if (engine.contains("last_heartbeat")) {
+                auto last_heartbeat = std::chrono::system_clock::time_point{
+                    std::chrono::milliseconds{engine["last_heartbeat"]}
+                };
+                auto duration = std::chrono::duration_cast<std::chrono::minutes>(now - last_heartbeat);
+                
+                if (duration > ENGINE_HEARTBEAT_TIMEOUT) {
+                    std::string engine_id = engine["engine_id"];
+                    std::cout << "Removing stale engine: " << engine_id << std::endl;
+                    
+                    // Check if this engine had a job assigned
+                    if (engine.contains("current_job_id") && !engine["current_job_id"].get<std::string>().empty()) {
+                        std::string job_id = engine["current_job_id"];
+                        std::cout << "Re-queuing job " << job_id << " from stale engine " << engine_id << std::endl;
+                        
+                        // Re-queue the job
+                        if (job_repo_->job_exists(job_id)) {
+                            nlohmann::json job = job_repo_->get_job(job_id);
+                            // Only re-queue if it was still marked as assigned/processing
+                            if (job["status"] == "assigned" || job["status"] == "processing") {
+                                job["status"] = "pending";
+                                job["assigned_engine"] = nullptr;
+                                job["retries"] = job.value("retries", 0) + 1; // Count as a retry since it failed to complete
+                                job_repo_->save_job(job_id, job);
+                            }
+                        }
+                    }
+                    
+                    engine_repo_->remove_engine(engine_id);
+                }
+            }
+        }
+        return;
+    }
+
     if (use_legacy_storage_) {
         std::lock_guard<std::mutex> lock(state_mutex);
         auto now = std::chrono::system_clock::now();
@@ -255,6 +300,17 @@ void DispatchServer::cleanup_stale_engines() {
                 
                 if (duration > ENGINE_HEARTBEAT_TIMEOUT) {
                     std::cout << "Removing stale engine: " << it.key() << std::endl;
+                    
+                    // Legacy: Re-queue job if assigned
+                    if (it.value().contains("current_job_id") && !it.value()["current_job_id"].get<std::string>().empty()) {
+                         std::string job_id = it.value()["current_job_id"];
+                         if (jobs_db.contains(job_id)) {
+                             jobs_db[job_id]["status"] = "pending";
+                             jobs_db[job_id]["assigned_engine"] = nullptr;
+                             jobs_db[job_id]["retries"] = jobs_db[job_id].value("retries", 0) + 1;
+                         }
+                    }
+
                     it = engines_db.erase(it);
                     async_save_state();
                 } else {
@@ -268,6 +324,68 @@ void DispatchServer::cleanup_stale_engines() {
 }
 
 void DispatchServer::handle_job_timeouts() {
+    // Use repository if available
+    if (!use_legacy_storage_ && job_repo_) {
+        // We need to find assigned jobs that haven't been updated in a while.
+        // Since we don't have a direct query for this in the interface yet, we might need to iterate or add a method.
+        // For now, let's iterate all jobs (inefficient but works for now) or rely on the engine heartbeat timeout to catch crashes.
+        // Actually, job timeout is different from engine timeout. A job might be stuck processing.
+        // Let's iterate for now, but in a real app we'd add `get_stuck_jobs` to the repo.
+        
+        auto jobs = job_repo_->get_all_jobs();
+        auto now = std::chrono::system_clock::now();
+        
+        for (auto& job : jobs) {
+            if (job["status"] == "assigned" || job["status"] == "processing") {
+                if (job.contains("updated_at")) {
+                    auto updated_at = std::chrono::system_clock::time_point{
+                        std::chrono::milliseconds{job["updated_at"]}
+                    };
+                    auto duration = std::chrono::duration_cast<std::chrono::minutes>(now - updated_at);
+                    
+                    if (duration > JOB_TIMEOUT) {
+                        std::string job_id = job["job_id"];
+                        std::cout << "Job " << job_id << " timed out, marking as failed" << std::endl;
+                        
+                        // Mark as failed/retry
+                        int retries = job.value("retries", 0);
+                        int max_retries = job.value("max_retries", 3);
+                        
+                        if (retries < max_retries) {
+                            // Backoff: 2^retries * 30 seconds
+                            int backoff_seconds = (1 << retries) * 30;
+                            auto retry_after = now + std::chrono::seconds(backoff_seconds);
+                            int64_t retry_after_ms = std::chrono::duration_cast<std::chrono::milliseconds>(retry_after.time_since_epoch()).count();
+                            
+                            job["status"] = "failed_retry";
+                            job["retry_after"] = retry_after_ms;
+                            job["retries"] = retries + 1;
+                        } else {
+                            job["status"] = "failed_permanently";
+                            job["error_message"] = "Job timed out and exceeded max retries";
+                        }
+                        
+                        job["updated_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+                        
+                        // Free up the engine
+                        if (job.contains("assigned_engine") && !job["assigned_engine"].is_null()) {
+                            std::string engine_id = job["assigned_engine"];
+                            if (engine_repo_->engine_exists(engine_id)) {
+                                nlohmann::json engine = engine_repo_->get_engine(engine_id);
+                                engine["status"] = "idle";
+                                engine["current_job_id"] = "";
+                                engine_repo_->save_engine(engine_id, engine);
+                            }
+                        }
+                        
+                        job_repo_->save_job(job_id, job);
+                    }
+                }
+            }
+        }
+        return;
+    }
+
     if (use_legacy_storage_) {
         std::lock_guard<std::mutex> lock(state_mutex);
         auto now = std::chrono::system_clock::now();
@@ -297,6 +415,44 @@ void DispatchServer::handle_job_timeouts() {
                     async_save_state();
                 }
             }
+        }
+    }
+}
+
+void DispatchServer::requeue_failed_jobs() {
+    if (!use_legacy_storage_ && job_repo_) {
+        // Iterate jobs to find 'failed_retry' ones that are ready
+        // Ideally this should be a repo method `get_ready_to_retry_jobs()`
+        auto jobs = job_repo_->get_all_jobs();
+        auto now = std::chrono::system_clock::now();
+        int64_t now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+        
+        for (auto& job : jobs) {
+            if (job.value("status", "") == "failed_retry") {
+                int64_t retry_after = job.value("retry_after", 0LL);
+                if (now_ms >= retry_after) {
+                    std::cout << "Re-queuing job " << job["job_id"] << " for retry." << std::endl;
+                    job["status"] = "pending";
+                    job["updated_at"] = now_ms;
+                    job_repo_->save_job(job["job_id"], job);
+                }
+            }
+        }
+    }
+}
+
+void DispatchServer::expire_pending_jobs() {
+    if (!use_legacy_storage_ && job_repo_) {
+        // 24 hours expiration for pending jobs
+        int64_t timeout_seconds = 24 * 3600; 
+        auto stale_job_ids = job_repo_->get_stale_pending_jobs(timeout_seconds);
+        
+        for (const auto& job_id : stale_job_ids) {
+            std::cout << "Expiring stale pending job " << job_id << std::endl;
+            nlohmann::json job = job_repo_->get_job(job_id);
+            job["status"] = "expired";
+            job["error_message"] = "Job expired after being pending for too long";
+            job_repo_->save_job(job_id, job);
         }
     }
 }
@@ -350,6 +506,37 @@ void DispatchServer::set_api_key(const std::string& key) {
     } else {
         setup_endpoints();
     }
+}
+
+
+
+void DispatchServer::setup_storage_endpoints() {
+    // Create storage repository (in-memory for now)
+    static auto storage_repo = std::make_shared<InMemoryStorageRepository>();
+    
+    // POST /storage_pools/ - Create storage pool
+    auto storage_create_handler = std::make_shared<StoragePoolCreateHandler>(std::make_shared<AuthMiddleware>(api_key_), storage_repo);
+    svr.Post("/storage_pools/", [storage_create_handler](const httplib::Request& req, httplib::Response& res) {
+        storage_create_handler->handle(req, res);
+    });
+
+    // GET /storage_pools/ - List storage pools
+    auto storage_list_handler = std::make_shared<StoragePoolListHandler>(std::make_shared<AuthMiddleware>(api_key_), storage_repo);
+    svr.Get("/storage_pools/", [storage_list_handler](const httplib::Request& req, httplib::Response& res) {
+        storage_list_handler->handle(req, res);
+    });
+
+    // PUT /storage_pools/{id} - Update storage pool
+    auto storage_update_handler = std::make_shared<StoragePoolUpdateHandler>(std::make_shared<AuthMiddleware>(api_key_), storage_repo);
+    svr.Put(R"(/storage_pools/(.+))", [storage_update_handler](const httplib::Request& req, httplib::Response& res) {
+        storage_update_handler->handle(req, res);
+    });
+
+    // DELETE /storage_pools/{id} - Delete storage pool
+    auto storage_delete_handler = std::make_shared<StoragePoolDeleteHandler>(std::make_shared<AuthMiddleware>(api_key_), storage_repo);
+    svr.Delete(R"(/storage_pools/(.+))", [storage_delete_handler](const httplib::Request& req, httplib::Response& res) {
+        storage_delete_handler->handle(req, res);
+    });
 }
 
 void DispatchServer::start(int port, bool block) {
@@ -457,7 +644,16 @@ void setup_endpoints(httplib::Server &svr, const std::string& api_key) {
 
 
     // Endpoint to assign a job (for engines to poll)
-    auto job_assignment_handler = std::make_shared<JobAssignmentHandler>(auth);
+    // Note: This is legacy code, but we need to update it to use the new constructor
+    // For now, we need to get the job_repo from global variables
+    extern nlohmann::json jobs_db;
+    extern std::mutex state_mutex;
+    auto legacy_job_repo = std::make_shared<InMemoryJobRepository>();
+    // Copy jobs_db into the repository
+    for (const auto& [id, job] : jobs_db.items()) {
+        legacy_job_repo->save_job(id, job);
+    }
+    auto job_assignment_handler = std::make_shared<JobAssignmentHandler>(auth, legacy_job_repo);
     svr.Post("/assign_job/", [job_assignment_handler](const httplib::Request& req, httplib::Response& res) {
         job_assignment_handler->handle(req, res);
     });
@@ -510,6 +706,7 @@ void DispatchServer::setup_endpoints() {
     setup_system_endpoints();
     setup_job_endpoints();
     setup_engine_endpoints();
+    setup_storage_endpoints();
 }
 
 void DispatchServer::setup_system_endpoints() {
@@ -676,7 +873,46 @@ void DispatchServer::setup_job_endpoints() {
                 res.set_content("Server error: " + std::string(e.what()), "text/plain");
             }
         }));
+
+    // POST /jobs/{job_id}/retry - Manually retry a failed job
+    auto job_retry_handler = std::make_shared<JobRetryHandler>(std::make_shared<AuthMiddleware>(api_key_));
+    svr.Post(R"(/jobs/(.+)/retry)", [job_retry_handler](const httplib::Request& req, httplib::Response& res) {
+        job_retry_handler->handle(req, res);
+    });
+
+    // POST /jobs/{job_id}/cancel - Cancel a job
+    auto job_cancel_handler = std::make_shared<JobCancelHandler>(std::make_shared<AuthMiddleware>(api_key_));
+    svr.Post(R"(/jobs/(.+)/cancel)", [job_cancel_handler](const httplib::Request& req, httplib::Response& res) {
+        job_cancel_handler->handle(req, res);
+    });
 }
+
+
+    // New endpoint registrations
+    
+    // PUT /jobs/{job_id} - Update job parameters
+    auto job_update_handler = std::make_shared<JobUpdateHandler>(std::make_shared<AuthMiddleware>(api_key_), job_repo_);
+    svr.Put(R"(/jobs/(.+))", [job_update_handler](const httplib::Request& req, httplib::Response& res) {
+        job_update_handler->handle(req, res);
+    });
+
+    // PUT /jobs/{job_id}/status - Un ified status update
+    auto job_unified_status_handler = std::make_shared<JobUnifiedStatusHandler>(std::make_shared<AuthMiddleware>(api_key_), job_repo_);
+    svr.Put(R"(/jobs/(.+)/status)", [job_unified_status_handler](const httplib::Request& req, httplib::Response& res) {
+        job_unified_status_handler->handle(req, res);
+    });
+
+    // POST /jobs/{job_id}/progress - Report job progress
+    auto job_progress_handler = std::make_shared<JobProgressHandler>(std::make_shared<AuthMiddleware>(api_key_), job_repo_);
+    svr.Post(R"(/jobs/(.+)/progress)", [job_progress_handler](const httplib::Request& req, httplib::Response& res) {
+        job_progress_handler->handle(req, res);
+    });
+
+    // GET /engines/{engine_id}/jobs - Get jobs for a specific engine
+    auto engine_jobs_handler = std::make_shared<EngineJobsHandler>(std::make_shared<AuthMiddleware>(api_key_), job_repo_);
+    svr.Get(R"(/engines/(.+)/jobs)", [engine_jobs_handler](const httplib::Request& req, httplib::Response& res) {
+        engine_jobs_handler->handle(req, res);
+    });
 
 void DispatchServer::setup_engine_endpoints() {
     // POST /engines/heartbeat - Engine registration/heartbeat

@@ -42,6 +42,8 @@ struct Job {
     std::chrono::system_clock::time_point created_at;
     std::chrono::system_clock::time_point updated_at;
     int priority = 0; // 0=normal, 1=high, 2=urgent
+    std::chrono::system_clock::time_point retry_after;
+    nlohmann::json resource_requirements;
     
     nlohmann::json to_json() const;
     static Job from_json(const nlohmann::json& j);
@@ -56,6 +58,7 @@ struct Engine {
     int storage_capacity_gb;
     std::chrono::system_clock::time_point last_heartbeat;
     std::string current_job_id;
+    nlohmann::json resources;
     
     nlohmann::json to_json() const;
     static Engine from_json(const nlohmann::json& j);
@@ -99,12 +102,15 @@ private:
     void setup_endpoints();
     void setup_job_endpoints();
     void setup_engine_endpoints();
+    void setup_storage_endpoints();
     void setup_system_endpoints();
     
     // Background processing
     void background_worker();
     void cleanup_stale_engines();
     void handle_job_timeouts();
+    void requeue_failed_jobs();
+    void expire_pending_jobs();
     void async_save_state();
     
     // Thread-safe job operations

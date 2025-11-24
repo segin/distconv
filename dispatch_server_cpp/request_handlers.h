@@ -29,5 +29,8 @@ void set_json_response(httplib::Response& res, const nlohmann::json& data,
                        int status = 200);
 void set_error_response(httplib::Response& res, const std::string& message, 
                         int status = 400);
+void set_json_error_response(httplib::Response& res, const std::string& error_message,
+                             const std::string& error_type, int status,
+                             const std::string& details = "");
 
 #endif  // REQUEST_HANDLERS_H

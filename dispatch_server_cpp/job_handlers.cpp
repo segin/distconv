@@ -100,6 +100,15 @@ bool JobSubmissionHandler::validate_job_input(const nlohmann::json& input,
         }
     }
     
+    // Validate priority if present
+    if (input.contains("priority")) {
+        if (!input["priority"].is_number_integer()) {
+             set_error_response(res, 
+                "Bad Request: 'priority' must be an integer.", 400);
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -121,6 +130,7 @@ nlohmann::json JobSubmissionHandler::create_job(const nlohmann::json& input) {
     job["retries"] = 0;
     job["max_retries"] = input.value("max_retries", DEFAULT_MAX_RETRIES);
     job["priority"] = input.value("priority", PRIORITY_NORMAL);
+    job["resource_requirements"] = input.value("resource_requirements", nlohmann::json::object());
     job["created_at"] = now_ms;
     job["updated_at"] = now_ms;
     
@@ -176,4 +186,84 @@ void JobListHandler::handle(const httplib::Request& req, httplib::Response& res)
 
     // 3. Return Response
     set_json_response(res, all_jobs, 200);
+}
+
+// ==================== JobRetryHandler ====================
+
+JobRetryHandler::JobRetryHandler(std::shared_ptr<AuthMiddleware> auth)
+    : auth_(auth) {}
+
+void JobRetryHandler::handle(const httplib::Request& req, httplib::Response& res) {
+    if (!auth_->authenticate(req, res)) return;
+
+    if (req.matches.size() < 2) {
+        set_error_response(res, "Internal Server Error: Job ID not found in path", 500);
+        return;
+    }
+    std::string job_id = req.matches[1];
+
+    std::lock_guard<std::mutex> lock(state_mutex);
+    if (jobs_db.contains(job_id)) {
+        // Only allow retry if failed or failed_permanently or failed_retry
+        std::string status = jobs_db[job_id]["status"];
+        if (status == "failed" || status == "failed_permanently" || status == "failed_retry" || status == "cancelled") {
+            jobs_db[job_id]["status"] = "pending";
+            jobs_db[job_id]["retries"] = 0; // Reset retries on manual retry
+            jobs_db[job_id]["assigned_engine"] = nullptr;
+            jobs_db[job_id]["updated_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::system_clock::now().time_since_epoch()).count();
+            
+            save_state_unlocked();
+            set_json_response(res, jobs_db[job_id], 200);
+        } else {
+            set_error_response(res, "Job is not in a failed or cancelled state", 400);
+        }
+    } else {
+        res.status = 404;
+        res.set_content("Job not found", "text/plain");
+    }
+}
+
+// ==================== JobCancelHandler ====================
+
+JobCancelHandler::JobCancelHandler(std::shared_ptr<AuthMiddleware> auth)
+    : auth_(auth) {}
+
+void JobCancelHandler::handle(const httplib::Request& req, httplib::Response& res) {
+    if (!auth_->authenticate(req, res)) return;
+
+    if (req.matches.size() < 2) {
+        set_error_response(res, "Internal Server Error: Job ID not found in path", 500);
+        return;
+    }
+    std::string job_id = req.matches[1];
+
+    std::lock_guard<std::mutex> lock(state_mutex);
+    if (jobs_db.contains(job_id)) {
+        std::string status = jobs_db[job_id]["status"];
+        // Can cancel pending, assigned, processing, failed_retry
+        if (status != "completed" && status != "failed_permanently" && status != "cancelled") {
+            jobs_db[job_id]["status"] = "cancelled";
+            jobs_db[job_id]["updated_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::system_clock::now().time_since_epoch()).count();
+            
+            // If assigned, free the engine
+            if (!jobs_db[job_id]["assigned_engine"].is_null()) {
+                std::string engine_id = jobs_db[job_id]["assigned_engine"];
+                if (engines_db.contains(engine_id)) {
+                    engines_db[engine_id]["status"] = "idle";
+                    engines_db[engine_id]["current_job_id"] = "";
+                }
+                jobs_db[job_id]["assigned_engine"] = nullptr;
+            }
+            
+            save_state_unlocked();
+            set_json_response(res, jobs_db[job_id], 200);
+        } else {
+            set_error_response(res, "Job cannot be cancelled in current state: " + status, 400);
+        }
+    } else {
+        res.status = 404;
+        res.set_content("Job not found", "text/plain");
+    }
 }

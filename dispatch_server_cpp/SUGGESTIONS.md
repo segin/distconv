@@ -18,16 +18,16 @@ This checklist contains 100 specific suggestions for improving the dispatch serv
 - [ ] Eliminate Global State: Refactor to remove global variables like `API_KEY`, `jobs_db`, and `engines_db`. Pass them as dependencies (e.g., in a context/application object).
 
 ## Job Management & Scheduling
-- [ ] Improve Job Assignment Logic: The current logic just picks the first pending job and assigns it to a complexly-chosen engine. Improve this by considering job priority, job size, and engine load.
-- [ ] Job re-submission logic is flawed: A failed job is just marked "pending". It should have a separate "failed_retry" state and a backoff delay before being re-queued.
-- [ ] Handle `job_id` collisions: Using a millisecond timestamp as a job ID is not guaranteed to be unique under high load. Use a UUID or a database sequence.
-- [ ] The server assumes all jobs are the same. Different transcoding tasks have different resource requirements. The scheduler should be aware of this.
-- [ ] Time-Based Job Expiration: Automatically fail jobs that have been in the queue for too long without being picked up.
-- [ ] The `/assign_job` endpoint is inefficient: It iterates all jobs every time. Use a dedicated queue or a database query to find the next pending job.
-- [ ] The server should have a concept of job priority, settable at submission time.
-- [ ] Add endpoint to manually re-submit a failed job.
-- [ ] Add endpoint to cancel a pending or assigned job.
-- [ ] The server should handle the case where an engine takes a job but then crashes before completing it. A timeout mechanism is needed on the server side for assigned jobs.
+- [x] Improve Job Assignment Logic: The current logic just picks the first pending job and assigns it to a complexly-chosen engine. Improve this by considering job priority, job size, and engine load.
+- [x] Job re-submission logic is flawed: A failed job is just marked "pending". It should have a separate "failed_retry" state and a backoff delay before being re-queued.
+- [x] Handle `job_id` collisions: Using a millisecond timestamp as a job ID is not guaranteed to be unique under high load. Use a UUID or a database sequence.
+- [x] The server assumes all jobs are the same. Different transcoding tasks have different resource requirements. The scheduler should be aware of this.
+- [x] Time-Based Job Expiration: Automatically fail jobs that have been in the queue for too long without being picked up.
+- [x] The `/assign_job` endpoint is inefficient: It iterates all jobs every time. Use a dedicated queue or a database query to find the next pending job.
+- [x] The server should have a concept of job priority, settable at submission time.
+- [x] Add endpoint to manually re-submit a failed job.
+- [x] Add endpoint to cancel a pending or assigned job.
+- [x] The server should handle the case where an engine takes a job but then crashes before completing it. A timeout mechanism is needed on the server side for assigned jobs.
 
 ## API & Endpoints
 - [x] Add an `/api/v1` prefix to all endpoints.
@@ -35,11 +35,11 @@ This checklist contains 100 specific suggestions for improving the dispatch serv
 - [x] Add a `/version` endpoint to return the server's build version and commit hash.
 - [x] Add a `/status` endpoint for a simple health check.
 - [x] Endpoint for engine de-registration: Add an endpoint for an engine to signal it's shutting down, so the server can remove it from the pool.
-- [ ] Add endpoint to update a job's parameters after submission.
-- [ ] Add endpoint to get a list of jobs assigned to a specific engine.
-- [ ] The `/jobs/{id}/complete` and `/fail` endpoints should probably be a single `/jobs/{id}/status` endpoint using `PUT` or `PATCH`.
-- [ ] Add mechanism for engine to report progress on a job. Add a `/jobs/{id}/progress` endpoint.
-- [ ] The storage pool endpoint is a placeholder. It should be implemented to allow adding, removing, and querying storage locations.
+- [x] Add endpoint to update a job's parameters after submission.
+- [x] Add endpoint to get a list of jobs assigned to a specific engine.
+- [x] The `/jobs/{id}/complete` and `/fail` endpoints should probably be a single `/jobs/{id}/status` endpoint using `PUT` or `PATCH`.
+- [x] Add mechanism for engine to report progress on a job. Add a `/jobs/{id}/progress` endpoint.
+- [x] The storage pool endpoint is a placeholder. It should be implemented to allow adding, removing, and querying storage locations.
 
 ## Error Handling & Validation
 - [ ] Better JSON error handling: The `try-catch` blocks are good, but provide more specific error messages to the client about what was wrong with their JSON payload.

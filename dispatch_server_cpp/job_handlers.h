@@ -41,4 +41,24 @@ private:
     std::shared_ptr<AuthMiddleware> auth_;
 };
 
+// Handler for POST /jobs/{id}/retry
+class JobRetryHandler : public IRequestHandler {
+public:
+    explicit JobRetryHandler(std::shared_ptr<AuthMiddleware> auth);
+    void handle(const httplib::Request& req, httplib::Response& res) override;
+    
+private:
+    std::shared_ptr<AuthMiddleware> auth_;
+};
+
+// Handler for POST /jobs/{id}/cancel
+class JobCancelHandler : public IRequestHandler {
+public:
+    explicit JobCancelHandler(std::shared_ptr<AuthMiddleware> auth);
+    void handle(const httplib::Request& req, httplib::Response& res) override;
+    
+private:
+    std::shared_ptr<AuthMiddleware> auth_;
+};
+
 #endif  // JOB_HANDLERS_H
