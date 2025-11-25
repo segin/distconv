@@ -1,6 +1,6 @@
 # Action Plan: Distributed Video Transcoding System
 
-This document outlines the implementation plan for the first 40 architectural and design improvements identified for the project.
+This document outlines the implementation plan for the first 39 architectural and design improvements identified for the project.
 
 ## I. Architecture & Design
 
@@ -24,6 +24,15 @@ This document outlines the implementation plan for the first 40 architectural an
     - [ ] Robustness
         - [ ] Implement acknowledgement mechanism (ACK/NACK).
         - [ ] Design Dead Letter Queue (DLQ) handling (refer to Item 61).
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Introduce a Message Queue implementation.
+            - [ ] Unit Test: Mock external dependencies for Introduce a Message Queue.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
+            - [ ] Unit Test: Verify Producer/Consumer message format compatibility.
+            - [ ] Unit Test: Test behavior when queue is full or empty.
+            - [ ] Unit Test: Verify ACK/NACK logic.
 
 - [ ] **2. Service-Oriented Architecture**
     - [ ] Analysis
@@ -35,6 +44,14 @@ This document outlines the implementation plan for the first 40 architectural an
     - [ ] Interface definition
         - [ ] Define strict C++ interfaces between these services.
         - [ ] Ensure no direct database access across service boundaries.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Service-Oriented Architecture implementation.
+            - [ ] Unit Test: Mock external dependencies for Service-Oriented Architecture.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
+            - [ ] Unit Test: Verify service interface isolation.
+            - [ ] Unit Test: Test interaction between decoupled components using mocks.
 
 - [ ] **3. Plugin-Based Engine**
     - [ ] Architecture Design
@@ -45,6 +62,15 @@ This document outlines the implementation plan for the first 40 architectural an
         - [ ] Implement dynamic loading mechanism (e.g., `dlopen` or shared libraries) or compile-time registration.
     - [ ] Extension
         - [ ] Create example plugin for a different tool (e.g., Handbrake CLI wrapper or hardware-specific SDK).
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Plugin-Based Engine implementation.
+            - [ ] Unit Test: Mock external dependencies for Plugin-Based Engine.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
+            - [ ] Unit Test: Verify command generation for external processes.
+            - [ ] Unit Test: Test process lifecycle management (start, stop, kill).
+            - [ ] Unit Test: Verify parsing of output/progress from external tools.
 
 - [ ] **4. Abstract Storage Layer**
     - [ ] Interface Design
@@ -55,6 +81,14 @@ This document outlines the implementation plan for the first 40 architectural an
     - [ ] Integration
         - [ ] Update Dispatch Server to use `StorageProvider` factory based on configuration.
         - [ ] Ensure atomic writes where possible (upload to temp, then rename/commit).
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Abstract Storage Layer implementation.
+            - [ ] Unit Test: Mock external dependencies for Abstract Storage Layer.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
+            - [ ] Unit Test: Verify read/write operations against mock storage.
+            - [ ] Unit Test: Test handling of storage quota or permission errors.
 
 - [ ] **5. State Machine Implementation**
     - [ ] Design
@@ -66,20 +100,14 @@ This document outlines the implementation plan for the first 40 architectural an
         - [ ] Add side-effect hooks (e.g., "OnEnterFailed" -> increment retry count).
     - [ ] Persistence
         - [ ] Ensure state transitions are persisted to SQLite immediately.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of State Machine Implementation implementation.
+            - [ ] Unit Test: Mock external dependencies for State Machine Implementation.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
 
-- [ ] **6. Adopt gRPC**
-    - [ ] Definition
-        - [ ] Define `.proto` files for Job and Engine services.
-        - [ ] Define messages for `JobRequest`, `JobStatus`, `Heartbeat`, etc.
-    - [ ] Build System integration
-        - [ ] Add `protoc` and gRPC C++ plugin to CMake.
-    - [ ] Implementation
-        - [ ] Generate C++ stubs.
-        - [ ] Replace internal REST client/server logic with gRPC calls.
-    - [ ] Migration
-        - [ ] Maintain dual-stack (REST + gRPC) during transition if necessary.
-
-- [ ] **7. Configuration Service**
+- [ ] **6. Configuration Service**
     - [ ] Requirement gathering
         - [ ] Identify all configuration parameters (DB paths, timeouts, thresholds).
     - [ ] Design
@@ -88,8 +116,16 @@ This document outlines the implementation plan for the first 40 architectural an
         - [ ] Create `ConfigManager` singleton/dependency.
         - [ ] Implement hot-reloading of configuration where safe.
         - [ ] Remove all hardcoded constants and command-line parsing logic for deep config.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Configuration Service implementation.
+            - [ ] Unit Test: Mock external dependencies for Configuration Service.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
+            - [ ] Unit Test: Verify service interface isolation.
+            - [ ] Unit Test: Test interaction between decoupled components using mocks.
 
-- [ ] **8. Separate API Gateway**
+- [ ] **7. Separate API Gateway**
     - [ ] Design
         - [ ] Design architecture where Dispatch Server is internal-only.
         - [ ] Select Gateway technology (Nginx, Traefik, or custom C++ layer).
@@ -97,8 +133,17 @@ This document outlines the implementation plan for the first 40 architectural an
         - [ ] Configure Gateway for Authentication termination.
         - [ ] Configure Rate Limiting at the Gateway.
         - [ ] Route `/api/v1/*` to Dispatch Server.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Separate API Gateway implementation.
+            - [ ] Unit Test: Mock external dependencies for Separate API Gateway.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
+            - [ ] Unit Test: Verify request validation and parsing.
+            - [ ] Unit Test: Test response formatting and status codes.
+            - [ ] Unit Test: Verify authentication/authorization logic.
 
-- [ ] **9. Event-Driven Architecture**
+- [ ] **8. Event-Driven Architecture**
     - [ ] Event Definitions
         - [ ] Define schema for events: `JobCreated`, `JobAssigned`, `TranscodingStarted`, `ProgressUpdated`, `JobFinished`.
     - [ ] Infrastructure
@@ -106,40 +151,78 @@ This document outlines the implementation plan for the first 40 architectural an
     - [ ] Refactoring
         - [ ] Change `JobScheduler` to subscribe to `JobCreated` and `EngineHeartbeat` events.
         - [ ] Change `NotificationService` (Webhooks) to subscribe to status change events.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Event-Driven Architecture implementation.
+            - [ ] Unit Test: Mock external dependencies for Event-Driven Architecture.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
+            - [ ] Unit Test: Verify service interface isolation.
+            - [ ] Unit Test: Test interaction between decoupled components using mocks.
 
-- [ ] **10. Idempotency in API**
+- [ ] **9. Idempotency in API**
     - [ ] Design
         - [ ] Identify non-idempotent operations (Submission, Retry).
         - [ ] Add `Idempotency-Key` header requirement for sensitive POST requests.
     - [ ] Implementation
         - [ ] Store processed keys in Redis or SQLite with expiration.
         - [ ] Middleware to check incoming keys and return cached response if already processed.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Idempotency in API implementation.
+            - [ ] Unit Test: Mock external dependencies for Idempotency in API.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
+            - [ ] Unit Test: Verify request validation and parsing.
+            - [ ] Unit Test: Test response formatting and status codes.
+            - [ ] Unit Test: Verify authentication/authorization logic.
 
 ### B. Scalability & Performance
 
-- [ ] **11. Horizontal Scaling for Dispatch Server**
+- [ ] **10. Horizontal Scaling for Dispatch Server**
     - [ ] State Externalization
         - [ ] Move any in-memory state (local queues) to Redis or shared DB.
     - [ ] Locking
         - [ ] Implement distributed locking (e.g., Redis Lock) for job assignment to prevent double-assignment.
     - [ ] Load Balancing
         - [ ] Configure Nginx/HAProxy to round-robin requests to server instances.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Horizontal Scaling for Dispatch Server implementation.
+            - [ ] Unit Test: Mock external dependencies for Horizontal Scaling for Dispatch Server.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
 
-- [ ] **12. Database Read Replicas**
+- [ ] **11. Database Read Replicas**
     - [ ] Infrastructure
         - [ ] Set up Master-Slave replication for the database (PostgreSQL/MySQL if migrated, or rqlite).
     - [ ] Code Changes
         - [ ] Update `Repository` layer to separate `ReadOnlyConnection` and `ReadWriteConnection`.
         - [ ] Route `GET` requests to Read Replicas.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Database Read Replicas implementation.
+            - [ ] Unit Test: Mock external dependencies for Database Read Replicas.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
+            - [ ] Unit Test: Verify SQL query generation and parameter binding.
+            - [ ] Unit Test: Test connection pooling or sharding logic behavior under load.
+            - [ ] Unit Test: Verify transaction atomicity and rollback scenarios.
 
-- [ ] **13. Connection Pooling**
+- [ ] **12. Connection Pooling**
     - [ ] Implementation
         - [ ] Implement or integrate a generic object pool for Database connections.
         - [ ] Configure min/max pool size and idle timeouts.
     - [ ] Integration
         - [ ] Replace single `sqlite3*` handle with `ConnectionPool::acquire()`.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Connection Pooling implementation.
+            - [ ] Unit Test: Mock external dependencies for Connection Pooling.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
 
-- [ ] **14. Caching Layer**
+- [ ] **13. Caching Layer**
     - [ ] Strategy
         - [ ] Identify cacheable entities (Engine details, Job status, Config).
     - [ ] Implementation
@@ -147,65 +230,125 @@ This document outlines the implementation plan for the first 40 architectural an
         - [ ] Implement `Write-Through` or `Cache-Aside` pattern in Repositories.
     - [ ] Invalidation
         - [ ] Ensure cache invalidation on state changes.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Caching Layer implementation.
+            - [ ] Unit Test: Mock external dependencies for Caching Layer.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
 
-- [ ] **15. Content Delivery Network (CDN)**
+- [ ] **14. Content Delivery Network (CDN)**
     - [ ] Integration
         - [ ] Update `StorageProvider` (S3) to generate public URLs pointing to the CDN domain instead of direct bucket URLs.
     - [ ] Configuration
         - [ ] Add CDN base URL configuration.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Content Delivery Network (CDN) implementation.
+            - [ ] Unit Test: Mock external dependencies for Content Delivery Network (CDN).
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
 
-- [ ] **16. Sharding the Jobs Database**
+- [ ] **15. Sharding the Jobs Database**
     - [ ] Strategy
         - [ ] Choose sharding key (e.g., `User_ID`, `Time_Range`, or Hash of `Job_ID`).
     - [ ] Implementation
         - [ ] Implement `ShardRouter` to determine which DB instance to query.
         - [ ] Handle cross-shard queries (aggregation) if necessary (or avoid them).
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Sharding the Jobs Database implementation.
+            - [ ] Unit Test: Mock external dependencies for Sharding the Jobs Database.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
+            - [ ] Unit Test: Verify SQL query generation and parameter binding.
+            - [ ] Unit Test: Test connection pooling or sharding logic behavior under load.
+            - [ ] Unit Test: Verify transaction atomicity and rollback scenarios.
 
-- [ ] **17. Use `io_uring`**
+- [ ] **16. Use `io_uring`**
     - [ ] Investigation
         - [ ] Check kernel version compatibility on target deployment.
     - [ ] Implementation
         - [ ] Replace `epoll`/`select` in the networking layer with `liburing`.
         - [ ] Implement async file I/O using `io_uring` for video upload/download.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Use `io_uring` implementation.
+            - [ ] Unit Test: Mock external dependencies for Use `io_uring`.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
 
-- [ ] **18. Offload SSL/TLS Termination**
+- [ ] **17. Offload SSL/TLS Termination**
     - [ ] Configuration
         - [ ] Disable SSL/TLS code in Dispatch Server (or make optional).
         - [ ] Configure Nginx sidecar or ingress controller to handle certificates.
         - [ ] Ensure communication between LB and Server is trusted (or use mTLS).
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Offload SSL/TLS Termination implementation.
+            - [ ] Unit Test: Mock external dependencies for Offload SSL/TLS Termination.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
 
-- [ ] **19. Optimize JSON Parsing**
+- [ ] **18. Optimize JSON Parsing**
     - [ ] Benchmarking
         - [ ] Profile current `nlohmann/json` usage under load.
     - [ ] Replacement
         - [ ] Evaluate `simdjson` or `RapidJSON` for critical paths.
         - [ ] Refactor serialization code to use the new library where performance is critical.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Optimize JSON Parsing implementation.
+            - [ ] Unit Test: Mock external dependencies for Optimize JSON Parsing.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
 
-- [ ] **20. Asynchronous I/O in C++ Components**
+- [ ] **19. Asynchronous I/O in C++ Components**
     - [ ] Framework adoption
         - [ ] Evaluate Boost.Asio or Seastar.
     - [ ] Refactoring
         - [ ] Rewrite request handlers to be non-blocking.
         - [ ] Use coroutines (C++20) for cleaner async code structure.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Asynchronous I/O in C++ Components implementation.
+            - [ ] Unit Test: Mock external dependencies for Asynchronous I/O in C++ Components.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
 
 ### C. Transcoding Engine Design
 
-- [ ] **21. Isolate `ffmpeg` Process**
+- [ ] **20. Isolate `ffmpeg` Process**
     - [ ] Technology Selection
         - [ ] Choose isolation level: Docker API, `systemd-nspawn`, or `bubblewrap`.
     - [ ] Implementation
         - [ ] Wrap `ffmpeg` execution to run inside the container/sandbox.
         - [ ] Map necessary volumes (input/output) into the sandbox.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Isolate `ffmpeg` Process implementation.
+            - [ ] Unit Test: Mock external dependencies for Isolate `ffmpeg` Process.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
+            - [ ] Unit Test: Verify command generation for external processes.
+            - [ ] Unit Test: Test process lifecycle management (start, stop, kill).
+            - [ ] Unit Test: Verify parsing of output/progress from external tools.
 
-- [ ] **22. Local Job Queue Persistence**
+- [ ] **21. Local Job Queue Persistence**
     - [ ] Database Schema
         - [ ] Ensure SQLite schema in engine supports `queue_order`, `retry_count`.
     - [ ] Logic
         - [ ] On startup, load pending jobs from SQLite.
         - [ ] On job arrival, write to SQLite before acknowledging receipt.
         - [ ] On completion, remove from SQLite.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Local Job Queue Persistence implementation.
+            - [ ] Unit Test: Mock external dependencies for Local Job Queue Persistence.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
 
-- [ ] **23. Engine Self-Registration**
+- [ ] **22. Engine Self-Registration**
     - [ ] Protocol
         - [ ] Define `POST /engines/register` payload (Capabilities, Hostname, IP).
     - [ ] Server Logic
@@ -213,8 +356,17 @@ This document outlines the implementation plan for the first 40 architectural an
     - [ ] Engine Logic
         - [ ] Call register endpoint on startup.
         - [ ] Store assigned `engine_id` and credentials locally.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Engine Self-Registration implementation.
+            - [ ] Unit Test: Mock external dependencies for Engine Self-Registration.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
+            - [ ] Unit Test: Verify command generation for external processes.
+            - [ ] Unit Test: Test process lifecycle management (start, stop, kill).
+            - [ ] Unit Test: Verify parsing of output/progress from external tools.
 
-- [ ] **24. Graceful Shutdown for Engines**
+- [ ] **23. Graceful Shutdown for Engines**
     - [ ] Signal Handling
         - [ ] Catch `SIGTERM` and `SIGINT`.
     - [ ] State Management
@@ -223,8 +375,17 @@ This document outlines the implementation plan for the first 40 architectural an
         - [ ] Wait for current transcoding to finish.
         - [ ] Send `EngineOffline` event to server.
         - [ ] Exit.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Graceful Shutdown for Engines implementation.
+            - [ ] Unit Test: Mock external dependencies for Graceful Shutdown for Engines.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
+            - [ ] Unit Test: Verify command generation for external processes.
+            - [ ] Unit Test: Test process lifecycle management (start, stop, kill).
+            - [ ] Unit Test: Verify parsing of output/progress from external tools.
 
-- [ ] **25. Engine Self-Update Mechanism**
+- [ ] **24. Engine Self-Update Mechanism**
     - [ ] Design
         - [ ] Server endpoint to check latest version/binary URL.
     - [ ] Implementation
@@ -234,41 +395,82 @@ This document outlines the implementation plan for the first 40 architectural an
             - [ ] Verify signature/hash.
             - [ ] Spawn new process.
             - [ ] Gracefully shutdown current process.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Engine Self-Update Mechanism implementation.
+            - [ ] Unit Test: Mock external dependencies for Engine Self-Update Mechanism.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
+            - [ ] Unit Test: Verify command generation for external processes.
+            - [ ] Unit Test: Test process lifecycle management (start, stop, kill).
+            - [ ] Unit Test: Verify parsing of output/progress from external tools.
 
-- [ ] **26. Backpressure Handling**
+- [ ] **25. Backpressure Handling**
     - [ ] Metrics
         - [ ] Monitor CPU Load, Memory Usage, Disk I/O Wait.
     - [ ] Logic
         - [ ] Define thresholds (e.g., >90% CPU).
         - [ ] If thresholds exceeded, reject new job assignments or report `Busy` status in heartbeat even if queue is empty.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Backpressure Handling implementation.
+            - [ ] Unit Test: Mock external dependencies for Backpressure Handling.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
 
-- [ ] **27. Off-Heap Storage**
+- [ ] **26. Off-Heap Storage**
     - [ ] Implementation
         - [ ] Use `mmap` for reading large input files during upload/processing if applicable.
         - [ ] Ensure memory limits are enforced on buffers.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Off-Heap Storage implementation.
+            - [ ] Unit Test: Mock external dependencies for Off-Heap Storage.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
+            - [ ] Unit Test: Verify read/write operations against mock storage.
+            - [ ] Unit Test: Test handling of storage quota or permission errors.
 
-- [ ] **28. Hardware Affinity**
+- [ ] **27. Hardware Affinity**
     - [ ] Configuration
         - [ ] Allow tagging engine with specific hardware IDs (e.g., `GPU:0`, `CPU_Set:1-4`).
     - [ ] Execution
         - [ ] Apply `taskset` (Linux) or CUDA_VISIBLE_DEVICES when launching `ffmpeg`.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Hardware Affinity implementation.
+            - [ ] Unit Test: Mock external dependencies for Hardware Affinity.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
 
-- [ ] **29. Dynamic Capability Reporting**
+- [ ] **28. Dynamic Capability Reporting**
     - [ ] Monitoring
         - [ ] Periodically run capability checks (e.g., check if GPU driver is still loaded).
     - [ ] Reporting
         - [ ] Update `supported_codecs` and `hardware_acceleration` flags in the Heartbeat payload if changed.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Dynamic Capability Reporting implementation.
+            - [ ] Unit Test: Mock external dependencies for Dynamic Capability Reporting.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
 
-- [ ] **30. Streaming vs. File Transfer Logic**
+- [ ] **29. Streaming vs. File Transfer Logic**
     - [ ] Decision Matrix
         - [ ] Inputs: Network Speed, File Size, Engine Disk Space.
         - [ ] Logic: If (Size > DiskFree) OR (Network < Threshold), use Streaming.
     - [ ] Implementation
         - [ ] Implement Streaming Transcoding path (Pipe input from HTTP -> FFmpeg -> HTTP upload).
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Streaming vs. File Transfer Logic implementation.
+            - [ ] Unit Test: Mock external dependencies for Streaming vs. File Transfer Logic.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
 
 ### D. Dispatch Server Design
 
-- [ ] **31. Separate Job Scheduler**
+- [ ] **30. Separate Job Scheduler**
     - [ ] Architecture
         - [ ] Decouple `Scheduler` from `JobController`.
         - [ ] `Scheduler` runs in its own thread/service loop.
@@ -276,67 +478,136 @@ This document outlines the implementation plan for the first 40 architectural an
         - [ ] Pull pending jobs.
         - [ ] Match with available engines.
         - [ ] Assign.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Separate Job Scheduler implementation.
+            - [ ] Unit Test: Mock external dependencies for Separate Job Scheduler.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
 
-- [ ] **32. Fairness in Scheduling**
+- [ ] **31. Fairness in Scheduling**
     - [ ] Algorithm
         - [ ] Implement Weighted Fair Queuing (WFQ) or Round Robin per User/Tenant.
     - [ ] Implementation
         - [ ] Track active jobs per user.
         - [ ] Deprioritize users exceeding their share.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Fairness in Scheduling implementation.
+            - [ ] Unit Test: Mock external dependencies for Fairness in Scheduling.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
 
-- [ ] **33. Job-Engine Affinity**
+- [ ] **32. Job-Engine Affinity**
     - [ ] Data Model
         - [ ] Add `required_capabilities` to Job.
         - [ ] Add `tags` to Engine.
     - [ ] Matching Logic
         - [ ] Filter engines that possess all `required_capabilities` of the job.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Job-Engine Affinity implementation.
+            - [ ] Unit Test: Mock external dependencies for Job-Engine Affinity.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
+            - [ ] Unit Test: Verify command generation for external processes.
+            - [ ] Unit Test: Test process lifecycle management (start, stop, kill).
+            - [ ] Unit Test: Verify parsing of output/progress from external tools.
 
-- [ ] **34. Time-Based Job Expiration** (Note: Partially implemented)
+- [ ] **33. Time-Based Job Expiration** (Note: Partially implemented)
     - [ ] Implementation
         - [ ] Background thread checks `created_at` timestamp of `pending` jobs.
         - [ ] If `now - created_at > ttl`, transition to `Failed` with `reason="Expired"`.
     - [ ] Configuration
         - [ ] Make TTL configurable globally and per-job.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Time-Based Job Expiration implementation.
+            - [ ] Unit Test: Mock external dependencies for Time-Based Job Expiration.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
 
-- [ ] **35. Webhook Support**
+- [ ] **34. Webhook Support**
     - [ ] Data Model
         - [ ] Add `webhook_url` to Job submission payload.
     - [ ] Implementation
         - [ ] On job completion/failure, trigger HTTP POST to `webhook_url`.
         - [ ] Include JSON payload with job status and output URL.
         - [ ] Implement retries for failed webhook delivery.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Webhook Support implementation.
+            - [ ] Unit Test: Mock external dependencies for Webhook Support.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
 
-- [ ] **36. API Versioning in URL** (Note: Partially implemented)
+- [ ] **35. API Versioning in URL** (Note: Partially implemented)
     - [ ] Routing
         - [ ] Ensure all routes are prefixed with `/api/v1/`.
     - [ ] Version Handler
         - [ ] Prepare structure for `/api/v2/` future support.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of API Versioning in URL implementation.
+            - [ ] Unit Test: Mock external dependencies for API Versioning in URL.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
+            - [ ] Unit Test: Verify request validation and parsing.
+            - [ ] Unit Test: Test response formatting and status codes.
+            - [ ] Unit Test: Verify authentication/authorization logic.
 
-- [ ] **37. Standardized Error Responses**
+- [ ] **36. Standardized Error Responses**
     - [ ] Design
         - [ ] Define standard JSON structure: `{"error": {"code": "ERR_CODE", "message": "Human readable", "details": {...}}}`.
     - [ ] Implementation
         - [ ] Create `APIException` class hierarchy.
         - [ ] Create global exception handler to catch and format JSON response.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Standardized Error Responses implementation.
+            - [ ] Unit Test: Mock external dependencies for Standardized Error Responses.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
 
-- [ ] **38. Pagination for List Endpoints**
+- [ ] **37. Pagination for List Endpoints**
     - [ ] API Design
         - [ ] Add query params: `limit`, `offset` (or `cursor`).
     - [ ] Database
         - [ ] Implement `LIMIT` and `OFFSET` in SQL queries.
     - [ ] Response
         - [ ] Return metadata: `total_count`, `next_page_url`.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Pagination for List Endpoints implementation.
+            - [ ] Unit Test: Mock external dependencies for Pagination for List Endpoints.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
+            - [ ] Unit Test: Verify request validation and parsing.
+            - [ ] Unit Test: Test response formatting and status codes.
+            - [ ] Unit Test: Verify authentication/authorization logic.
 
-- [ ] **39. Support for `HEAD` Requests**
+- [ ] **38. Support for `HEAD` Requests**
     - [ ] Implementation
         - [ ] Register `HEAD` handlers for `/jobs/{id}`, `/engines/{id}`.
         - [ ] Perform DB lookup but return no body.
         - [ ] Set `Content-Length` and `Last-Modified` headers.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of Support for `HEAD` Requests implementation.
+            - [ ] Unit Test: Mock external dependencies for Support for `HEAD` Requests.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
 
-- [ ] **40. ETag Support**
+- [ ] **39. ETag Support**
     - [ ] Logic
         - [ ] Calculate hash of resource state (e.g., job status + update time).
     - [ ] Implementation
         - [ ] Send `ETag` header in responses.
         - [ ] Check `If-None-Match` header in requests.
         - [ ] Return `304 Not Modified` if matches.
+        - [ ] Testing & Verification
+            - [ ] Unit Test: Verify core logic of ETag Support implementation.
+            - [ ] Unit Test: Mock external dependencies for ETag Support.
+            - [ ] Unit Test: Test edge cases and error handling paths.
+            - [ ] Unit Test: Verify state consistency after operations.
+            - [ ] Unit Test: Check for memory leaks or resource cleanup.
