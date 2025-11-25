@@ -5,8 +5,10 @@
 #include "dispatch_server_core.h"
 #include "repositories.h"
 #include "server_config.h"
+#include "memory_message_queue.h"
 
 using namespace distconv::DispatchServer;
+using namespace distconv;
 
 int main(int argc, char* argv[]) {
     std::cout << "Modern Dispatch Server Application Starting..." << std::endl;
@@ -43,8 +45,11 @@ int main(int argc, char* argv[]) {
         auto job_repo = std::make_shared<SqliteJobRepository>(database_path);
         auto engine_repo = std::make_shared<SqliteEngineRepository>(database_path);
         
+        // Create Message Queue Factory (Memory for now)
+        auto mq_factory = std::make_unique<MemoryMessageQueueFactory>();
+
         // Create server with injected dependencies
-        DispatchServer server(job_repo, engine_repo, api_key);
+        DispatchServer server(job_repo, engine_repo, std::move(mq_factory), api_key);
         
         std::cout << "Starting server on port " << port << " with database: " << database_path << std::endl;
         std::cout << "API key authentication enabled" << std::endl;

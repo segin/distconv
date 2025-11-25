@@ -32,12 +32,17 @@ add_library(dispatch_server_core STATIC
     server_config.cpp server_config.h
     response_utils.cpp response_utils.h
     dispatch_server_constants.h
+    job_publisher.cpp job_publisher.h
+    status_subscriber.cpp status_subscriber.h
+    message_queue.h
+    memory_message_queue.h
 )
 
 # Include directories for httplib and nlohmann/json
 target_include_directories(dispatch_server_core PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/../third_party/json/single_include
+    ${CMAKE_SOURCE_DIR}/../third_party/trompeloeil/include
 )
 
 # Find UUID library
@@ -61,17 +66,36 @@ target_include_directories(dispatch_server_modern PRIVATE
 )
 
 # Unit Tests
-add_executable(dispatch_server_tests tests/main.cpp tests/jobs_post_api_tests.cpp tests/jobs_get_api_tests.cpp tests/engines_api_tests.cpp tests/jobs_status_update_tests.cpp tests/job_resubmission_tests.cpp tests/scheduling_logic_tests.cpp tests/persistent_storage_tests.cpp tests/jobs_assign_api_tests.cpp tests/job_state_transition_tests.cpp tests/command_line_tests.cpp tests/thread_safety_tests.cpp tests/api_test_definitions.cpp tests/json_parsing_edge_case_tests.cpp tests/final_edge_case_tests.cpp tests/thread_safety_improvements_tests.cpp tests/job_handlers_tests.cpp tests/engine_handlers_tests.cpp tests/job_management_tests.cpp tests/api_endpoint_tests.cpp tests/error_handling_tests.cpp tests/url_validation_tests.cpp tests/server_config_tests.cpp tests/max_retries_validation_tests.cpp)
+add_executable(dispatch_server_tests tests/main.cpp tests/jobs_post_api_tests.cpp tests/jobs_get_api_tests.cpp tests/engines_api_tests.cpp tests/jobs_status_update_tests.cpp tests/job_resubmission_tests.cpp tests/scheduling_logic_tests.cpp tests/persistent_storage_tests.cpp tests/jobs_assign_api_tests.cpp tests/job_state_transition_tests.cpp tests/command_line_tests.cpp tests/thread_safety_tests.cpp tests/api_test_definitions.cpp tests/json_parsing_edge_case_tests.cpp tests/final_edge_case_tests.cpp tests/thread_safety_improvements_tests.cpp tests/job_handlers_tests.cpp tests/engine_handlers_tests.cpp tests/job_management_tests.cpp tests/api_endpoint_tests.cpp tests/error_handling_tests.cpp tests/url_validation_tests.cpp tests/server_config_tests.cpp tests/max_retries_validation_tests.cpp tests/message_queue_tests.cpp tests/message_queue_integration_tests.cpp)
 target_link_libraries(dispatch_server_tests dispatch_server_core gtest gmock)
 target_include_directories(dispatch_server_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/../third_party/json/single_include
     ${CMAKE_CURRENT_SOURCE_DIR}/tests
+    ${CMAKE_SOURCE_DIR}/../third_party/trompeloeil/include
+)
+
+# Optimized dedicated test target for Message Queue
+add_executable(mq_tests
+    tests/main.cpp
+    tests/message_queue_tests.cpp
+    tests/message_queue_integration_tests.cpp
+)
+target_link_libraries(mq_tests dispatch_server_core gtest gmock)
+target_include_directories(mq_tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/../third_party/json/single_include
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests
+    ${CMAKE_SOURCE_DIR}/../third_party/trompeloeil/include
 )
 
 enable_testing()
 include(GoogleTest)
 gtest_discover_tests(dispatch_server_tests
+    PROPERTIES
+    TIMEOUT 10
+)
+gtest_discover_tests(mq_tests
     PROPERTIES
     TIMEOUT 10
 )

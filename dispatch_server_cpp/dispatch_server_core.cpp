@@ -514,12 +514,67 @@ DispatchServer::DispatchServer(std::shared_ptr<IJobRepository> job_repo,
     }
 }
 
+// Constructor with dependency injection + MessageQueueFactory
+DispatchServer::DispatchServer(std::shared_ptr<IJobRepository> job_repo,
+                               std::shared_ptr<IEngineRepository> engine_repo,
+                               std::unique_ptr<MessageQueueFactory> mq_factory,
+                               const std::string& api_key)
+    : job_repo_(job_repo),
+      engine_repo_(engine_repo),
+      mq_factory_(std::move(mq_factory)),
+      use_legacy_storage_(false),
+      api_key_(api_key) {
+
+    if (mq_factory_) {
+        // Create job publisher
+        job_publisher_ = std::make_shared<JobPublisher>(mq_factory_->createProducer());
+
+        // Create status subscriber and wire it up
+        status_subscriber_ = std::make_shared<StatusSubscriber>(mq_factory_->createConsumer("dispatch-server-group"));
+        status_subscriber_->subscribeToStatusUpdates([this](const std::string& message_payload) {
+            try {
+                auto j = nlohmann::json::parse(message_payload);
+                if (j.contains("job_id") && j.contains("status")) {
+                    std::string job_id = j["job_id"];
+                    std::string status = j["status"];
+
+                    if (this->job_repo_->job_exists(job_id)) {
+                        auto job = this->job_repo_->get_job(job_id);
+                        job["status"] = status;
+                        if (j.contains("output_url")) {
+                            job["output_url"] = j["output_url"];
+                        }
+                        if (j.contains("error_message")) {
+                            job["error_message"] = j["error_message"];
+                        }
+                        this->job_repo_->save_job(job_id, job);
+                        std::cout << "[StatusSubscriber] Updated job " << job_id << " status to " << status << std::endl;
+                    } else {
+                        std::cerr << "[StatusSubscriber] Job not found: " << job_id << std::endl;
+                    }
+                }
+            } catch (const std::exception& e) {
+                std::cerr << "[StatusSubscriber] Error processing status update: " << e.what() << std::endl;
+            }
+        });
+    }
+
+    // Endpoints will be set up when set_api_key is called or immediately if key is provided
+    if (!api_key_.empty()) {
+        setup_endpoints();
+    }
+}
+
 // Default constructor (for backward compatibility)
 DispatchServer::DispatchServer() 
     : job_repo_(nullptr), 
       engine_repo_(nullptr),
       use_legacy_storage_(true) {
     // Endpoints will be set up when set_api_key is called
+}
+
+DispatchServer::~DispatchServer() {
+    stop();
 }
 
 void DispatchServer::set_api_key(const std::string& key) {
@@ -590,7 +645,9 @@ void DispatchServer::stop() {
         state_save_future_.wait();
     }
     
-    svr.stop();
+    if (svr.is_running()) {
+        svr.stop();
+    }
     if (server_thread.joinable()) {
         server_thread.join();
     }
@@ -800,6 +857,11 @@ void DispatchServer::setup_job_endpoints() {
 
                 // Save job
                 job_repo_->save_job(job_id, job);
+
+                // Publish to message queue if available
+                if (job_publisher_) {
+                    job_publisher_->publishJob(job.dump());
+                }
 
                 res.status = 201;
                 res.set_content(job.dump(), "application/json");
