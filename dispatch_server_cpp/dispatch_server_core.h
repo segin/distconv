@@ -12,6 +12,9 @@
 #include "httplib.h"
 #include "repositories.h"
 #include "api_middleware.h"
+#include "message_queue.h"
+#include "job_publisher.h"
+#include "status_subscriber.h"
 
 namespace distconv {
 namespace DispatchServer {
@@ -74,9 +77,17 @@ public:
     DispatchServer(std::shared_ptr<IJobRepository> job_repo, 
                    std::shared_ptr<IEngineRepository> engine_repo,
                    const std::string& api_key = "");
+
+    // Constructor with dependency injection + MessageQueueFactory
+    DispatchServer(std::shared_ptr<IJobRepository> job_repo,
+                   std::shared_ptr<IEngineRepository> engine_repo,
+                   std::unique_ptr<MessageQueueFactory> mq_factory,
+                   const std::string& api_key = "");
     
     // Default constructor (for backward compatibility)
     DispatchServer();
+
+    ~DispatchServer();
     
     void start(int port, bool block = true);
     void stop();
@@ -104,6 +115,11 @@ private:
     std::shared_ptr<IJobRepository> job_repo_;
     std::shared_ptr<IEngineRepository> engine_repo_;
     
+    // Message Queue components
+    std::unique_ptr<MessageQueueFactory> mq_factory_;
+    std::shared_ptr<JobPublisher> job_publisher_;
+    std::shared_ptr<StatusSubscriber> status_subscriber_;
+
     // Whether to use legacy global state or repositories
     bool use_legacy_storage_;
     
