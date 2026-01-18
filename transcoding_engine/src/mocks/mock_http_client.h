@@ -5,11 +5,8 @@
 #include <queue>
 #include <map>
 
-// Import necessary types from the correct namespace
-using distconv::TranscodingEngine::IHttpClient;
-using distconv::TranscodingEngine::HttpResponse;
-
-namespace transcoding_engine {
+namespace distconv {
+namespace TranscodingEngine {
 
 class MockHttpClient : public distconv::TranscodingEngine::IHttpClient {
 public:
@@ -69,6 +66,6 @@ private:
                     const std::string& body, const std::map<std::string, std::string>& headers);
 };
 
-} // namespace transcoding_engine
+}} // namespace distconv::TranscodingEngine
 
 #endif // MOCK_HTTP_CLIENT_H

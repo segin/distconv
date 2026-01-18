@@ -4,9 +4,8 @@
 #include "../interfaces/database_interface.h"
 #include <set>
 
-using distconv::TranscodingEngine::IDatabase;
-
-namespace transcoding_engine {
+namespace distconv {
+namespace TranscodingEngine {
 
 class MockDatabase : public distconv::TranscodingEngine::IDatabase {
 public:
@@ -62,6 +61,6 @@ private:
     int clear_call_count_ = 0;
 };
 
-} // namespace transcoding_engine
+}} // namespace distconv::TranscodingEngine
 
 #endif // MOCK_DATABASE_H

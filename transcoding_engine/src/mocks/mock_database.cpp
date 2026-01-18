@@ -1,7 +1,8 @@
 #include "mock_database.h"
 #include <algorithm>
 
-namespace transcoding_engine {
+namespace distconv {
+namespace TranscodingEngine {
 
 using namespace distconv::TranscodingEngine;
 
@@ -54,4 +55,4 @@ bool MockDatabase::is_connected() const {
     return is_connected_;
 }
 
-} // namespace transcoding_engine
+}} // namespace distconv::TranscodingEngine

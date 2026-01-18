@@ -5,10 +5,8 @@
 #include <map>
 #include <queue>
 
-using distconv::TranscodingEngine::ISubprocessRunner;
-using distconv::TranscodingEngine::SubprocessResult;
-
-namespace transcoding_engine {
+namespace distconv {
+namespace TranscodingEngine {
 
 class MockSubprocess : public distconv::TranscodingEngine::ISubprocessRunner {
 public:
@@ -73,6 +71,6 @@ private:
     std::string command_to_string(const std::vector<std::string>& command) const;
 };
 
-} // namespace transcoding_engine
+}} // namespace distconv::TranscodingEngine
 
 #endif // MOCK_SUBPROCESS_H
