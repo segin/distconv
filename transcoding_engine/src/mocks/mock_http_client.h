@@ -5,8 +5,9 @@
 #include <queue>
 #include <map>
 
-namespace distconv {
-namespace TranscodingEngine {
+using namespace distconv::TranscodingEngine;
+
+namespace transcoding_engine {
 
 class MockHttpClient : public distconv::TranscodingEngine::IHttpClient {
 public:
