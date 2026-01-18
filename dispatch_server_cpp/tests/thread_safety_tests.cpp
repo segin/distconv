@@ -343,3 +343,58 @@ TEST_F(ApiTest, ConcurrentlyAssignJobsAndCompleteJobs) {
         }
     }
 }
+
+TEST_F(ApiTest, ConcurrentGetNextAndExpireJobs) {
+    const int num_jobs = 10;
+
+    // 1. Create multiple jobs
+    for (int i = 0; i < num_jobs; ++i) {
+        nlohmann::json job_payload = {
+            {"source_url", "http://example.com/video" + std::to_string(i) + ".mp4"},
+            {"target_codec", "h264"},
+            {"created_at", std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()}
+        };
+        auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
+        ASSERT_EQ(res_submit->status, 200);
+    }
+
+    std::atomic<bool> stop_threads(false);
+    std::vector<std::thread> threads;
+
+    // Thread 1: Repeatedly call get_next_pending_job
+    threads.emplace_back([&]() {
+        while (!stop_threads) {
+            get_next_pending_job();
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+    });
+
+    // Thread 2: Repeatedly call expire_old_pending_jobs
+    threads.emplace_back([&]() {
+        while (!stop_threads) {
+            expire_old_pending_jobs(std::chrono::minutes(0)); // Expire jobs immediately
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+    });
+
+    // Let the threads run for a short period
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    stop_threads = true;
+
+    for (auto& thread : threads) {
+        thread.join();
+    }
+
+    // If the test completes without deadlocking, the fix is successful.
+    // We can also check if some jobs were expired.
+    auto res_jobs = client->Get("/jobs/", admin_headers);
+    ASSERT_EQ(res_jobs->status, 200);
+    nlohmann::json all_jobs = nlohmann::json::parse(res_jobs->body);
+    int expired_jobs = 0;
+    for (const auto& job : all_jobs) {
+        if (job["status"] == "expired") {
+            expired_jobs++;
+        }
+    }
+    ASSERT_GT(expired_jobs, 0);
+}
