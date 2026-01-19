@@ -51,7 +51,7 @@ TEST_F(SubmissionClientTest, SubmitJobSendsPostRequestToCorrectUrl) {
         .LR_SIDE_EFFECT(header_arg = _2, body_arg = _3)
         .LR_RETURN(response);
 
-    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, true, std::move(mock_cpr_api));
 
     std::string expected_source_url = "http://example.com/video.mp4";
     std::string expected_target_codec = "h264";
@@ -80,7 +80,7 @@ TEST_F(SubmissionClientTest, SubmitJobCallsSaveJobIdOnSuccess) {
     REQUIRE_CALL(*mock_cpr_api, Post(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::_, trompeloeil::_, trompeloeil::_))
         .LR_RETURN(response);
 
-    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, true, std::move(mock_cpr_api));
 
     apiClient.submitJob("http://example.com/video.mp4", "h264", 100.0, 3);
 
@@ -105,7 +105,7 @@ TEST_F(SubmissionClientTest, SubmitJobUsesSslVerificationWhenCaPathProvided) {
         .LR_SIDE_EFFECT(ssl_opts_arg = _4)
         .LR_RETURN(response);
 
-    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, true, std::move(mock_cpr_api));
 
     apiClient.submitJob("http://example.com/video.mp4", "h264", 100.0, 3);
 
@@ -129,7 +129,7 @@ TEST_F(SubmissionClientTest, SubmitJobDisablesSslVerificationWhenNoCaPathProvide
         .LR_SIDE_EFFECT(ssl_opts_arg = _4)
         .LR_RETURN(response);
 
-    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, false, std::move(mock_cpr_api));
 
     apiClient.submitJob("http://example.com/video.mp4", "h264", 100.0, 3);
 
@@ -147,7 +147,7 @@ TEST_F(SubmissionClientTest, SubmitJobHandlesServerError) {
     REQUIRE_CALL(*mock_cpr_api, Post(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::_, trompeloeil::_, trompeloeil::_))
         .LR_RETURN(response);
 
-    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, true, std::move(mock_cpr_api));
 
     ASSERT_THROW({
         apiClient.submitJob("http://example.com/video.mp4", "h264", 100.0, 3);
@@ -164,7 +164,7 @@ TEST_F(SubmissionClientTest, SubmitJobHandlesClientError) {
     REQUIRE_CALL(*mock_cpr_api, Post(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::_, trompeloeil::_, trompeloeil::_))
         .LR_RETURN(response);
 
-    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, true, std::move(mock_cpr_api));
 
     ASSERT_THROW({
         apiClient.submitJob("http://example.com/video.mp4", "h264", 100.0, 3);
@@ -182,7 +182,7 @@ TEST_F(SubmissionClientTest, SubmitJobHandlesTransportError) {
     REQUIRE_CALL(*mock_cpr_api, Post(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::_, trompeloeil::_, trompeloeil::_))
         .LR_RETURN(response);
 
-    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, true, std::move(mock_cpr_api));
 
     ASSERT_THROW({
         apiClient.submitJob("http://example.com/video.mp4", "h264", 100.0, 3);
@@ -203,7 +203,7 @@ TEST_F(SubmissionClientTest, GetJobStatusHandlesSuccessfulResponse) {
         .LR_SIDE_EFFECT(header_arg = _2)
         .LR_RETURN(response);
 
-    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, true, std::move(mock_cpr_api));
 
     nlohmann::json result_json = apiClient.getJobStatus(job_id);
 
@@ -226,7 +226,7 @@ TEST_F(SubmissionClientTest, GetJobStatusHandlesNotFoundResponse) {
     REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/jobs/" + job_id}, trompeloeil::_, trompeloeil::_))
         .LR_RETURN(response);
 
-    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, true, std::move(mock_cpr_api));
 
     ASSERT_THROW({
         apiClient.getJobStatus(job_id);
@@ -245,7 +245,7 @@ TEST_F(SubmissionClientTest, GetJobStatusHandlesServerError) {
     REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/jobs/" + job_id}, trompeloeil::_, trompeloeil::_))
         .LR_RETURN(response);
 
-    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, true, std::move(mock_cpr_api));
 
     ASSERT_THROW({
         apiClient.getJobStatus(job_id);
@@ -265,7 +265,7 @@ TEST_F(SubmissionClientTest, GetJobStatusHandlesTransportError) {
     REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/jobs/" + job_id}, trompeloeil::_, trompeloeil::_))
         .LR_RETURN(response);
 
-    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, true, std::move(mock_cpr_api));
 
     ASSERT_THROW({
         apiClient.getJobStatus(job_id);
@@ -279,7 +279,7 @@ TEST_F(SubmissionClientTest, GetJobStatusUsesSslVerificationWhenCaPathProvided) 
     response.status_code = 200;
     response.text = R"({"job_id": "test_job_id_123", "status": "pending"})";
 
-    std::string expected_ca_path = "/path/to/ca.crt";
+    std.string expected_ca_path = "/path/to/ca.crt";
     g_caCertPath = expected_ca_path;
 
     std::string job_id = "test_job_id_123";
@@ -289,7 +289,7 @@ TEST_F(SubmissionClientTest, GetJobStatusUsesSslVerificationWhenCaPathProvided) 
         .LR_SIDE_EFFECT(ssl_opts_arg = _3)
         .LR_RETURN(response);
 
-    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, true, std::move(mock_cpr_api));
 
     apiClient.getJobStatus(job_id);
 
@@ -314,7 +314,7 @@ TEST_F(SubmissionClientTest, GetJobStatusDisablesSslVerificationWhenNoCaPathProv
         .LR_SIDE_EFFECT(ssl_opts_arg = _3)
         .LR_RETURN(response);
 
-    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, false, std::move(mock_cpr_api));
 
     apiClient.getJobStatus(job_id);
 
@@ -335,7 +335,7 @@ TEST_F(SubmissionClientTest, ListAllJobsSendsGetRequestToCorrectUrl) {
         .LR_SIDE_EFFECT(header_arg = _2)
         .LR_RETURN(response);
 
-    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, true, std::move(mock_cpr_api));
 
     nlohmann::json result_json = apiClient.listAllJobs();
 
@@ -356,7 +356,7 @@ TEST_F(SubmissionClientTest, ListAllJobsHandlesSuccessfulResponse) {
     REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::_, trompeloeil::_))
         .LR_RETURN(response);
 
-    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, true, std::move(mock_cpr_api));
 
     nlohmann::json result_json = apiClient.listAllJobs();
 
@@ -378,7 +378,7 @@ TEST_F(SubmissionClientTest, ListAllJobsHandlesServerError) {
     REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::_, trompeloeil::_))
         .LR_RETURN(response);
 
-    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, true, std::move(mock_cpr_api));
 
     ASSERT_THROW({
         apiClient.listAllJobs();
@@ -396,7 +396,7 @@ TEST_F(SubmissionClientTest, ListAllJobsHandlesTransportError) {
     REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/jobs/"}, trompeloeil::_, trompeloeil::_))
         .LR_RETURN(response);
 
-    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, true, std::move(mock_cpr_api));
 
     ASSERT_THROW({
         apiClient.listAllJobs();
@@ -419,7 +419,7 @@ TEST_F(SubmissionClientTest, ListAllJobsUsesSslVerificationWhenCaPathProvided) {
         .LR_SIDE_EFFECT(ssl_opts_arg = _3)
         .LR_RETURN(response);
 
-    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, true, std::move(mock_cpr_api));
 
     apiClient.listAllJobs();
 
@@ -443,7 +443,7 @@ TEST_F(SubmissionClientTest, ListAllJobsDisablesSslVerificationWhenNoCaPathProvi
         .LR_SIDE_EFFECT(ssl_opts_arg = _3)
         .LR_RETURN(response);
 
-    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, false, std::move(mock_cpr_api));
 
     apiClient.listAllJobs();
 
@@ -464,7 +464,7 @@ TEST_F(SubmissionClientTest, ListAllEnginesSendsGetRequestToCorrectUrl) {
         .LR_SIDE_EFFECT(header_arg = _2)
         .LR_RETURN(response);
 
-    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, true, std::move(mock_cpr_api));
 
     nlohmann::json result_json = apiClient.listAllEngines();
 
@@ -490,7 +490,7 @@ TEST_F(SubmissionClientTest, ListAllEnginesHandlesTransportError) {
     REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/engines/"}, trompeloeil::_, trompeloeil::_))
         .LR_RETURN(response);
 
-    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, true, std::move(mock_cpr_api));
 
     ASSERT_THROW({
         apiClient.listAllEngines();
@@ -507,7 +507,7 @@ TEST_F(SubmissionClientTest, ListAllEnginesCorrectlyParsesJsonResponse) {
     REQUIRE_CALL(*mock_cpr_api, Get(cpr::Url{g_dispatchServerUrl + "/engines/"}, trompeloeil::_, trompeloeil::_))
         .LR_RETURN(response);
 
-    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, true, std::move(mock_cpr_api));
 
     nlohmann::json result_json = apiClient.listAllEngines();
 
@@ -534,7 +534,7 @@ TEST_F(SubmissionClientTest, ListAllEnginesDisablesSslVerificationWhenNoCaPathPr
         .LR_SIDE_EFFECT(ssl_opts_arg = _3)
         .LR_RETURN(response);
 
-    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, std::move(mock_cpr_api));
+    ApiClient apiClient(g_dispatchServerUrl, g_apiKey, g_caCertPath, false, std::move(mock_cpr_api));
 
     apiClient.listAllEngines();
 

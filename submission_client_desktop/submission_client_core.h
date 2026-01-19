@@ -16,11 +16,14 @@ public:
     virtual cpr::Response Post(const cpr::Url& url, const cpr::Header& header, const cpr::Body& body, const cpr::SslOptions& ssl_opts) {
         return cpr::Post(url, header, body, ssl_opts);
     }
+    virtual cpr::Response Get(const cpr::Url& url, const cpr::Header& header, const cpr::SslOptions& ssl_opts) {
+        return cpr::Get(url, header, ssl_opts);
+    }
 };
 
 class ApiClient {
 public:
-    ApiClient(const std::string& server_url, const std::string& api_key, const std::string& ca_cert_path, std::unique_ptr<CprApi> cpr_api = std::make_unique<CprApi>());
+    ApiClient(const std::string& server_url, const std::string& api_key, const std::string& ca_cert_path, bool ssl_verify, std::unique_ptr<CprApi> cpr_api = std::make_unique<CprApi>());
 
     nlohmann::json submitJob(const std::string& source_url, const std::string& target_codec, double job_size, int max_retries);
     nlohmann::json getJobStatus(const std::string& job_id);
@@ -28,9 +31,11 @@ public:
     nlohmann::json listAllEngines();
 
 private:
+    cpr::SslOptions create_ssl_options();
     std::string server_url_;
     std::string api_key_;
     std::string ca_cert_path_;
+    bool ssl_verify_;
     std::unique_ptr<CprApi> cpr_api_;
 };
 
