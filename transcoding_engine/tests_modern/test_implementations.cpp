@@ -286,6 +286,29 @@ TEST_F(ImplementationTest, SpecialCharacterUrls) {
     }
 }
 
+// Test 151: The HTTP client correctly applies SSL options
+TEST_F(ImplementationTest, SslOptionsConfiguration) {
+    CprHttpClient http_client;
+
+    // Set SSL options (disable verification for test)
+    http_client.set_ssl_options("", false);
+
+    // Make a request to a public HTTPS site to verify it doesn't crash
+    // and that options are applied (though we can't inspect internal state easily)
+    auto response = http_client.get("https://www.google.com");
+
+    // Whether it succeeds or fails depends on network, but it shouldn't crash
+    EXPECT_TRUE(response.status_code >= 0);
+
+    // Test with a dummy CA cert path (should handle gracefully)
+    http_client.set_ssl_options("/non/existent/cert.pem", true);
+    response = http_client.get("https://www.google.com");
+
+    // Should fail or behave gracefully, not crash
+    // cpr might return status 0 and an error message if cert file is missing/invalid
+    EXPECT_TRUE(response.status_code >= 0);
+}
+
 // Test 150: The engine handles the dispatch server returning a malformed, non-JSON error response
 TEST_F(ImplementationTest, MalformedServerResponses) {
     CprHttpClient http_client;

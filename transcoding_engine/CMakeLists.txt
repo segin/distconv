@@ -25,7 +25,13 @@ else()
         set(CPR_AVAILABLE TRUE)
     elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpr/CMakeLists.txt")
         message(STATUS "Using local cpr from third_party")
-        add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpr" cpr_build)
+        set(CPR_USE_SYSTEM_CURL OFF CACHE BOOL "" FORCE)
+        # Skip internal libpsl build (requires meson) by claiming system libpsl
+        set(CPR_USE_SYSTEM_LIB_PSL ON CACHE BOOL "" FORCE)
+        # Tell curl to not use libpsl
+        set(CURL_USE_LIBPSL OFF CACHE BOOL "" FORCE)
+        set(CPR_ENABLE_SSL ON CACHE BOOL "" FORCE)
+        add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpr" cpr)
         set(CPR_AVAILABLE TRUE)
     else()
         message(STATUS "cpr not found via find_package or pkg-config. Using local third_party/cpr.")
@@ -58,7 +64,14 @@ if(NOT nlohmann_json_FOUND)
     pkg_check_modules(NLOHMANN_JSON QUIET nlohmann_json)
     if(NLOHMANN_JSON_FOUND)
         add_library(nlohmann_json::nlohmann_json INTERFACE IMPORTED)
-        target_include_directories(nlohmann_json::nlohmann_json INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/include")
+        target_include_directories(nlohmann_json::nlohmann_json INTERFACE ${NLOHMANN_JSON_INCLUDE_DIRS})
+    elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/CMakeLists.txt")
+        message(STATUS "Using local nlohmann_json from third_party")
+        add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json" json)
+        # Verify target alias exists, create if not to match FindPackage behavior
+        if(NOT TARGET nlohmann_json::nlohmann_json)
+            add_library(nlohmann_json::nlohmann_json ALIAS nlohmann_json)
+        endif()
     else()
         message(STATUS "nlohmann_json not found via find_package or pkg-config. Using local third_party/json.")
         add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json ${CMAKE_CURRENT_BINARY_DIR}/json)
@@ -84,17 +97,12 @@ endif()
 find_package(GTest QUIET)
 if(NOT GTest_FOUND)
     include(FetchContent)
+    message(STATUS "GTest not found, fetching from URL...")
     FetchContent_Declare(
-        googletest
-        URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.tar.gz
+      googletest
+      URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.tar.gz
     )
-    # For Windows: Prevent overriding the parent project's compiler/linker settings
-    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-
     FetchContent_MakeAvailable(googletest)
-
-    add_library(GTest::gtest ALIAS gtest)
-    add_library(GTest::gtest_main ALIAS gtest_main)
     set(GTest_FOUND TRUE)
 endif()
 

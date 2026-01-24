@@ -10,7 +10,9 @@ using distconv::TranscodingEngine::SubprocessResult;
 
 namespace transcoding_engine {
 
-class MockSubprocess : public distconv::TranscodingEngine::ISubprocessRunner {
+using namespace distconv::TranscodingEngine;
+
+class MockSubprocess : public ISubprocessRunner {
 public:
     MockSubprocess() = default;
     ~MockSubprocess() override = default;
