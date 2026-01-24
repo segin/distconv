@@ -12,7 +12,9 @@ find_package(Threads REQUIRED)
 
 # Find cpr (try package first, fallback to manual)
 find_package(cpr QUIET)
-if(NOT cpr_FOUND)
+if(cpr_FOUND)
+    set(CPR_AVAILABLE TRUE)
+else()
     # Try to find via pkg-config
     pkg_check_modules(CPR QUIET cpr)
     if(CPR_FOUND)
@@ -26,24 +28,27 @@ if(NOT cpr_FOUND)
         add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpr" cpr_build)
         set(CPR_AVAILABLE TRUE)
     else()
-        # Fallback to third_party
-        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpr/CMakeLists.txt")
-            message(STATUS "Using local cpr from ../third_party/cpr")
-            set(CPR_USE_SYSTEM_CURL OFF CACHE BOOL "" FORCE)
-            set(CPR_USE_SYSTEM_LIB_PSL ON CACHE BOOL "" FORCE) # Avoid building libpsl (avoids meson dependency)
-            set(CURL_USE_LIBPSL OFF CACHE BOOL "" FORCE)      # Tell curl not to use libpsl
-            set(BUILD_CPR_TESTS OFF CACHE BOOL "" FORCE)
-            add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpr" cpr_build)
-            set(CPR_AVAILABLE TRUE)
-        else()
-            message(WARNING "cpr library not found. Building without HTTP functionality.")
-            # Create a dummy cpr target
-            add_library(cpr::cpr INTERFACE IMPORTED)
-            set(CPR_AVAILABLE FALSE)
+        message(STATUS "cpr not found via find_package or pkg-config. Using local third_party/cpr.")
+
+        # Configure cpr to use internal curl if needed, but per memory guidance:
+        # CPR_USE_SYSTEM_CURL must be OFF for local build
+        # We set CPR_USE_SYSTEM_LIB_PSL to ON to prevent cpr from trying to build libpsl with meson (which is missing).
+        # We then disable libpsl in curl via CURL_USE_LIBPSL=OFF.
+        set(CPR_USE_SYSTEM_CURL OFF CACHE BOOL "Use system curl" FORCE)
+        set(CPR_USE_SYSTEM_LIB_PSL ON CACHE BOOL "Use system libpsl (skip internal build)" FORCE)
+        set(CURL_USE_LIBPSL OFF CACHE BOOL "Disable libpsl in curl" FORCE)
+        set(CPR_ENABLE_SSL ON CACHE BOOL "Enable SSL" FORCE)
+
+        # Prevent cpr from building its tests
+        set(CPR_BUILD_TESTS OFF CACHE BOOL "Build cpr tests" FORCE)
+
+        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpr ${CMAKE_CURRENT_BINARY_DIR}/cpr)
+
+        if(NOT TARGET cpr::cpr)
+            add_library(cpr::cpr ALIAS cpr)
         endif()
+        set(CPR_AVAILABLE TRUE)
     endif()
-else()
-    set(CPR_AVAILABLE TRUE)
 endif()
 
 # Find nlohmann_json
@@ -55,15 +60,9 @@ if(NOT nlohmann_json_FOUND)
         add_library(nlohmann_json::nlohmann_json INTERFACE IMPORTED)
         target_include_directories(nlohmann_json::nlohmann_json INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/include")
     else()
-        # Fallback to third_party
-        set(JSON_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/include")
-        if(EXISTS "${JSON_INCLUDE_DIR}/nlohmann/json.hpp")
-            add_library(nlohmann_json::nlohmann_json INTERFACE IMPORTED)
-            target_include_directories(nlohmann_json::nlohmann_json INTERFACE "${JSON_INCLUDE_DIR}")
-            message(STATUS "Using local nlohmann_json from ${JSON_INCLUDE_DIR}")
-        else()
-            message(FATAL_ERROR "nlohmann_json not found. Please install nlohmann-json3-dev or update submodules.")
-        endif()
+        message(STATUS "nlohmann_json not found via find_package or pkg-config. Using local third_party/json.")
+        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json ${CMAKE_CURRENT_BINARY_DIR}/json)
+        # nlohmann_json provides nlohmann_json::nlohmann_json target
     endif()
 endif()
 
@@ -81,32 +80,23 @@ if(NOT SQLite3_FOUND)
     endif()
 endif()
 
-# Find cjson
-find_package(cjson QUIET)
-if(NOT cjson_FOUND)
-    pkg_check_modules(CJSON QUIET libcjson)
-    if(CJSON_FOUND)
-        add_library(cjson::cjson INTERFACE IMPORTED)
-        target_link_libraries(cjson::cjson INTERFACE ${CJSON_LIBRARIES})
-        target_include_directories(cjson::cjson INTERFACE ${CJSON_INCLUDE_DIRS})
-    else()
-        message(STATUS "libcjson not found. Legacy engine target will be skipped.")
-    endif()
-endif()
-
-# Find CURL (used by legacy core)
-find_package(CURL QUIET)
-
 # Find GTest for testing
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
-)
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
-set(GTest_FOUND TRUE)
+find_package(GTest QUIET)
+if(NOT GTest_FOUND)
+    include(FetchContent)
+    FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.tar.gz
+    )
+    # For Windows: Prevent overriding the parent project's compiler/linker settings
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+    FetchContent_MakeAvailable(googletest)
+
+    add_library(GTest::gtest ALIAS gtest)
+    add_library(GTest::gtest_main ALIAS gtest_main)
+    set(GTest_FOUND TRUE)
+endif()
 
 include_directories(src)
 

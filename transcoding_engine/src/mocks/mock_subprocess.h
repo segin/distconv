@@ -5,7 +5,8 @@
 #include <map>
 #include <queue>
 
-using namespace distconv::TranscodingEngine;
+using distconv::TranscodingEngine::ISubprocessRunner;
+using distconv::TranscodingEngine::SubprocessResult;
 
 namespace transcoding_engine {
 

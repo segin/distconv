@@ -34,9 +34,9 @@ protected:
 
 // Test: (Refactor) sendHeartbeat payload is built using nlohmann::json
 TEST_F(RefactoringTest, HeartbeatUsesNlohmannJson) {
-    auto mock_http = std::make_unique<MockHttpClient>();
-    auto mock_db = std::make_unique<MockDatabase>();
-    auto mock_subprocess = std::make_unique<MockSubprocess>();
+    auto mock_http = std::make_unique<transcoding_engine::MockHttpClient>();
+    auto mock_db = std::make_unique<transcoding_engine::MockDatabase>();
+    auto mock_subprocess = std::make_unique<transcoding_engine::MockSubprocess>();
     
     auto http_ptr = mock_http.get();
     
@@ -77,9 +77,9 @@ TEST_F(RefactoringTest, HeartbeatUsesNlohmannJson) {
 
 // Test: (Refactor) localJobQueue in heartbeat is a JSON array, not a string
 TEST_F(RefactoringTest, LocalJobQueueIsJsonArray) {
-    auto mock_http = std::make_unique<MockHttpClient>();
-    auto mock_db = std::make_unique<MockDatabase>();
-    auto mock_subprocess = std::make_unique<MockSubprocess>();
+    auto mock_http = std::make_unique<transcoding_engine::MockHttpClient>();
+    auto mock_db = std::make_unique<transcoding_engine::MockDatabase>();
+    auto mock_subprocess = std::make_unique<transcoding_engine::MockSubprocess>();
     
     auto http_ptr = mock_http.get();
     auto db_ptr = mock_db.get();
@@ -133,9 +133,9 @@ TEST_F(RefactoringTest, LocalJobQueueIsJsonArray) {
 
 // Test: (Refactor) getJob response is parsed using nlohmann::json
 TEST_F(RefactoringTest, GetJobUsesNlohmannJsonParsing) {
-    auto mock_http = std::make_unique<MockHttpClient>();
-    auto mock_db = std::make_unique<MockDatabase>();
-    auto mock_subprocess = std::make_unique<MockSubprocess>();
+    auto mock_http = std::make_unique<transcoding_engine::MockHttpClient>();
+    auto mock_db = std::make_unique<transcoding_engine::MockDatabase>();
+    auto mock_subprocess = std::make_unique<transcoding_engine::MockSubprocess>();
     
     auto http_ptr = mock_http.get();
     
@@ -172,9 +172,9 @@ TEST_F(RefactoringTest, GetJobUsesNlohmannJsonParsing) {
 
 // Test: (Refactor) nlohmann::json::parse handles an invalid job JSON from the server
 TEST_F(RefactoringTest, HandlesMalformedJobJson) {
-    auto mock_http = std::make_unique<MockHttpClient>();
-    auto mock_db = std::make_unique<MockDatabase>();
-    auto mock_subprocess = std::make_unique<MockSubprocess>();
+    auto mock_http = std::make_unique<transcoding_engine::MockHttpClient>();
+    auto mock_db = std::make_unique<transcoding_engine::MockDatabase>();
+    auto mock_subprocess = std::make_unique<transcoding_engine::MockSubprocess>();
     
     auto http_ptr = mock_http.get();
     
@@ -213,9 +213,9 @@ TEST_F(RefactoringTest, HandlesMalformedJobJson) {
 
 // Test: (Refactor) nlohmann::json::value is used for safe access to optional fields
 TEST_F(RefactoringTest, SafeJsonFieldAccess) {
-    auto mock_http = std::make_unique<MockHttpClient>();
-    auto mock_db = std::make_unique<MockDatabase>();
-    auto mock_subprocess = std::make_unique<MockSubprocess>();
+    auto mock_http = std::make_unique<transcoding_engine::MockHttpClient>();
+    auto mock_db = std::make_unique<transcoding_engine::MockDatabase>();
+    auto mock_subprocess = std::make_unique<transcoding_engine::MockSubprocess>();
     
     auto http_ptr = mock_http.get();
     
@@ -383,9 +383,9 @@ TEST_F(RefactoringTest, ExecutablePathFinding) {
 
 // Test: Dependency injection enables comprehensive mocking
 TEST_F(RefactoringTest, ComprehensiveMockingCapability) {
-    auto mock_http = std::make_unique<MockHttpClient>();
-    auto mock_db = std::make_unique<MockDatabase>();
-    auto mock_subprocess = std::make_unique<MockSubprocess>();
+    auto mock_http = std::make_unique<transcoding_engine::MockHttpClient>();
+    auto mock_db = std::make_unique<transcoding_engine::MockDatabase>();
+    auto mock_subprocess = std::make_unique<transcoding_engine::MockSubprocess>();
     
     // Store raw pointers for test access
     auto http_ptr = mock_http.get();

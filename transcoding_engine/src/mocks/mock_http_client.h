@@ -5,7 +5,9 @@
 #include <queue>
 #include <map>
 
-using namespace distconv::TranscodingEngine;
+// Import types from distconv::TranscodingEngine
+using distconv::TranscodingEngine::IHttpClient;
+using distconv::TranscodingEngine::HttpResponse;
 
 namespace transcoding_engine {
 
