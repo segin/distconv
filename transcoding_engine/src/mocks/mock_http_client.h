@@ -5,6 +5,10 @@
 #include <queue>
 #include <map>
 
+// Import necessary types from the correct namespace
+using distconv::TranscodingEngine::IHttpClient;
+using distconv::TranscodingEngine::HttpResponse;
+
 namespace transcoding_engine {
 
 class MockHttpClient : public IHttpClient {

@@ -54,6 +54,11 @@ bool TranscodingEngine::initialize(const EngineConfig& config) {
             return false;
         }
     }
+
+    // Cache static FFmpeg capabilities
+    cached_encoders_ = get_ffmpeg_capabilities("encoders");
+    cached_decoders_ = get_ffmpeg_capabilities("decoders");
+    cached_hwaccels_ = get_ffmpeg_hw_accels();
     
     std::cout << "Transcoding Engine initialized: " << config_.engine_id << std::endl;
     return true;
@@ -279,6 +284,14 @@ bool TranscodingEngine::report_job_failure(const std::string& job_id, const std:
 }
 
 std::string TranscodingEngine::get_ffmpeg_capabilities(const std::string& capability_type) {
+    // Check cache first
+    if (capability_type == "encoders" && !cached_encoders_.empty()) {
+        return cached_encoders_;
+    }
+    if (capability_type == "decoders" && !cached_decoders_.empty()) {
+        return cached_decoders_;
+    }
+
     std::vector<std::string> command = {"ffmpeg", "-hide_banner", "-" + capability_type};
     auto result = subprocess_runner_->run(command);
     
@@ -312,6 +325,11 @@ std::string TranscodingEngine::get_ffmpeg_capabilities(const std::string& capabi
 }
 
 std::string TranscodingEngine::get_ffmpeg_hw_accels() {
+    // Check cache first
+    if (!cached_hwaccels_.empty()) {
+        return cached_hwaccels_;
+    }
+
     std::vector<std::string> command = {"ffmpeg", "-hide_banner", "-hwaccels"};
     auto result = subprocess_runner_->run(command);
     
