@@ -5,11 +5,8 @@
 #include <queue>
 #include <map>
 
-namespace distconv {
-namespace TranscodingEngine {
-
-using distconv::TranscodingEngine::IHttpClient;
-using distconv::TranscodingEngine::HttpResponse;
+namespace transcoding_engine {
+using namespace distconv::TranscodingEngine;
 
 class MockHttpClient : public IHttpClient {
 public:

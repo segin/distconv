@@ -1,8 +1,8 @@
 #include "mock_database.h"
 #include <algorithm>
 
-namespace distconv {
-namespace TranscodingEngine {
+namespace transcoding_engine {
+using namespace distconv::TranscodingEngine;
 
 bool MockDatabase::initialize(const std::string& db_path) {
     initialize_call_count_++;

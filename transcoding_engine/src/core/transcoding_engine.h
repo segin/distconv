@@ -11,6 +11,7 @@
 #include <atomic>
 #include <thread>
 #include <optional>
+#include <fstream>
 
 namespace distconv {
 namespace TranscodingEngine {
@@ -96,10 +97,7 @@ private:
     void benchmark_loop();
     void main_job_loop();
     
-    // Cache
-    std::string cached_encoders_;
-    std::string cached_decoders_;
-    std::string cached_hwaccels_;
+    std::ifstream thermal_file_;
 
     // Job processing
     bool download_source_file(const std::string& source_url, const std::string& output_path);

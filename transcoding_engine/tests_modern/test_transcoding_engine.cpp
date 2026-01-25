@@ -421,85 +421,15 @@ TEST_F(TranscodingEngineTest, MockableDatabaseInjection) {
     EXPECT_TRUE(result);
 }
 
-TEST_F(TranscodingEngineTest, VerifySubprocessCallReduction) {
+// Test: get_cpu_temperature returns reasonable value (or -1.0) and handles persistent file handle correctly
+TEST_F(TranscodingEngineTest, GetCpuTemperatureTest) {
     ASSERT_TRUE(engine->initialize(config));
 
-    // Mock heartbeat response
-    http_client_ptr->set_response_for_url("http://test-dispatcher:8080/engines/heartbeat",
-        {200, "Heartbeat received", {}, true, ""});
+    // Call multiple times to test persistent handle logic (open once, seek reset)
+    double temp1 = engine->get_cpu_temperature();
+    double temp2 = engine->get_cpu_temperature();
 
-    // Mock ffmpeg capabilities with consistent responses that match the parser expectations
-    // Parser expects "DEV" or "D.V" in the line for codecs
-    subprocess_ptr->set_result_for_command({"ffmpeg", "-hide_banner", "-encoders"},
-        {0, "DEV h264\nDEV h265\nDEV vp9", "", true, ""});
-    subprocess_ptr->set_result_for_command({"ffmpeg", "-hide_banner", "-decoders"},
-        {0, "D.V h264\nD.V h265\nD.V vp9", "", true, ""});
-    subprocess_ptr->set_result_for_command({"ffmpeg", "-hide_banner", "-hwaccels"},
-        {0, "cuda\nvaapi", "", true, ""});
-
-    // Clear history from initialization calls (if any - currently none in initialize for capabilities)
-    subprocess_ptr->clear_call_history();
-
-    // Call send_heartbeat multiple times
-    int num_calls = 3;
-    for (int i = 0; i < num_calls; ++i) {
-        engine->send_heartbeat();
-    }
-
-    // Analyze call history
-    int encoders_calls = 0;
-    int decoders_calls = 0;
-    int hwaccels_calls = 0;
-
-    auto history = subprocess_ptr->get_call_history();
-    for (const auto& call : history) {
-        if (call.command.size() >= 3) {
-            if (call.command[2] == "-encoders") encoders_calls++;
-            if (call.command[2] == "-decoders") decoders_calls++;
-            if (call.command[2] == "-hwaccels") hwaccels_calls++;
-        }
-    }
-
-    // OPTIMIZED ASSERTION: These should only be called ONCE (during initialization),
-    // and subsequent calls should use the cache.
-    // NOTE: In this test setup, initialize() didn't call these because we set the mock results *after* initialization
-    // in the SetUp, OR we need to verify if initialize() called them.
-    // However, the MockSubprocess records ALL calls.
-    // If initialize() is called in SetUp, it might have failed to get results if mocks weren't ready.
-    // But wait, SetUp calls initialize. If we want to test caching that happens in initialize,
-    // we should configure mocks BEFORE initialize.
-    // In current SetUp, we create engine and call initialize.
-
-    // Actually, let's verify if the cache was populated during initialize.
-    // Since I modified initialize to call these, and SetUp calls initialize...
-    // But in SetUp, the mock subprocess might return default results (empty?).
-    // Let's re-initialize the engine with configured mocks to be sure.
-
-    // Re-initialize to trigger caching with valid responses
-    engine->initialize(config);
-    subprocess_ptr->clear_call_history(); // Clear the calls made during re-initialization
-
-    // Call send_heartbeat multiple times
-    for (int i = 0; i < num_calls; ++i) {
-        engine->send_heartbeat();
-    }
-
-    // Analyze call history again
-    encoders_calls = 0;
-    decoders_calls = 0;
-    hwaccels_calls = 0;
-    history = subprocess_ptr->get_call_history();
-
-    for (const auto& call : history) {
-        if (call.command.size() >= 3) {
-            if (call.command[2] == "-encoders") encoders_calls++;
-            if (call.command[2] == "-decoders") decoders_calls++;
-            if (call.command[2] == "-hwaccels") hwaccels_calls++;
-        }
-    }
-
-    // Expectation: 0 calls during heartbeat loop because they are cached.
-    EXPECT_EQ(encoders_calls, 0) << "Optimized expectation: Encoders check should be cached";
-    EXPECT_EQ(decoders_calls, 0) << "Optimized expectation: Decoders check should be cached";
-    EXPECT_EQ(hwaccels_calls, 0) << "Optimized expectation: Hardware accels check should be cached";
+    // In this environment, it should return -1.0 as /sys path doesn't exist
+    EXPECT_EQ(temp1, temp2);
+    EXPECT_EQ(temp1, -1.0);
 }

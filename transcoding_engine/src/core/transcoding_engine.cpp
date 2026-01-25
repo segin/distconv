@@ -17,6 +17,9 @@ TranscodingEngine::TranscodingEngine(std::unique_ptr<IHttpClient> http_client,
     : http_client_(std::move(http_client))
     , database_(std::move(database))
     , subprocess_runner_(std::move(subprocess_runner)) {
+#ifdef __linux__
+    thermal_file_.open("/sys/class/thermal/thermal_zone0/temp");
+#endif
 }
 
 TranscodingEngine::~TranscodingEngine() {
@@ -361,10 +364,16 @@ std::string TranscodingEngine::get_ffmpeg_hw_accels() {
 
 double TranscodingEngine::get_cpu_temperature() {
 #ifdef __linux__
-    std::ifstream thermal_file("/sys/class/thermal/thermal_zone0/temp");
-    if (thermal_file.is_open()) {
+    if (!thermal_file_.is_open()) {
+        thermal_file_.open("/sys/class/thermal/thermal_zone0/temp");
+    }
+
+    if (thermal_file_.is_open()) {
+        thermal_file_.clear();
+        thermal_file_.seekg(0, std::ios::beg);
+
         std::string line;
-        if (std::getline(thermal_file, line)) {
+        if (std::getline(thermal_file_, line)) {
             try {
                 return std::stod(line) / 1000.0; // Convert millidegrees to Celsius
             } catch (const std::exception&) {

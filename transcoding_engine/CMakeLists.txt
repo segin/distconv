@@ -42,38 +42,24 @@ else()
              endif()
         endif()
     else()
-        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpr/include")
-            message(STATUS "Checking dependencies for local CPR build...")
+        message(STATUS "cpr system package not found. Using local third_party.")
+        set(CPR_USE_SYSTEM_CURL OFF CACHE BOOL "" FORCE)
+        set(CPR_USE_SYSTEM_LIB_PSL ON CACHE BOOL "" FORCE)
+        set(CPR_DISABLE_LIBPSL ON CACHE BOOL "" FORCE)
+        set(CURL_USE_LIBPSL OFF CACHE BOOL "" FORCE)
+        set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
-            find_program(MESON_PATH meson)
-            pkg_check_modules(LIBPSL QUIET libpsl)
-
-            if(LIBPSL_FOUND OR MESON_PATH)
-                message(STATUS "Dependencies found. Building local CPR...")
-                if(LIBPSL_FOUND)
-                     set(CPR_USE_SYSTEM_LIB_PSL ON CACHE BOOL "" FORCE)
-                else()
-                     set(CPR_USE_SYSTEM_LIB_PSL OFF CACHE BOOL "" FORCE)
-                endif()
-
-                set(CPR_USE_SYSTEM_CURL OFF CACHE BOOL "" FORCE)
-                set(CPR_ENABLE_SSL OFF CACHE BOOL "" FORCE) # Disable SSL to avoid complications
-
-                add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpr" cpr_build EXCLUDE_FROM_ALL)
-                set(CPR_AVAILABLE TRUE)
-            else()
-                 message(WARNING "CPR dependencies missing (meson and libpsl). Building without HTTP functionality.")
-                 # Create a dummy cpr target to satisfy linking
-                 add_library(cpr::cpr INTERFACE IMPORTED)
-                 set(CPR_AVAILABLE FALSE)
-                 add_compile_definitions(NO_CPR_AVAILABLE)
+        # Check if submodule exists
+        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpr/CMakeLists.txt")
+            add_subdirectory(../third_party/cpr cpr_lib EXCLUDE_FROM_ALL)
+            if(TARGET cpr)
+                add_library(cpr::cpr ALIAS cpr)
             endif()
+            set(CPR_AVAILABLE TRUE)
         else()
-             message(WARNING "cpr library not found. Building without HTTP functionality.")
-             # Create a dummy cpr target to satisfy linking
-             add_library(cpr::cpr INTERFACE IMPORTED)
-             set(CPR_AVAILABLE FALSE)
-             add_compile_definitions(NO_CPR_AVAILABLE)
+            message(WARNING "cpr library not found and submodule missing. Building without HTTP functionality.")
+            add_library(cpr::cpr INTERFACE IMPORTED)
+            set(CPR_AVAILABLE FALSE)
         endif()
     endif()
 endif()
@@ -91,9 +77,13 @@ if(NOT nlohmann_json_FOUND)
         add_library(nlohmann_json::nlohmann_json INTERFACE IMPORTED)
         target_include_directories(nlohmann_json::nlohmann_json INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/include")
     else()
-        message(STATUS "nlohmann_json not found via find_package or pkg-config. Using local third_party/json.")
-        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json ${CMAKE_CURRENT_BINARY_DIR}/json)
-        # nlohmann_json provides nlohmann_json::nlohmann_json target
+        message(STATUS "nlohmann_json system package not found. Using local third_party.")
+        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/single_include")
+            add_library(nlohmann_json::nlohmann_json INTERFACE IMPORTED)
+            target_include_directories(nlohmann_json::nlohmann_json INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/single_include")
+        else()
+            message(FATAL_ERROR "nlohmann_json not found. Please install nlohmann-json3-dev.")
+        endif()
     endif()
 endif()
 
@@ -111,17 +101,18 @@ if(NOT SQLite3_FOUND)
     endif()
 endif()
 
-# Fetch GTest content
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
-)
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
-
-set(GTest_FOUND TRUE)
+# Find GTest for testing
+find_package(GTest QUIET)
+if(NOT GTest_FOUND)
+    include(FetchContent)
+    FetchContent_Declare(
+      googletest
+      URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+    )
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(googletest)
+    set(GTest_FOUND TRUE)
+endif()
 
 include_directories(src)
 
