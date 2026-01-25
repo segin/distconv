@@ -9,6 +9,7 @@
 #include <thread>
 #include <poll.h>
 #include <fcntl.h>
+#include <cstring>
 #include <vector>
 
 namespace distconv {
@@ -124,159 +125,114 @@ private:
         }
         close(stdin_pipe[1]);
         
-        // Set read pipes to non-blocking
-        set_nonblocking(stdout_pipe[0]);
-        set_nonblocking(stderr_pipe[0]);
+        // Set pipes to non-blocking mode
+        fcntl(stdout_pipe[0], F_SETFL, O_NONBLOCK);
+        fcntl(stderr_pipe[0], F_SETFL, O_NONBLOCK);
 
         std::string stdout_output;
         std::string stderr_output;
-
-        std::vector<struct pollfd> fds;
-        struct pollfd pfd_out = {stdout_pipe[0], POLLIN, 0};
-        struct pollfd pfd_err = {stderr_pipe[0], POLLIN, 0};
-        fds.push_back(pfd_out);
-        fds.push_back(pfd_err);
+        
+        struct pollfd fds[2];
+        fds[0].fd = stdout_pipe[0];
+        fds[0].events = POLLIN;
+        fds[1].fd = stderr_pipe[0];
+        fds[1].events = POLLIN;
 
         auto start_time = std::chrono::steady_clock::now();
-        bool stdout_open = true;
-        bool stderr_open = true;
         bool timed_out = false;
-
         char buffer[4096];
 
-        while (stdout_open || stderr_open) {
-            // Calculate remaining timeout
+        while (fds[0].fd != -1 || fds[1].fd != -1) {
             int remaining_ms = -1;
             if (timeout_seconds > 0) {
-                auto now = std::chrono::steady_clock::now();
-                auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time).count();
-                remaining_ms = (timeout_seconds * 1000) - elapsed;
-
+                auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::steady_clock::now() - start_time);
+                remaining_ms = (timeout_seconds * 1000) - elapsed.count();
                 if (remaining_ms <= 0) {
                     timed_out = true;
                     break;
                 }
             }
 
-            // Prepare pollfds (only include open pipes)
-            std::vector<struct pollfd> active_fds;
-            if (stdout_open) active_fds.push_back({stdout_pipe[0], POLLIN, 0});
-            if (stderr_open) active_fds.push_back({stderr_pipe[0], POLLIN, 0});
+            // We use a small poll timeout (e.g., 100ms) even if global timeout is larger
+            // to allow periodic checks, though we could rely on remaining_ms directly.
+            // Using remaining_ms directly is efficient.
+            int ret = poll(fds, 2, remaining_ms);
 
-            if (active_fds.empty()) break;
-
-            int poll_result = poll(active_fds.data(), active_fds.size(), remaining_ms);
-
-            if (poll_result == -1) {
+            if (ret == -1) {
                 if (errno == EINTR) continue;
-                // Other error, break loop
+                break; // Error
+            }
+
+            if (ret == 0 && timeout_seconds > 0) {
+                timed_out = true; // Poll timed out
                 break;
             }
 
-            if (poll_result == 0) {
-                // Timeout
-                timed_out = true;
-                break;
-            }
-
-            // Process results
-            for (const auto& fd : active_fds) {
-                if (fd.revents & POLLIN) {
-                    ssize_t bytes_read = read(fd.fd, buffer, sizeof(buffer));
-                    if (bytes_read > 0) {
-                        if (fd.fd == stdout_pipe[0]) {
-                            stdout_output.append(buffer, bytes_read);
-                        } else {
-                            stderr_output.append(buffer, bytes_read);
-                        }
-                    } else if (bytes_read == 0) {
-                        // EOF
-                        if (fd.fd == stdout_pipe[0]) stdout_open = false;
-                        else stderr_open = false;
-                    } else {
-                         // Error (should happen only if not EAGAIN which is handled by poll)
-                         if (errno != EAGAIN && errno != EWOULDBLOCK) {
-                             if (fd.fd == stdout_pipe[0]) stdout_open = false;
-                             else stderr_open = false;
-                         }
+            // Check stdout
+            if (fds[0].fd != -1) {
+                if (fds[0].revents & POLLIN) {
+                    ssize_t bytes = read(fds[0].fd, buffer, sizeof(buffer));
+                    if (bytes > 0) {
+                        stdout_output.append(buffer, bytes);
+                    } else if (bytes == 0) {
+                        close(fds[0].fd);
+                        fds[0].fd = -1;
                     }
-                } else if (fd.revents & (POLLHUP | POLLERR | POLLNVAL)) {
-                    // Pipe closed or error
-                     if (fd.fd == stdout_pipe[0]) stdout_open = false;
-                     else stderr_open = false;
+                } else if (fds[0].revents & (POLLHUP | POLLERR | POLLNVAL)) {
+                    // Try to read remaining data if any
+                    ssize_t bytes;
+                    while ((bytes = read(fds[0].fd, buffer, sizeof(buffer))) > 0) {
+                        stdout_output.append(buffer, bytes);
+                    }
+                    close(fds[0].fd);
+                    fds[0].fd = -1;
+                }
+            }
+
+            // Check stderr
+            if (fds[1].fd != -1) {
+                if (fds[1].revents & POLLIN) {
+                    ssize_t bytes = read(fds[1].fd, buffer, sizeof(buffer));
+                    if (bytes > 0) {
+                        stderr_output.append(buffer, bytes);
+                    } else if (bytes == 0) {
+                        close(fds[1].fd);
+                        fds[1].fd = -1;
+                    }
+                } else if (fds[1].revents & (POLLHUP | POLLERR | POLLNVAL)) {
+                    // Try to read remaining data
+                    ssize_t bytes;
+                    while ((bytes = read(fds[1].fd, buffer, sizeof(buffer))) > 0) {
+                        stderr_output.append(buffer, bytes);
+                    }
+                    close(fds[1].fd);
+                    fds[1].fd = -1;
                 }
             }
         }
-        
-        close(stdout_pipe[0]);
-        close(stderr_pipe[0]);
-        
-        int status = 0;
-        
+
+        // Close any remaining open pipes
+        if (fds[0].fd != -1) close(fds[0].fd);
+        if (fds[1].fd != -1) close(fds[1].fd);
+
         if (timed_out) {
             kill(pid, SIGTERM);
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             kill(pid, SIGKILL);
+            int status;
             waitpid(pid, &status, 0);
             return {-1, stdout_output, stderr_output, false, "Process timed out"};
         }
         
-        // Wait for process to finish (it should be finished or finishing if pipes are closed)
-        // We still use a small timeout check just in case the process keeps running after closing pipes
-        if (timeout_seconds > 0) {
-             // Check if we have remaining time
-             auto now = std::chrono::steady_clock::now();
-             auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - start_time).count();
-             int remaining = timeout_seconds - elapsed;
-             if (remaining <= 0) remaining = 0; // Immediate check
-
-             if (!wait_with_timeout(pid, &status, remaining)) {
-                // Should be rare if pipes are closed, but possible
-                kill(pid, SIGTERM);
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                kill(pid, SIGKILL);
-                waitpid(pid, &status, 0);
-                return {-1, stdout_output, stderr_output, false, "Process timed out after output closed"};
-             }
-        } else {
-            waitpid(pid, &status, 0);
-        }
+        // Wait for child process (it should be finished or nearly finished)
+        int status;
+        waitpid(pid, &status, 0);
 
         int exit_code = WEXITSTATUS(status);
         bool success = (exit_code == 0);
         
         return {exit_code, stdout_output, stderr_output, success, ""};
-    }
-    
-    bool wait_with_timeout(pid_t pid, int* status, int timeout_seconds) {
-        auto start_time = std::chrono::steady_clock::now();
-        auto timeout_duration = std::chrono::seconds(timeout_seconds);
-        
-        // If timeout is 0 or negative, we still check at least once,
-        // but let's assume this helper is called when we want to wait up to X seconds.
-        // If X=0, we do a non-blocking check.
-
-        while (true) {
-            pid_t result = waitpid(pid, status, WNOHANG);
-            
-            if (result == pid) {
-                return true; // Process finished
-            }
-            
-            if (result == -1) {
-                return false; // Error
-            }
-            
-            auto current_time = std::chrono::steady_clock::now();
-            if (current_time - start_time >= timeout_duration && timeout_seconds >= 0) {
-                 // Check one last time before declaring timeout
-                 result = waitpid(pid, status, WNOHANG);
-                 if (result == pid) return true;
-                 return false; // Timeout
-            }
-            
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        }
     }
     
 public:
