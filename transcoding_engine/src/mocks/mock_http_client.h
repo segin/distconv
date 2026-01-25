@@ -8,6 +8,8 @@
 namespace transcoding_engine {
 using namespace distconv::TranscodingEngine;
 
+using namespace distconv::TranscodingEngine;
+
 class MockHttpClient : public IHttpClient {
 public:
     MockHttpClient() = default;

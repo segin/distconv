@@ -1,30 +1,32 @@
 #include "mock_subprocess.h"
 #include <sstream>
-#include <algorithm>
 #include <fstream>
 
 namespace transcoding_engine {
+using namespace distconv::TranscodingEngine;
+
 using namespace distconv::TranscodingEngine;
 
 SubprocessResult MockSubprocess::run(const std::vector<std::string>& command,
                                     const std::string& working_directory,
                                     int timeout_seconds) {
     record_call(command, "", working_directory, timeout_seconds);
-    
-    auto result = get_result_for_command(command);
-    
-    // If this looks like an FFmpeg command and the result is successful, create the output file
-    if (result.success && result.exit_code == 0 && command.size() >= 7 && command[0] == "ffmpeg") {
-        // FFmpeg command format: ffmpeg -y -i input.mp4 -c:v codec output.mp4
-        std::string output_file = command.back(); // Last argument is typically the output file
-        if (output_file.find(".mp4") != std::string::npos) {
-            std::ofstream file(output_file);
-            file << "mock transcoded content";
-            file.close();
+
+    // Simulate side effects for ffmpeg: create output file
+    if (!command.empty() && command[0] == "ffmpeg") {
+        // Assume last argument is output file
+        if (command.size() > 1) {
+            std::string output_file = command.back();
+            // Simple check: output file usually ends with .mp4 or similar, and is not a flag
+            if (output_file.length() > 4 && output_file[0] != '-') {
+                 std::ofstream file(output_file);
+                 file << "mock output content";
+                 file.close();
+            }
         }
     }
-    
-    return result;
+
+    return get_result_for_command(command);
 }
 
 SubprocessResult MockSubprocess::run_with_input(const std::vector<std::string>& command,
@@ -36,30 +38,20 @@ SubprocessResult MockSubprocess::run_with_input(const std::vector<std::string>& 
 }
 
 bool MockSubprocess::is_executable_available(const std::string& executable) {
-    auto it = executable_availability_.find(executable);
-    if (it != executable_availability_.end()) {
-        return it->second;
+    if (executable_availability_.count(executable)) {
+        return executable_availability_[executable];
     }
-    // Default: assume common executables are available
-    return (executable == "ffmpeg" || executable == "echo" || executable == "cat");
+    return true; // Default to available
 }
 
 std::string MockSubprocess::find_executable_path(const std::string& executable) {
-    auto it = executable_paths_.find(executable);
-    if (it != executable_paths_.end()) {
-        return it->second;
+    if (executable_paths_.count(executable)) {
+        return executable_paths_[executable];
     }
-    
-    // Default paths for common executables
-    if (executable == "ffmpeg") return "/usr/bin/ffmpeg";
-    if (executable == "echo") return "/bin/echo";
-    if (executable == "cat") return "/bin/cat";
-    
-    return "";
+    return "/usr/bin/" + executable; // Default mock path
 }
 
-void MockSubprocess::set_result_for_command(const std::vector<std::string>& command, 
-                                           const SubprocessResult& result) {
+void MockSubprocess::set_result_for_command(const std::vector<std::string>& command, const SubprocessResult& result) {
     command_results_[command] = result;
 }
 
@@ -75,9 +67,8 @@ void MockSubprocess::set_executable_path(const std::string& executable, const st
     executable_paths_[executable] = path;
 }
 
-void MockSubprocess::add_result_queue(const std::vector<std::string>& command, 
-                                     std::queue<SubprocessResult> results) {
-    command_result_queues_[command] = std::move(results);
+void MockSubprocess::add_result_queue(const std::vector<std::string>& command, std::queue<SubprocessResult> results) {
+    command_result_queues_[command] = results;
 }
 
 bool MockSubprocess::was_command_called(const std::vector<std::string>& command) const {
@@ -100,13 +91,13 @@ bool MockSubprocess::was_executable_called(const std::string& executable) const 
 
 MockSubprocess::CallInfo MockSubprocess::get_last_call() const {
     if (call_history_.empty()) {
-        return {{}, "", "", 0};
+        return {};
     }
     return call_history_.back();
 }
 
 SubprocessResult MockSubprocess::get_result_for_command(const std::vector<std::string>& command) {
-    // Check for queued results first
+    // Check queues first
     auto queue_it = command_result_queues_.find(command);
     if (queue_it != command_result_queues_.end() && !queue_it->second.empty()) {
         auto result = queue_it->second.front();
@@ -114,30 +105,13 @@ SubprocessResult MockSubprocess::get_result_for_command(const std::vector<std::s
         return result;
     }
     
-    // Check for specific command result
+    // Check specific results
     auto it = command_results_.find(command);
     if (it != command_results_.end()) {
         return it->second;
     }
     
-    // Generate realistic output for ffmpeg commands
-    if (!command.empty()) {
-        if (command[0] == "ffmpeg") {
-            if (std::find(command.begin(), command.end(), "-encoders") != command.end()) {
-                return {0, "h264,h265,vp8,vp9,av1", "", true, ""};
-            }
-            if (std::find(command.begin(), command.end(), "-hwaccels") != command.end()) {
-                return {0, "cuda,vaapi,qsv", "", true, ""};
-            }
-            // For transcoding commands, check if default is set to fail
-            if (!default_result_.success || default_result_.exit_code != 0) {
-                return default_result_; // Use the configured failure
-            }
-            // Transcoding simulation - success case
-            return {0, "frame= 1000 fps= 30 q=23.0 size=    1024kB time=00:00:33.33", "", true, ""};
-        }
-    }
-    
+    // Return default result
     return default_result_;
 }
 
@@ -147,12 +121,12 @@ void MockSubprocess::record_call(const std::vector<std::string>& command, const 
 }
 
 std::string MockSubprocess::command_to_string(const std::vector<std::string>& command) const {
-    std::ostringstream oss;
+    std::stringstream ss;
     for (size_t i = 0; i < command.size(); ++i) {
-        if (i > 0) oss << " ";
-        oss << command[i];
+        if (i > 0) ss << " ";
+        ss << command[i];
     }
-    return oss.str();
+    return ss.str();
 }
 
 } // namespace TranscodingEngine

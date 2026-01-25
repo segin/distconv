@@ -10,6 +10,9 @@ add_compile_options(-Wall -Wextra -Wpedantic)
 find_package(PkgConfig REQUIRED)
 find_package(Threads REQUIRED)
 
+# Include FetchContent for dependencies
+include(FetchContent)
+
 # Find cpr (try package first, fallback to manual)
 find_package(cpr QUIET)
 if(cpr_FOUND)
@@ -42,33 +45,28 @@ else()
              endif()
         endif()
     else()
-        message(STATUS "cpr system package not found. Using local third_party.")
-        set(CPR_USE_SYSTEM_CURL OFF CACHE BOOL "" FORCE)
-        set(CPR_USE_SYSTEM_LIB_PSL ON CACHE BOOL "" FORCE)
-        set(CPR_DISABLE_LIBPSL ON CACHE BOOL "" FORCE)
-        set(CURL_USE_LIBPSL OFF CACHE BOOL "" FORCE)
-        set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+        # Fallback to local source in third_party/cpr
+        message(STATUS "cpr not found in system. Using local third_party/cpr.")
 
-        # Check if submodule exists
-        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpr/CMakeLists.txt")
-            add_subdirectory(../third_party/cpr cpr_lib EXCLUDE_FROM_ALL)
-            if(TARGET cpr)
-                add_library(cpr::cpr ALIAS cpr)
-            endif()
-            set(CPR_AVAILABLE TRUE)
-        else()
-            message(WARNING "cpr library not found and submodule missing. Building without HTTP functionality.")
-            add_library(cpr::cpr INTERFACE IMPORTED)
-            set(CPR_AVAILABLE FALSE)
-        endif()
+        # Configure CPR for local build
+        # We set CPR_USE_SYSTEM_LIB_PSL to ON to bypass CPR's attempt to build libpsl with meson
+        # But we verify curl doesn't try to use it via CURL_USE_LIBPSL=OFF
+        set(CPR_USE_SYSTEM_CURL OFF CACHE BOOL "Use system curl" FORCE)
+        set(CPR_USE_SYSTEM_LIB_PSL ON CACHE BOOL "Use system libpsl (fake to bypass build)" FORCE)
+        set(CURL_USE_LIBPSL OFF CACHE BOOL "Disable libpsl in curl" FORCE)
+        set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build static libraries" FORCE)
+        set(CPR_ENABLE_SSL ON CACHE BOOL "Enable SSL" FORCE)
+        set(CPR_FORCE_OPENSSL_BACKEND ON CACHE BOOL "Force OpenSSL" FORCE)
+
+        add_subdirectory(../third_party/cpr cpr)
+        set(CPR_AVAILABLE TRUE)
     endif()
 endif()
 
 # Find nlohmann_json
 find_package(nlohmann_json QUIET)
 if(NOT nlohmann_json_FOUND)
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(NLOHMANN_JSON QUIET nlohmann_json)
+    pkg_check_modules(NLOHMANN_JSON nlohmann_json)
     if(NLOHMANN_JSON_FOUND)
         add_library(nlohmann_json::nlohmann_json INTERFACE IMPORTED)
         target_include_directories(nlohmann_json::nlohmann_json INTERFACE ${NLOHMANN_JSON_INCLUDE_DIRS})
@@ -77,20 +75,21 @@ if(NOT nlohmann_json_FOUND)
         add_library(nlohmann_json::nlohmann_json INTERFACE IMPORTED)
         target_include_directories(nlohmann_json::nlohmann_json INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/include")
     else()
-        message(STATUS "nlohmann_json system package not found. Using local third_party.")
-        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/single_include")
-            add_library(nlohmann_json::nlohmann_json INTERFACE IMPORTED)
-            target_include_directories(nlohmann_json::nlohmann_json INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/single_include")
-        else()
-            message(FATAL_ERROR "nlohmann_json not found. Please install nlohmann-json3-dev.")
-        endif()
+        # Fallback to local source in third_party/json
+        message(STATUS "nlohmann_json not found in system. Using local third_party/json.")
+
+        # Check if we can use add_subdirectory (usually it supports it)
+        # Disable tests for json
+        set(JSON_BuildTests OFF CACHE INTERNAL "")
+
+        add_subdirectory(../third_party/json json)
+        # Note: nlohmann_json target name is nlohmann_json::nlohmann_json
     endif()
 endif()
 
 
 find_package(SQLite3 QUIET)
 if(NOT SQLite3_FOUND)
-    find_package(PkgConfig REQUIRED)
     pkg_check_modules(SQLITE3 REQUIRED sqlite3)
     if(SQLITE3_FOUND)
         add_library(SQLite::SQLite3 INTERFACE IMPORTED)
@@ -104,13 +103,17 @@ endif()
 # Find GTest for testing
 find_package(GTest QUIET)
 if(NOT GTest_FOUND)
-    include(FetchContent)
+    message(STATUS "GTest not found in system. Fetching from source.")
     FetchContent_Declare(
       googletest
-      URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+      URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.tar.gz
     )
+    # For Windows: Prevent overriding the parent project's compiler/linker settings
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
     FetchContent_MakeAvailable(googletest)
+
+    # Enable testing
+    enable_testing()
     set(GTest_FOUND TRUE)
 endif()
 
