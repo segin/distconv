@@ -6,6 +6,10 @@
 #include <vector>
 #include <memory>
 #include <mutex>
+#include <map>
+
+struct sqlite3;
+struct sqlite3_stmt;
 
 struct sqlite3;
 
@@ -58,6 +62,11 @@ private:
     sqlite3* db_;
     mutable std::mutex mutex_;
     
+    sqlite3* db_ = nullptr;
+    std::map<std::string, sqlite3_stmt*> statements_;
+
+    sqlite3_stmt* get_prepared_statement(const std::string& sql);
+
     void initialize_database();
     void execute_sql(const std::string& sql);
     nlohmann::json execute_query(const std::string& sql);
