@@ -80,6 +80,7 @@ add_executable(mq_tests
     tests/main.cpp
     tests/message_queue_tests.cpp
     tests/message_queue_integration_tests.cpp
+    tests/modern_api_tests.cpp
 )
 target_link_libraries(mq_tests dispatch_server_core gtest gmock)
 target_include_directories(mq_tests PRIVATE
@@ -94,6 +95,14 @@ include(GoogleTest)
 gtest_discover_tests(dispatch_server_tests
     PROPERTIES
     TIMEOUT 10
+)
+
+# Performance Benchmark
+add_executable(perf_benchmark tests/performance_benchmark.cpp)
+target_link_libraries(perf_benchmark dispatch_server_core)
+target_include_directories(perf_benchmark PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/../third_party/json/single_include
 )
 gtest_discover_tests(mq_tests
     PROPERTIES

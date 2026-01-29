@@ -344,16 +344,16 @@ void DispatchServer::cleanup_stale_engines() {
 void DispatchServer::handle_job_timeouts() {
     // Use repository if available
     if (!use_legacy_storage_ && job_repo_) {
-        // We need to find assigned jobs that haven't been updated in a while.
-        // Since we don't have a direct query for this in the interface yet, we might need to iterate or add a method.
-        // For now, let's iterate all jobs (inefficient but works for now) or rely on the engine heartbeat timeout to catch crashes.
-        // Actually, job timeout is different from engine timeout. A job might be stuck processing.
-        // Let's iterate for now, but in a real app we'd add `get_stuck_jobs` to the repo.
+        // Optimized to fetch only relevant jobs
+        auto assigned_jobs = job_repo_->get_jobs_by_status("assigned");
+        auto processing_jobs = job_repo_->get_jobs_by_status("processing");
+        std::vector<nlohmann::json> jobs = std::move(assigned_jobs);
+        jobs.insert(jobs.end(), processing_jobs.begin(), processing_jobs.end());
         
-        auto jobs = job_repo_->get_all_jobs();
         auto now = std::chrono::system_clock::now();
         
         for (auto& job : jobs) {
+            // Check implicit again just in case, though we fetched by status
             if (job["status"] == "assigned" || job["status"] == "processing") {
                 if (job.contains("updated_at")) {
                     auto updated_at = std::chrono::system_clock::time_point{
@@ -441,7 +441,7 @@ void DispatchServer::requeue_failed_jobs() {
     if (!use_legacy_storage_ && job_repo_) {
         // Iterate jobs to find 'failed_retry' ones that are ready
         // Ideally this should be a repo method `get_ready_to_retry_jobs()`
-        auto jobs = job_repo_->get_all_jobs();
+        auto jobs = job_repo_->get_jobs_by_status("failed_retry");
         auto now = std::chrono::system_clock::now();
         int64_t now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
         
@@ -891,7 +891,26 @@ void DispatchServer::setup_job_endpoints() {
     // GET /jobs/ - List all jobs
     svr.Get("/jobs/", ApiMiddleware::with_api_key_validation(api_key_, 
         [this](const httplib::Request& req, httplib::Response& res) {
-            std::vector<nlohmann::json> jobs = job_repo_->get_all_jobs();
+            // Default limit 100, offset 0 for performance
+            int limit = 100;
+            int offset = 0;
+
+            if (req.has_param("limit")) {
+                try {
+                    limit = std::stoi(req.get_param_value("limit"));
+                    if (limit < 1) limit = 1;
+                    if (limit > 1000) limit = 1000; // Cap max limit
+                } catch (...) {}
+            }
+
+            if (req.has_param("offset")) {
+                try {
+                    offset = std::stoi(req.get_param_value("offset"));
+                    if (offset < 0) offset = 0;
+                } catch (...) {}
+            }
+
+            std::vector<nlohmann::json> jobs = job_repo_->get_jobs_paginated(limit, offset);
             nlohmann::json response = nlohmann::json::array();
             
             for (const auto& job : jobs) {
