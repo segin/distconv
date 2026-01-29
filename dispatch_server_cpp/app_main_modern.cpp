@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
         auto mq_factory = std::make_unique<MemoryMessageQueueFactory>();
 
         // Create server with injected dependencies
-        DispatchServer server(job_repo, engine_repo, std::move(mq_factory), api_key);
+        distconv::DispatchServer::DispatchServer server(job_repo, engine_repo, std::move(mq_factory), api_key);
         
         std::cout << "Starting server on port " << port << " with database: " << database_path << std::endl;
         std::cout << "API key authentication enabled" << std::endl;
