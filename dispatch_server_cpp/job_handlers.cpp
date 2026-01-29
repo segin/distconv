@@ -10,7 +10,6 @@ namespace DispatchServer {
 // External globals (from dispatch_server_core.cpp)
 extern nlohmann::json jobs_db;
 extern std::mutex state_mutex;
-extern void save_state_unlocked();
 extern std::string generate_uuid();
 
 using namespace Constants;

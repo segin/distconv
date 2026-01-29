@@ -242,9 +242,8 @@ TEST_F(ApiTest, CompleteJobNoApiKey) {
     auto res = client->Post(("/jobs/" + job_id + "/complete").c_str(), no_api_key_headers, update_body.dump(), "application/json");
     ASSERT_TRUE(res != nullptr);
     ASSERT_EQ(res->status, 401);
-    // Enhanced endpoints return JSON error
-    nlohmann::json error_response = nlohmann::json::parse(res->body);
-    ASSERT_EQ(error_response["error"]["message"], "Missing 'X-API-Key' header");
+    // Middleware returns text/plain error
+    ASSERT_EQ(res->body, "Unauthorized: Missing 'X-API-Key' header.");
 }
 
 TEST_F(ApiTest, FailJobValid) {
@@ -312,7 +311,9 @@ TEST_F(ApiTest, FailJobMissingErrorMessage) {
     auto res = client->Post(("/jobs/" + job_id + "/fail").c_str(), headers, fail_body.dump(), "application/json");
     ASSERT_TRUE(res != nullptr);
     ASSERT_EQ(res->status, 400);
-    ASSERT_EQ(res->body, "Bad Request: 'error_message' is missing.");
+    // Handler returns JSON error
+    nlohmann::json error_obj = nlohmann::json::parse(res->body);
+    ASSERT_EQ(error_obj["error"], "Bad Request: 'error_message' is missing.");
 }
 
 TEST_F(ApiTest, FailJobInvalidJson) {
@@ -367,7 +368,6 @@ TEST_F(ApiTest, FailJobNoApiKey) {
     auto res = client->Post(("/jobs/" + job_id + "/fail").c_str(), no_api_key_headers, fail_body.dump(), "application/json");
     ASSERT_TRUE(res != nullptr);
     ASSERT_EQ(res->status, 401);
-    // Enhanced endpoints return JSON error
-    nlohmann::json error_response = nlohmann::json::parse(res->body);
-    ASSERT_EQ(error_response["error"]["message"], "Missing 'X-API-Key' header");
+    // Middleware returns text/plain error
+    ASSERT_EQ(res->body, "Unauthorized: Missing 'X-API-Key' header.");
 }

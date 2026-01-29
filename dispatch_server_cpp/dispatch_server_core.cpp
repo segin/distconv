@@ -38,11 +38,85 @@ std::mutex engines_mutex; // Dedicated mutex for engines
 // Persistent storage for jobs and engines
 std::string PERSISTENT_STORAGE_FILE = "dispatch_server_state.json";
 
-bool mock_save_state_enabled = false;
-int save_state_call_count = 0;
+std::atomic<bool> mock_save_state_enabled{false};
+std::atomic<int> save_state_call_count{0};
 
 // Forward declaration for save_state_unlocked
-void save_state_unlocked();
+void save_state_unlocked(bool async);
+
+// Persistence thread globals
+std::thread persistence_thread;
+std::mutex persistence_mutex;
+std::condition_variable persistence_cv;
+std::atomic<bool> persistence_running{false};
+std::atomic<bool> persistence_dirty{false};
+
+void perform_save_state_to_disk(const nlohmann::json& jobs, const nlohmann::json& engines) {
+    // Use a temporary file for atomic write
+    std::string temp_file = PERSISTENT_STORAGE_FILE + ".tmp";
+    std::ofstream ofs(temp_file);
+    if (ofs.is_open()) {
+        nlohmann::json state_to_save;
+        state_to_save["jobs"] = jobs;
+        state_to_save["engines"] = engines;
+        ofs << state_to_save.dump(4) << std::endl;
+        ofs.close();
+
+        // Atomic rename
+        if (std::rename(temp_file.c_str(), PERSISTENT_STORAGE_FILE.c_str()) == 0) {
+            // Success
+        } else {
+            std::cerr << "Failed to atomically save state." << std::endl;
+            std::remove(temp_file.c_str()); // Clean up temp file
+        }
+    } else {
+        std::cerr << "Failed to open temporary file for state saving." << std::endl;
+    }
+}
+
+void persistence_worker() {
+    while (true) {
+        {
+            std::unique_lock<std::mutex> lock(persistence_mutex);
+            persistence_cv.wait(lock, []{ return persistence_dirty.load() || !persistence_running.load(); });
+
+            if (!persistence_running.load() && !persistence_dirty.load()) {
+                return;
+            }
+            persistence_dirty.store(false);
+        }
+
+        // Copy state (requires state_mutex)
+        nlohmann::json jobs_copy;
+        nlohmann::json engines_copy;
+        {
+             std::lock_guard<std::mutex> lock(state_mutex);
+             jobs_copy = jobs_db;
+             engines_copy = engines_db;
+        }
+
+        // Write to disk (no locks)
+        perform_save_state_to_disk(jobs_copy, engines_copy);
+        // std::cout << "Saved state (async)." << std::endl;
+    }
+}
+
+void start_persistence_thread() {
+    if (!persistence_running.load()) {
+        persistence_running.store(true);
+        persistence_thread = std::thread(persistence_worker);
+    }
+}
+
+void stop_persistence_thread() {
+    if (persistence_running.load()) {
+        persistence_running.store(false);
+        persistence_cv.notify_all();
+        if (persistence_thread.joinable()) {
+            persistence_thread.join();
+        }
+    }
+}
 
 bool mock_load_state_enabled = false;
 nlohmann::json mock_load_state_data = nlohmann::json::object();
@@ -186,14 +260,21 @@ void load_state() {
 }
 
 // This version of save_state assumes the caller already holds the lock
-void save_state_unlocked() {
-    std::ofstream ofs(PERSISTENT_STORAGE_FILE);
-    if (ofs.is_open()) {
-        nlohmann::json state_to_save;
-        state_to_save["jobs"] = jobs_db;
-        state_to_save["engines"] = engines_db;
-        ofs << state_to_save.dump(4) << std::endl;
-        ofs.close();
+void save_state_unlocked(bool async) {
+    if (mock_save_state_enabled) {
+        save_state_call_count++;
+        return;
+    }
+
+    if (async && persistence_running.load()) {
+        {
+            std::lock_guard<std::mutex> lock(persistence_mutex);
+            persistence_dirty.store(true);
+        }
+        persistence_cv.notify_one();
+    } else {
+        // Synchronous save
+        perform_save_state_to_disk(jobs_db, engines_db);
         std::cout << "Saved state." << std::endl;
     }
 }
@@ -204,7 +285,7 @@ void save_state() {
         return;
     }
     std::lock_guard<std::mutex> lock(state_mutex);
-    save_state_unlocked();
+    save_state_unlocked(false);
 }
 
 // Asynchronous save state function
@@ -622,6 +703,7 @@ void DispatchServer::start(int port, bool block) {
     // Start background worker thread
     shutdown_requested_.store(false);
     background_worker_ = std::thread(&DispatchServer::background_worker, this);
+    start_persistence_thread();
     
     if (block) {
         svr.listen("0.0.0.0", port);
@@ -651,6 +733,8 @@ void DispatchServer::stop() {
     if (server_thread.joinable()) {
         server_thread.join();
     }
+
+    stop_persistence_thread();
     save_state();
 }
 
