@@ -13,6 +13,7 @@
 #include <algorithm>
 
 using namespace distconv::TranscodingEngine;
+using namespace transcoding_engine;
 
 class RefactoringTest : public ::testing::Test {
 protected:

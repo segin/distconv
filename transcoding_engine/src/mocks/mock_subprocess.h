@@ -7,17 +7,17 @@
 
 namespace transcoding_engine {
 
-class MockSubprocess : public ISubprocessRunner {
+class MockSubprocess : public distconv::TranscodingEngine::ISubprocessRunner {
 public:
     MockSubprocess() = default;
     ~MockSubprocess() override = default;
     
     // ISubprocessRunner interface
-    SubprocessResult run(const std::vector<std::string>& command,
+    distconv::TranscodingEngine::SubprocessResult run(const std::vector<std::string>& command,
                         const std::string& working_directory = "",
                         int timeout_seconds = 0) override;
     
-    SubprocessResult run_with_input(const std::vector<std::string>& command,
+    distconv::TranscodingEngine::SubprocessResult run_with_input(const std::vector<std::string>& command,
                                    const std::string& stdin_input,
                                    const std::string& working_directory = "",
                                    int timeout_seconds = 0) override;
@@ -26,11 +26,11 @@ public:
     std::string find_executable_path(const std::string& executable) override;
     
     // Mock-specific methods
-    void set_result_for_command(const std::vector<std::string>& command, const SubprocessResult& result);
-    void set_default_result(const SubprocessResult& result);
+    void set_result_for_command(const std::vector<std::string>& command, const distconv::TranscodingEngine::SubprocessResult& result);
+    void set_default_result(const distconv::TranscodingEngine::SubprocessResult& result);
     void set_executable_available(const std::string& executable, bool available);
     void set_executable_path(const std::string& executable, const std::string& path);
-    void add_result_queue(const std::vector<std::string>& command, std::queue<SubprocessResult> results);
+    void add_result_queue(const std::vector<std::string>& command, std::queue<distconv::TranscodingEngine::SubprocessResult> results);
     
     // Call tracking
     struct CallInfo {
@@ -57,14 +57,14 @@ public:
     }
 
 private:
-    std::map<std::vector<std::string>, SubprocessResult> command_results_;
-    std::map<std::vector<std::string>, std::queue<SubprocessResult>> command_result_queues_;
+    std::map<std::vector<std::string>, distconv::TranscodingEngine::SubprocessResult> command_results_;
+    std::map<std::vector<std::string>, std::queue<distconv::TranscodingEngine::SubprocessResult>> command_result_queues_;
     std::map<std::string, bool> executable_availability_;
     std::map<std::string, std::string> executable_paths_;
-    SubprocessResult default_result_{0, "", "", true, ""};
+    distconv::TranscodingEngine::SubprocessResult default_result_{0, "", "", true, ""};
     std::vector<CallInfo> call_history_;
     
-    SubprocessResult get_result_for_command(const std::vector<std::string>& command);
+    distconv::TranscodingEngine::SubprocessResult get_result_for_command(const std::vector<std::string>& command);
     void record_call(const std::vector<std::string>& command, const std::string& stdin_input,
                     const std::string& working_directory, int timeout_seconds);
     std::string command_to_string(const std::vector<std::string>& command) const;

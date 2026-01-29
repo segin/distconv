@@ -3,6 +3,8 @@
 
 namespace transcoding_engine {
 
+using namespace distconv::TranscodingEngine;
+
 bool MockDatabase::initialize(const std::string& db_path) {
     initialize_call_count_++;
     db_path_ = db_path;

@@ -310,3 +310,41 @@ TEST_F(ImplementationTest, MalformedServerResponses) {
         }
     }
 }
+
+// Test 151: SSL options are correctly applied
+TEST_F(ImplementationTest, SSLOptionsConfiguration) {
+    CprHttpClient http_client;
+
+    // Create a dummy file to act as an invalid CA certificate
+    // If the SSL options are correctly applied, using this as a CA cert should cause the request to fail
+    // (because it's not a valid certificate)
+    {
+        std::ofstream cert(test_file_path);
+        cert << "-----BEGIN CERTIFICATE-----\nINVALID_DATA\n-----END CERTIFICATE-----";
+        cert.close();
+    }
+
+    // Set the invalid CA cert
+    http_client.set_ssl_options(test_file_path, true);
+
+    // Attempt a request to a public HTTPS site
+    // If the fix works, this should use the invalid CA and fail SSL verification
+    // If the fix is missing (ignoring options), it would use system CAs and potentially succeed (if network is up)
+    auto response = http_client.get("https://google.com");
+
+    // We expect failure because of the invalid CA cert
+    // Note: If network is down, it also fails, which is consistent with "not succeeding"
+    if (response.success) {
+        // If it succeeded, it implies it IGNORED our invalid CA cert -> BUG
+        FAIL() << "Request succeeded despite using invalid CA certificate. SSL options might be ignored.";
+    } else {
+        // It failed, which is expected.
+        // Ideally we would check for a specific SSL error message, but that depends on the underlying curl version/error text.
+        SUCCEED();
+    }
+
+    // Also verify that disabling verification works (code path check)
+    http_client.set_ssl_options("", false);
+    // This just ensures no crash when ca_path is empty
+    http_client.get("https://google.com");
+}

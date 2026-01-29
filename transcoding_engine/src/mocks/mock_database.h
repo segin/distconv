@@ -6,7 +6,7 @@
 
 namespace transcoding_engine {
 
-class MockDatabase : public IDatabase {
+class MockDatabase : public distconv::TranscodingEngine::IDatabase {
 public:
     MockDatabase() = default;
     ~MockDatabase() override = default;
