@@ -1,114 +1,104 @@
 #include <iostream>
 #include <chrono>
 #include <vector>
-#include <string>
 #include <filesystem>
 #include <cstdio>
 #include "repositories.h"
 #include "nlohmann/json.hpp"
 
-namespace fs = std::filesystem;
 using namespace distconv::DispatchServer;
 
-void setup_benchmark_db(SqliteJobRepository& repo, int completed_count, int pending_count) {
+// Utility to measure time
+template<typename Func>
+double measure_ms(Func&& func) {
+    auto start = std::chrono::high_resolution_clock::now();
+    func();
+    auto end = std::chrono::high_resolution_clock::now();
+    return std::chrono::duration<double, std::milli>(end - start).count();
+}
+
+void setup_test_data(IJobRepository& repo, int total_jobs) {
     repo.clear_all_jobs();
 
-    // Insert completed jobs
-    for (int i = 0; i < completed_count; ++i) {
+    // Create completed jobs
+    for (int i = 0; i < total_jobs - 1; ++i) {
         nlohmann::json job;
-        job["job_id"] = "completed_" + std::to_string(i);
+        job["job_id"] = "job_" + std::to_string(i);
         job["status"] = "completed";
-        job["created_at"] = 1000 + i;
+        job["created_at"] = 100000 + i;
         job["priority"] = 0;
         repo.save_job(job["job_id"], job);
     }
 
-    // Insert pending jobs (interspersed or at the end, let's put them at the end for worst case linear scan if it scans in order)
-    // Actually get_all_jobs orders by created_at DESC. So latest created are first.
-    // If we want to simulate a realistic scenario, pending jobs might be new.
-    for (int i = 0; i < pending_count; ++i) {
-        nlohmann::json job;
-        job["job_id"] = "pending_" + std::to_string(i);
-        job["status"] = "pending";
-        job["created_at"] = 20000 + i; // Newer than completed
-        job["priority"] = 0;
-        repo.save_job(job["job_id"], job);
-    }
+    // Create one pending job (the one we want to find)
+    // Make it older than some, newer than others, or just add it at the end.
+    // In the old code (LIFO), get_all_jobs sorted by created_at DESC.
+    // If we add the pending job last (highest timestamp), it appears first in get_all_jobs (best case for old code).
+    // If we add it first (lowest timestamp), it appears last in get_all_jobs (worst case for old code).
+    // The new code uses efficient query to find it regardless.
+
+    // Let's add the pending job "in the middle" time-wise, or just ensure it exists.
+    nlohmann::json pending_job;
+    pending_job["job_id"] = "job_pending";
+    pending_job["status"] = "pending";
+    pending_job["created_at"] = 200000;
+    pending_job["priority"] = 10;
+    repo.save_job(pending_job["job_id"], pending_job);
 }
 
-void benchmark_linear_scan(SqliteJobRepository& repo) {
-    auto start = std::chrono::high_resolution_clock::now();
+void run_benchmark(IJobRepository& repo, const std::string& repo_name, int total_jobs) {
+    std::cout << "--- Benchmarking " << repo_name << " with " << total_jobs << " jobs ---" << std::endl;
 
-    std::vector<nlohmann::json> jobs = repo.get_all_jobs();
-    nlohmann::json selected_job;
+    setup_test_data(repo, total_jobs);
 
-    for (const auto& job : jobs) {
-        if (job["status"] == "pending") {
-            selected_job = job;
-            break;
+    // 1. Old Method: Get All + Scan
+    double old_method_time = measure_ms([&]() {
+        std::vector<nlohmann::json> jobs = repo.get_all_jobs();
+        nlohmann::json selected_job;
+        for (const auto& job : jobs) {
+            if (job["status"] == "pending") {
+                selected_job = job;
+                break;
+            }
         }
-    }
+        if (selected_job.is_null()) std::cerr << "Failed to find job (Old)!" << std::endl;
+    });
 
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> elapsed = end - start;
+    // 2. New Method: get_next_pending_job
+    double new_method_time = measure_ms([&]() {
+        std::vector<std::string> engines = {"any_engine"};
+        nlohmann::json selected_job = repo.get_next_pending_job(engines);
+        if (selected_job.is_null()) std::cerr << "Failed to find job (New)!" << std::endl;
+    });
 
-    if (selected_job.is_null()) {
-        std::cout << "Linear Scan: Found nothing (Unexpected!) in " << elapsed.count() << " ms\n";
-    } else {
-        std::cout << "Linear Scan: Found job " << selected_job["job_id"] << " in " << elapsed.count() << " ms\n";
-    }
-}
-
-void benchmark_optimized_query(SqliteJobRepository& repo) {
-    auto start = std::chrono::high_resolution_clock::now();
-
-    nlohmann::json selected_job = repo.get_next_pending_job({});
-
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> elapsed = end - start;
-
-    if (selected_job.is_null()) {
-        std::cout << "Optimized Query: Found nothing (Unexpected!) in " << elapsed.count() << " ms\n";
-    } else {
-        std::cout << "Optimized Query: Found job " << selected_job["job_id"] << " in " << elapsed.count() << " ms\n";
-    }
+    std::cout << "Old Method (Linear Scan): " << old_method_time << " ms" << std::endl;
+    std::cout << "New Method (Optimized):   " << new_method_time << " ms" << std::endl;
+    std::cout << "Speedup: " << (old_method_time / new_method_time) << "x" << std::endl;
+    std::cout << std::endl;
 }
 
 int main() {
-    std::string db_path = "benchmark_jobs.db";
-    // Clean up previous run
-    if (fs::exists(db_path)) {
-        fs::remove(db_path);
+    // 1. Test In-Memory Repository
+    {
+        InMemoryJobRepository memory_repo;
+        run_benchmark(memory_repo, "InMemoryJobRepository", 1000);
+        run_benchmark(memory_repo, "InMemoryJobRepository", 10000);
     }
 
-    SqliteJobRepository repo(db_path);
+    // 2. Test SQLite Repository
+    {
+        std::string db_file = "benchmark_test.db";
+        // Clean up previous run
+        std::remove(db_file.c_str());
 
-    int completed_jobs = 10000;
-    int pending_jobs = 10;
+        {
+            SqliteJobRepository sqlite_repo(db_file);
+            // Smaller numbers for SQLite as insertion takes time
+            run_benchmark(sqlite_repo, "SqliteJobRepository", 1000);
+            run_benchmark(sqlite_repo, "SqliteJobRepository", 5000);
+        }
 
-    std::cout << "Setting up database with " << completed_jobs << " completed jobs and " << pending_jobs << " pending jobs...\n";
-    setup_benchmark_db(repo, completed_jobs, pending_jobs);
-
-    std::cout << "Running benchmarks...\n";
-
-    // Warm up? Maybe not needed for sqlite file io but OS cache might matter.
-    // We'll run multiple times.
-
-    std::cout << "--- Run 1 ---\n";
-    benchmark_linear_scan(repo);
-    benchmark_optimized_query(repo);
-
-    std::cout << "--- Run 2 ---\n";
-    benchmark_linear_scan(repo);
-    benchmark_optimized_query(repo);
-
-    std::cout << "--- Run 3 ---\n";
-    benchmark_linear_scan(repo);
-    benchmark_optimized_query(repo);
-
-    // Cleanup
-    if (fs::exists(db_path)) {
-        fs::remove(db_path);
+        std::remove(db_file.c_str());
     }
 
     return 0;

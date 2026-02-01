@@ -1164,7 +1164,8 @@ void DispatchServer::setup_engine_endpoints() {
                 std::string engine_id = request_json["engine_id"];
                 
                 // Find a pending job
-                nlohmann::json selected_job = job_repo_->get_next_pending_job({});
+                std::vector<std::string> capable_engines = {engine_id};
+                nlohmann::json selected_job = job_repo_->get_next_pending_job(capable_engines);
                 
                 if (selected_job.is_null()) {
                     res.status = 204; // No Content
