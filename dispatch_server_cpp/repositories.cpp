@@ -55,11 +55,23 @@ SqliteJobRepository::SqliteJobRepository(const std::string& db_path) : db_path_(
 SqliteJobRepository::~SqliteJobRepository() {
     if (db_) {
         sqlite3_close(db_);
-        db_ = nullptr;
     }
 }
 
 void SqliteJobRepository::initialize_database() {
+    int rc = sqlite3_open(db_path_.c_str(), &db_);
+    if (rc) {
+        std::string err = sqlite3_errmsg(db_);
+        if (db_) sqlite3_close(db_);
+        db_ = nullptr;
+        throw std::runtime_error("Cannot open database: " + err);
+    }
+    
+    // Enable WAL mode for better concurrency
+    char* err_msg = nullptr;
+    sqlite3_exec(db_, "PRAGMA journal_mode=WAL;", nullptr, nullptr, nullptr);
+    sqlite3_busy_timeout(db_, 5000);
+
     const char* sql = R"(
         CREATE TABLE IF NOT EXISTS jobs (
             job_id TEXT PRIMARY KEY,
@@ -71,11 +83,12 @@ void SqliteJobRepository::initialize_database() {
         CREATE INDEX IF NOT EXISTS idx_jobs_created_at ON jobs(created_at);
     )";
     
-    char* err_msg = nullptr;
-    int rc = sqlite3_exec(db_, sql, nullptr, nullptr, &err_msg);
+    rc = sqlite3_exec(db_, sql, nullptr, nullptr, &err_msg);
     if (rc != SQLITE_OK) {
         std::string error = err_msg ? err_msg : "Unknown error";
         sqlite3_free(err_msg);
+        sqlite3_close(db_);
+        db_ = nullptr;
         throw std::runtime_error("Cannot create jobs table: " + error);
     }
 }
@@ -110,11 +123,14 @@ nlohmann::json SqliteJobRepository::execute_query(const std::string& sql) {
         result.push_back(row);
     }
     
+    sqlite3_finalize(stmt);
+    
     return result;
 }
 
-// Internal Helpers
-void SqliteJobRepository::save_job_internal(const std::string& job_id, const nlohmann::json& job) {
+void SqliteJobRepository::save_job(const std::string& job_id, const nlohmann::json& job) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    
     const char* sql = R"(
         INSERT OR REPLACE INTO jobs (job_id, job_data, updated_at) 
         VALUES (?, ?, datetime('now'))
@@ -133,6 +149,7 @@ void SqliteJobRepository::save_job_internal(const std::string& job_id, const nlo
     
     int rc = sqlite3_step(stmt);
     if (rc != SQLITE_DONE) {
+        sqlite3_finalize(stmt);
         throw std::runtime_error("Cannot save job: " + std::string(sqlite3_errmsg(db_)));
     }
 }
@@ -140,53 +157,34 @@ void SqliteJobRepository::save_job_internal(const std::string& job_id, const nlo
 nlohmann::json SqliteJobRepository::get_job_internal(const std::string& job_id) {
     const char* sql = "SELECT job_data FROM jobs WHERE job_id = ?";
     
+    sqlite3_finalize(stmt);
+}
+
+nlohmann::json SqliteJobRepository::get_job(const std::string& job_id) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    
+    const char* sql = "SELECT job_data FROM jobs WHERE job_id = ?";
+    
     sqlite3_stmt* stmt;
     int rc = sqlite3_prepare_v2(db_, sql, -1, &stmt, nullptr);
     if (rc != SQLITE_OK) {
         throw std::runtime_error("Cannot prepare statement: " + std::string(sqlite3_errmsg(db_)));
     }
-    StatementFinalizer guard(stmt);
     
-    sqlite3_stmt* stmt = get_prepared_statement(sql);
-    StatementGuard guard(stmt);
-
     sqlite3_bind_text(stmt, 1, job_id.c_str(), -1, SQLITE_STATIC);
     
-    int rc = sqlite3_step(stmt);
+    nlohmann::json result;
+    rc = sqlite3_step(stmt);
     if (rc == SQLITE_ROW) {
         const char* job_data = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
         if (job_data) {
-            return nlohmann::json::parse(job_data);
+            result = nlohmann::json::parse(job_data);
         }
     }
+    
+    sqlite3_finalize(stmt);
+    
     return result;
-}
-
-bool SqliteJobRepository::job_exists_internal(const std::string& job_id) {
-    const char* sql = "SELECT 1 FROM jobs WHERE job_id = ?";
-    sqlite3_stmt* stmt;
-    int rc = sqlite3_prepare_v2(db_, sql, -1, &stmt, nullptr);
-    if (rc != SQLITE_OK) {
-        return false;
-    }
-    StatementFinalizer guard(stmt);
-    
-    sqlite3_bind_text(stmt, 1, job_id.c_str(), -1, SQLITE_STATIC);
-    
-    rc = sqlite3_step(stmt);
-    return (rc == SQLITE_ROW);
-}
-
-// Public Methods
-
-void SqliteJobRepository::save_job(const std::string& job_id, const nlohmann::json& job) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    save_job_internal(job_id, job);
-}
-
-nlohmann::json SqliteJobRepository::get_job(const std::string& job_id) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    return get_job_internal(job_id);
 }
 
 std::vector<nlohmann::json> SqliteJobRepository::get_all_jobs() {
@@ -390,11 +388,23 @@ SqliteEngineRepository::SqliteEngineRepository(const std::string& db_path) : db_
 SqliteEngineRepository::~SqliteEngineRepository() {
     if (db_) {
         sqlite3_close(db_);
-        db_ = nullptr;
     }
 }
 
 void SqliteEngineRepository::initialize_database() {
+    int rc = sqlite3_open(db_path_.c_str(), &db_);
+    if (rc) {
+        std::string err = sqlite3_errmsg(db_);
+        if (db_) sqlite3_close(db_);
+        db_ = nullptr;
+        throw std::runtime_error("Cannot open database: " + err);
+    }
+    
+    // Enable WAL mode
+    char* err_msg = nullptr;
+    sqlite3_exec(db_, "PRAGMA journal_mode=WAL;", nullptr, nullptr, nullptr);
+    sqlite3_busy_timeout(db_, 5000);
+
     const char* sql = R"(
         CREATE TABLE IF NOT EXISTS engines (
             engine_id TEXT PRIMARY KEY,
@@ -406,11 +416,12 @@ void SqliteEngineRepository::initialize_database() {
         CREATE INDEX IF NOT EXISTS idx_engines_updated_at ON engines(updated_at);
     )";
     
-    char* err_msg = nullptr;
-    int rc = sqlite3_exec(db_, sql, nullptr, nullptr, &err_msg);
+    rc = sqlite3_exec(db_, sql, nullptr, nullptr, &err_msg);
     if (rc != SQLITE_OK) {
         std::string error = err_msg ? err_msg : "Unknown error";
         sqlite3_free(err_msg);
+        sqlite3_close(db_);
+        db_ = nullptr;
         throw std::runtime_error("Cannot create engines table: " + error);
     }
 }
@@ -445,11 +456,14 @@ nlohmann::json SqliteEngineRepository::execute_query(const std::string& sql) {
         result.push_back(row);
     }
     
+    sqlite3_finalize(stmt);
+    
     return result;
 }
 
-// Internal Helpers
-void SqliteEngineRepository::save_engine_internal(const std::string& engine_id, const nlohmann::json& engine) {
+void SqliteEngineRepository::save_engine(const std::string& engine_id, const nlohmann::json& engine) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    
     const char* sql = R"(
         INSERT OR REPLACE INTO engines (engine_id, engine_data, updated_at) 
         VALUES (?, ?, datetime('now'))
@@ -468,11 +482,16 @@ void SqliteEngineRepository::save_engine_internal(const std::string& engine_id, 
     
     rc = sqlite3_step(stmt);
     if (rc != SQLITE_DONE) {
+        sqlite3_finalize(stmt);
         throw std::runtime_error("Cannot save engine: " + std::string(sqlite3_errmsg(db_)));
     }
+    
+    sqlite3_finalize(stmt);
 }
 
-nlohmann::json SqliteEngineRepository::get_engine_internal(const std::string& engine_id) {
+nlohmann::json SqliteEngineRepository::get_engine(const std::string& engine_id) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    
     const char* sql = "SELECT engine_data FROM engines WHERE engine_id = ?";
     
     sqlite3_stmt* stmt;
@@ -492,6 +511,9 @@ nlohmann::json SqliteEngineRepository::get_engine_internal(const std::string& en
             result = nlohmann::json::parse(engine_data);
         }
     }
+    
+    sqlite3_finalize(stmt);
+    
     return result;
 }
 
