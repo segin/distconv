@@ -45,19 +45,9 @@ else()
              endif()
         endif()
     else()
-        # Fallback to local source in third_party/cpr
-        message(STATUS "cpr not found in system. Using local third_party/cpr.")
-
-        # Configure CPR for local build
-        # We set CPR_USE_SYSTEM_LIB_PSL to ON to bypass CPR's attempt to build libpsl with meson
-        # But we verify curl doesn't try to use it via CURL_USE_LIBPSL=OFF
-        set(CPR_USE_SYSTEM_CURL OFF CACHE BOOL "Use system curl" FORCE)
-        set(CPR_USE_SYSTEM_LIB_PSL ON CACHE BOOL "Use system libpsl (fake to bypass build)" FORCE)
-        set(CURL_USE_LIBPSL OFF CACHE BOOL "Disable libpsl in curl" FORCE)
-        set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build static libraries" FORCE)
-        set(CPR_ENABLE_SSL ON CACHE BOOL "Enable SSL" FORCE)
-        set(CPR_FORCE_OPENSSL_BACKEND ON CACHE BOOL "Force OpenSSL" FORCE)
-
+        message(STATUS "cpr system library not found. Using bundled version.")
+        set(CPR_USE_SYSTEM_CURL OFF CACHE BOOL "" FORCE)
+        set(CPR_BUILD_TESTS OFF CACHE BOOL "" FORCE)
         add_subdirectory(../third_party/cpr cpr)
         set(CPR_AVAILABLE TRUE)
     endif()
@@ -66,7 +56,8 @@ endif()
 # Find nlohmann_json
 find_package(nlohmann_json QUIET)
 if(NOT nlohmann_json_FOUND)
-    pkg_check_modules(NLOHMANN_JSON nlohmann_json)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(NLOHMANN_JSON QUIET nlohmann_json)
     if(NLOHMANN_JSON_FOUND)
         add_library(nlohmann_json::nlohmann_json INTERFACE IMPORTED)
         target_include_directories(nlohmann_json::nlohmann_json INTERFACE ${NLOHMANN_JSON_INCLUDE_DIRS})
@@ -75,15 +66,9 @@ if(NOT nlohmann_json_FOUND)
         add_library(nlohmann_json::nlohmann_json INTERFACE IMPORTED)
         target_include_directories(nlohmann_json::nlohmann_json INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/include")
     else()
-        # Fallback to local source in third_party/json
-        message(STATUS "nlohmann_json not found in system. Using local third_party/json.")
-
-        # Check if we can use add_subdirectory (usually it supports it)
-        # Disable tests for json
-        set(JSON_BuildTests OFF CACHE INTERNAL "")
-
-        add_subdirectory(../third_party/json json)
-        # Note: nlohmann_json target name is nlohmann_json::nlohmann_json
+        message(STATUS "nlohmann_json system library not found. Using bundled version.")
+        add_library(nlohmann_json::nlohmann_json INTERFACE IMPORTED)
+        target_include_directories(nlohmann_json::nlohmann_json INTERFACE ../third_party/json/single_include)
     endif()
 endif()
 
@@ -103,18 +88,14 @@ endif()
 # Find GTest for testing
 find_package(GTest QUIET)
 if(NOT GTest_FOUND)
-    message(STATUS "GTest not found in system. Fetching from source.")
+    include(FetchContent)
     FetchContent_Declare(
       googletest
-      URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.tar.gz
+      URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
     )
     # For Windows: Prevent overriding the parent project's compiler/linker settings
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
     FetchContent_MakeAvailable(googletest)
-
-    # Enable testing
-    enable_testing()
-    set(GTest_FOUND TRUE)
 endif()
 
 include_directories(src)
@@ -187,6 +168,12 @@ target_link_libraries(transcoding_engine_mocks
     transcoding_engine_lib
 )
 
+# Testing
+# Check if GTest target exists (either from find_package or FetchContent)
+if(TARGET GTest::gtest)
+    set(GTest_FOUND TRUE)
+endif()
+
 if(GTest_FOUND)
     enable_testing()
     
@@ -240,7 +227,7 @@ message(STATUS "  C++ Standard: ${CMAKE_CXX_STANDARD}")
 message(STATUS "  Build Type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "  Testing: ${GTest_FOUND}")
 message(STATUS "  CPR found: ${cpr_FOUND}")
-message(STATUS "  CPR Available: ${CPR_AVAILABLE}")
+message(STATUS "  CPR available: ${CPR_AVAILABLE}")
 message(STATUS "  nlohmann_json found: ${nlohmann_json_FOUND}")
 message(STATUS "  SQLite3 found: ${SQLite3_FOUND}")
 

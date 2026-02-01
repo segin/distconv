@@ -2,10 +2,8 @@
 #include <fstream>
 #include <algorithm>
 
-namespace transcoding_engine {
-using namespace distconv::TranscodingEngine;
-
-using namespace distconv::TranscodingEngine;
+namespace distconv {
+namespace TranscodingEngine {
 
 bool MockDatabase::initialize(const std::string& db_path) {
     initialize_call_count_++;
