@@ -432,55 +432,48 @@ void DispatchServer::handle_job_timeouts() {
         jobs.insert(jobs.end(), processing_jobs.begin(), processing_jobs.end());
         
         auto now = std::chrono::system_clock::now();
+        int64_t now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+        int64_t timeout_ms = std::chrono::duration_cast<std::chrono::milliseconds>(JOB_TIMEOUT).count();
+        int64_t older_than = now_ms - timeout_ms;
+
+        auto jobs = job_repo_->get_timed_out_jobs(older_than);
         
         for (auto& job : jobs) {
-            // Check implicit again just in case, though we fetched by status
-            if (job["status"] == "assigned" || job["status"] == "processing") {
-                if (job.contains("updated_at")) {
-                    auto updated_at = std::chrono::system_clock::time_point{
-                        std::chrono::milliseconds{job["updated_at"]}
-                    };
-                    auto duration = std::chrono::duration_cast<std::chrono::minutes>(now - updated_at);
-                    
-                    if (duration > JOB_TIMEOUT) {
-                        std::string job_id = job["job_id"];
-                        std::cout << "Job " << job_id << " timed out, marking as failed" << std::endl;
-                        
-                        // Mark as failed/retry
-                        int retries = job.value("retries", 0);
-                        int max_retries = job.value("max_retries", 3);
-                        
-                        if (retries < max_retries) {
-                            // Backoff: 2^retries * 30 seconds
-                            int backoff_seconds = (1 << retries) * 30;
-                            auto retry_after = now + std::chrono::seconds(backoff_seconds);
-                            int64_t retry_after_ms = std::chrono::duration_cast<std::chrono::milliseconds>(retry_after.time_since_epoch()).count();
-                            
-                            job["status"] = "failed_retry";
-                            job["retry_after"] = retry_after_ms;
-                            job["retries"] = retries + 1;
-                        } else {
-                            job["status"] = "failed_permanently";
-                            job["error_message"] = "Job timed out and exceeded max retries";
-                        }
-                        
-                        job["updated_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
-                        
-                        // Free up the engine
-                        if (job.contains("assigned_engine") && !job["assigned_engine"].is_null()) {
-                            std::string engine_id = job["assigned_engine"];
-                            if (engine_repo_->engine_exists(engine_id)) {
-                                nlohmann::json engine = engine_repo_->get_engine(engine_id);
-                                engine["status"] = "idle";
-                                engine["current_job_id"] = "";
-                                engine_repo_->save_engine(engine_id, engine);
-                            }
-                        }
-                        
-                        job_repo_->save_job(job_id, job);
-                    }
+            std::string job_id = job["job_id"];
+            std::cout << "Job " << job_id << " timed out, marking as failed" << std::endl;
+
+            // Mark as failed/retry
+            int retries = job.value("retries", 0);
+            int max_retries = job.value("max_retries", 3);
+
+            if (retries < max_retries) {
+                // Backoff: 2^retries * 30 seconds
+                int backoff_seconds = (1 << retries) * 30;
+                auto retry_after = now + std::chrono::seconds(backoff_seconds);
+                int64_t retry_after_ms = std::chrono::duration_cast<std::chrono::milliseconds>(retry_after.time_since_epoch()).count();
+
+                job["status"] = "failed_retry";
+                job["retry_after"] = retry_after_ms;
+                job["retries"] = retries + 1;
+            } else {
+                job["status"] = "failed_permanently";
+                job["error_message"] = "Job timed out and exceeded max retries";
+            }
+
+            job["updated_at"] = now_ms;
+
+            // Free up the engine
+            if (job.contains("assigned_engine") && !job["assigned_engine"].is_null()) {
+                std::string engine_id = job["assigned_engine"];
+                if (engine_repo_->engine_exists(engine_id)) {
+                    nlohmann::json engine = engine_repo_->get_engine(engine_id);
+                    engine["status"] = "idle";
+                    engine["current_job_id"] = "";
+                    engine_repo_->save_engine(engine_id, engine);
                 }
             }
+
+            job_repo_->save_job(job_id, job);
         }
         return;
     }
