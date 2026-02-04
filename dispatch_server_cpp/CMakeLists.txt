@@ -91,10 +91,10 @@ target_include_directories(mq_tests PRIVATE
     ${CMAKE_SOURCE_DIR}/../third_party/trompeloeil/include
 )
 
-# Benchmark target
-add_executable(repro_benchmark tests/repro_benchmark.cpp)
-target_link_libraries(repro_benchmark dispatch_server_core)
-target_include_directories(repro_benchmark PRIVATE
+# Benchmark
+add_executable(benchmark_sqlite tests/benchmark_sqlite.cpp)
+target_link_libraries(benchmark_sqlite dispatch_server_core)
+target_include_directories(benchmark_sqlite PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/../third_party/json/single_include
 )

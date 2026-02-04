@@ -24,52 +24,31 @@ private:
 };
 
 // SqliteJobRepository implementation
-SqliteJobRepository::SqliteJobRepository(const std::string& db_path) : db_path_(db_path) {
-    int rc = sqlite3_open(db_path_.c_str(), &db_);
-    if (rc) {
-        std::string err = sqlite3_errmsg(db_);
-        sqlite3_close(db_);
-        throw std::runtime_error("Cannot open database: " + err);
-    }
-
-    // Set busy timeout to 5000ms
-    sqlite3_busy_timeout(db_, 5000);
-
-    // WAL mode enabled
-    char* err_msg = nullptr;
-    rc = sqlite3_exec(db_, "PRAGMA journal_mode=WAL;", nullptr, nullptr, &err_msg);
-    if (rc != SQLITE_OK) {
-        std::string error = err_msg ? err_msg : "Unknown error";
-        sqlite3_free(err_msg);
-        std::cerr << "Warning: Could not enable WAL mode: " << error << std::endl;
-    }
-
-    try {
-        initialize_database();
-    } catch (...) {
-        sqlite3_close(db_);
-        throw;
-    }
+SqliteJobRepository::SqliteJobRepository(const std::string& db_path) : db_path_(db_path), db_(nullptr) {
+    initialize_database();
 }
 
 SqliteJobRepository::~SqliteJobRepository() {
     if (db_) {
         sqlite3_close(db_);
+        db_ = nullptr;
     }
 }
 
 void SqliteJobRepository::initialize_database() {
     int rc = sqlite3_open(db_path_.c_str(), &db_);
     if (rc) {
-        std::string err = sqlite3_errmsg(db_);
-        if (db_) sqlite3_close(db_);
-        db_ = nullptr;
-        throw std::runtime_error("Cannot open database: " + err);
+        std::string msg = sqlite3_errmsg(db_);
+        if (db_) {
+            sqlite3_close(db_);
+            db_ = nullptr;
+        }
+        throw std::runtime_error("Cannot open database: " + msg);
     }
     
-    // Enable WAL mode for better concurrency
-    char* err_msg = nullptr;
+    // Enable WAL mode
     sqlite3_exec(db_, "PRAGMA journal_mode=WAL;", nullptr, nullptr, nullptr);
+    // Set busy timeout
     sqlite3_busy_timeout(db_, 5000);
 
     const char* sql = R"(
@@ -83,6 +62,7 @@ void SqliteJobRepository::initialize_database() {
         CREATE INDEX IF NOT EXISTS idx_jobs_created_at ON jobs(created_at);
     )";
     
+    char* err_msg = nullptr;
     rc = sqlite3_exec(db_, sql, nullptr, nullptr, &err_msg);
     if (rc != SQLITE_OK) {
         std::string error = err_msg ? err_msg : "Unknown error";
@@ -91,19 +71,6 @@ void SqliteJobRepository::initialize_database() {
         db_ = nullptr;
         throw std::runtime_error("Cannot create jobs table: " + error);
     }
-
-    // Attempt to add generated columns and indices for optimization
-    // We execute these individually and ignore errors (e.g., if columns already exist)
-    const char* opt_sql_1 = "ALTER TABLE jobs ADD COLUMN status TEXT GENERATED ALWAYS AS (json_extract(job_data, '$.status')) VIRTUAL;";
-    sqlite3_exec(db, opt_sql_1, nullptr, nullptr, nullptr);
-
-    const char* opt_sql_2 = "ALTER TABLE jobs ADD COLUMN priority INTEGER GENERATED ALWAYS AS (json_extract(job_data, '$.priority')) VIRTUAL;";
-    sqlite3_exec(db, opt_sql_2, nullptr, nullptr, nullptr);
-
-    const char* opt_sql_3 = "CREATE INDEX IF NOT EXISTS idx_jobs_pending_priority ON jobs(status, priority DESC, created_at ASC);";
-    sqlite3_exec(db, opt_sql_3, nullptr, nullptr, nullptr);
-    
-    sqlite3_close(db);
 }
 
 void SqliteJobRepository::execute_sql(const std::string& sql) {
@@ -398,52 +365,31 @@ std::vector<nlohmann::json> SqliteJobRepository::get_timed_out_jobs(int64_t olde
 
 
 // SqliteEngineRepository implementation
-SqliteEngineRepository::SqliteEngineRepository(const std::string& db_path) : db_path_(db_path) {
-    int rc = sqlite3_open(db_path_.c_str(), &db_);
-    if (rc) {
-        std::string err = sqlite3_errmsg(db_);
-        sqlite3_close(db_);
-        throw std::runtime_error("Cannot open database: " + err);
-    }
-
-    // Set busy timeout to 5000ms
-    sqlite3_busy_timeout(db_, 5000);
-
-    // WAL mode enabled
-    char* err_msg = nullptr;
-    rc = sqlite3_exec(db_, "PRAGMA journal_mode=WAL;", nullptr, nullptr, &err_msg);
-    if (rc != SQLITE_OK) {
-         std::string error = err_msg ? err_msg : "Unknown error";
-        sqlite3_free(err_msg);
-        std::cerr << "Warning: Could not enable WAL mode: " << error << std::endl;
-    }
-
-    try {
-        initialize_database();
-    } catch (...) {
-        sqlite3_close(db_);
-        throw;
-    }
+SqliteEngineRepository::SqliteEngineRepository(const std::string& db_path) : db_path_(db_path), db_(nullptr) {
+    initialize_database();
 }
 
 SqliteEngineRepository::~SqliteEngineRepository() {
     if (db_) {
         sqlite3_close(db_);
+        db_ = nullptr;
     }
 }
 
 void SqliteEngineRepository::initialize_database() {
     int rc = sqlite3_open(db_path_.c_str(), &db_);
     if (rc) {
-        std::string err = sqlite3_errmsg(db_);
-        if (db_) sqlite3_close(db_);
-        db_ = nullptr;
-        throw std::runtime_error("Cannot open database: " + err);
+        std::string msg = sqlite3_errmsg(db_);
+        if (db_) {
+            sqlite3_close(db_);
+            db_ = nullptr;
+        }
+        throw std::runtime_error("Cannot open database: " + msg);
     }
     
     // Enable WAL mode
-    char* err_msg = nullptr;
     sqlite3_exec(db_, "PRAGMA journal_mode=WAL;", nullptr, nullptr, nullptr);
+    // Set busy timeout
     sqlite3_busy_timeout(db_, 5000);
 
     const char* sql = R"(
@@ -457,6 +403,7 @@ void SqliteEngineRepository::initialize_database() {
         CREATE INDEX IF NOT EXISTS idx_engines_updated_at ON engines(updated_at);
     )";
     
+    char* err_msg = nullptr;
     rc = sqlite3_exec(db_, sql, nullptr, nullptr, &err_msg);
     if (rc != SQLITE_OK) {
         std::string error = err_msg ? err_msg : "Unknown error";
