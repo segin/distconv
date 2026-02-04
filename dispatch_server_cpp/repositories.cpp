@@ -91,6 +91,19 @@ void SqliteJobRepository::initialize_database() {
         db_ = nullptr;
         throw std::runtime_error("Cannot create jobs table: " + error);
     }
+
+    // Attempt to add generated columns and indices for optimization
+    // We execute these individually and ignore errors (e.g., if columns already exist)
+    const char* opt_sql_1 = "ALTER TABLE jobs ADD COLUMN status TEXT GENERATED ALWAYS AS (json_extract(job_data, '$.status')) VIRTUAL;";
+    sqlite3_exec(db, opt_sql_1, nullptr, nullptr, nullptr);
+
+    const char* opt_sql_2 = "ALTER TABLE jobs ADD COLUMN priority INTEGER GENERATED ALWAYS AS (json_extract(job_data, '$.priority')) VIRTUAL;";
+    sqlite3_exec(db, opt_sql_2, nullptr, nullptr, nullptr);
+
+    const char* opt_sql_3 = "CREATE INDEX IF NOT EXISTS idx_jobs_pending_priority ON jobs(status, priority DESC, created_at ASC);";
+    sqlite3_exec(db, opt_sql_3, nullptr, nullptr, nullptr);
+    
+    sqlite3_close(db);
 }
 
 void SqliteJobRepository::execute_sql(const std::string& sql) {
@@ -237,9 +250,9 @@ nlohmann::json SqliteJobRepository::get_next_pending_job(const std::vector<std::
     
     std::string sql = R"(
         SELECT job_data FROM jobs 
-        WHERE json_extract(job_data, '$.status') = 'pending'
+        WHERE status = 'pending'
         ORDER BY 
-            json_extract(job_data, '$.priority') DESC,
+            priority DESC,
             created_at ASC
         LIMIT 1
     )";
