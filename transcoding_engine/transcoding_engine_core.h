@@ -13,6 +13,7 @@ namespace TranscodingEngine {
 extern sqlite3 *db;
 
 // Function declarations
+std::string generateQueueJson(const std::vector<std::string>& queue);
 std::string getFFmpegCapabilities(const std::string& capability_type);
 std::string getFFmpegHWAccels();
 double getCpuTemperature();

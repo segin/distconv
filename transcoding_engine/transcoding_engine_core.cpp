@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <thread>
+#include <mutex>
 #include <chrono>
 #include <cstdlib> // For system()
 #include <random> // For random engine ID
@@ -138,6 +139,19 @@ std::string makeHttpRequest(const std::string& url, const std::string& method, c
         curl_easy_cleanup(curl);
     }
     return readBuffer;
+}
+
+// Function to convert job queue to JSON string
+std::string generateQueueJson(const std::vector<std::string>& queue) {
+    cJSON *queue_array = cJSON_CreateArray();
+    for (const std::string& job_id : queue) {
+        cJSON_AddItemToArray(queue_array, cJSON_CreateString(job_id.c_str()));
+    }
+    char *queue_str = cJSON_PrintUnformatted(queue_array);
+    std::string queue_json = queue_str;
+    cJSON_Delete(queue_array);
+    free(queue_str);
+    return queue_json;
 }
 
 // Function to send heartbeat to dispatch server
@@ -406,7 +420,10 @@ int run_transcoding_engine(int argc, char* argv[]) {
     init_sqlite();
 
     // Local job queue (simulated)
+    std::mutex queue_mutex;
     std::vector<std::string> localJobQueue = get_jobs_from_db();
+    std::string cached_queue_json = generateQueueJson(localJobQueue);
+    bool queue_dirty = false;
 
     // Get ffmpeg capabilities
     std::string encoders = getFFmpegCapabilities("encoders");
@@ -418,14 +435,15 @@ int run_transcoding_engine(int argc, char* argv[]) {
         while (true) {
             double cpuTemperature = getCpuTemperature();
             // Convert localJobQueue to JSON string
-            cJSON *queue_array = cJSON_CreateArray();
-            for (const std::string& job_id : localJobQueue) {
-                cJSON_AddItemToArray(queue_array, cJSON_CreateString(job_id.c_str()));
+            std::string localJobQueueJson;
+            {
+                std::lock_guard<std::mutex> lock(queue_mutex);
+                if (queue_dirty) {
+                    cached_queue_json = generateQueueJson(localJobQueue);
+                    queue_dirty = false;
+                }
+                localJobQueueJson = cached_queue_json;
             }
-            char *queue_str = cJSON_PrintUnformatted(queue_array);
-            std::string localJobQueueJson = queue_str;
-            cJSON_Delete(queue_array);
-            free(queue_str);
 
             sendHeartbeat(dispatchServerUrl, engineId, storageCapacityGb, streamingSupport, encoders, decoders, hwaccels, cpuTemperature, localJobQueueJson, caCertPath, apiKey, hostname);
             std::this_thread::sleep_for(std::chrono::seconds(5)); // Send heartbeat every 5 seconds
@@ -464,13 +482,21 @@ int run_transcoding_engine(int argc, char* argv[]) {
 
                     // Add job to local queue
                     add_job_to_db(job_id);
-                    localJobQueue.push_back(job_id);
+                    {
+                        std::lock_guard<std::mutex> lock(queue_mutex);
+                        localJobQueue.push_back(job_id);
+                        queue_dirty = true;
+                    }
 
                     performTranscoding(dispatchServerUrl, job_id, source_url, target_codec, caCertPath, apiKey);
 
                     // Remove job from local queue after completion (or failure)
                     remove_job_from_db(job_id);
-                    localJobQueue.erase(std::remove(localJobQueue.begin(), localJobQueue.end(), job_id), localJobQueue.end());
+                    {
+                        std::lock_guard<std::mutex> lock(queue_mutex);
+                        localJobQueue.erase(std::remove(localJobQueue.begin(), localJobQueue.end(), job_id), localJobQueue.end());
+                        queue_dirty = true;
+                    }
 
                 } else {
                     std::cout << "Failed to parse job details from JSON: " << job_json << std::endl;
