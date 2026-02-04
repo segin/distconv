@@ -178,7 +178,7 @@ TEST_F(ApiTest, EngineStatusIsBusyAfterJobAssign) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     // 2. Register an engine
@@ -235,7 +235,7 @@ TEST_F(ApiTest, BusyEngineIsNotAssignedAnotherJob) {
         {"target_codec", "h264"}
     };
     auto res_submit_1 = client->Post("/jobs/", admin_headers, job_payload_1.dump(), "application/json");
-    ASSERT_EQ(res_submit_1->status, 200);
+    ASSERT_EQ(res_submit_1->status, 201);
     std::string job_id_1 = nlohmann::json::parse(res_submit_1->body)["job_id"];
 
     nlohmann::json job_payload_2 = {
@@ -243,7 +243,7 @@ TEST_F(ApiTest, BusyEngineIsNotAssignedAnotherJob) {
         {"target_codec", "vp9"}
     };
     auto res_submit_2 = client->Post("/jobs/", admin_headers, job_payload_2.dump(), "application/json");
-    ASSERT_EQ(res_submit_2->status, 200);
+    ASSERT_EQ(res_submit_2->status, 201);
     std::string job_id_2 = nlohmann::json::parse(res_submit_2->body)["job_id"];
 
     // 3. Assign the first job to the engine

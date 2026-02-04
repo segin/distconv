@@ -23,7 +23,7 @@ TEST_F(ApiTest, AssignJobWithPendingJobsAndIdleEngines) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     // 2. Register an idle engine
@@ -88,7 +88,7 @@ TEST_F(ApiTest, AssignJobWithPendingJobsButNoIdleEngines) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
 
     // 2. Register a busy engine
     nlohmann::json engine_payload = {
@@ -120,7 +120,7 @@ TEST_F(ApiTest, AssignedJobIsNotReassigned) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     // 2. Register an engine

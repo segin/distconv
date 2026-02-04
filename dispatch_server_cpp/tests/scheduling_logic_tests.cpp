@@ -22,7 +22,7 @@ TEST_F(ApiTest, SchedulerAssignsJobToIdleEngine) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     // 2. Register an engine
@@ -62,7 +62,7 @@ TEST_F(ApiTest, SchedulerDoesNotAssignJobIfNoEngines) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     // 2. Try to assign the job
@@ -84,7 +84,7 @@ TEST_F(ApiTest, SchedulerDoesNotAssignJobIfAllEnginesAreBusy) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     // 2. Register a busy engine
@@ -118,7 +118,7 @@ TEST_F(ApiTest, SchedulerAssignsLargeJobToStreamingEngine) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     // 2. Register a non-streaming engine
@@ -170,7 +170,7 @@ TEST_F(ApiTest, SchedulerAssignsLargeJobToFastestNonStreamingEngine) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     // 2. Register a slow, non-streaming engine
@@ -221,7 +221,7 @@ TEST_F(ApiTest, SchedulerAssignsSmallJobToSlowestEngine) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     // 2. Register a fast engine
@@ -272,7 +272,7 @@ TEST_F(ApiTest, SchedulerAssignsMediumJobToFastestEngine) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     // 2. Register a slow engine
@@ -322,7 +322,7 @@ TEST_F(ApiTest, SchedulerIgnoresEngineWithoutBenchmarkData) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     // 2. Register an engine without benchmark data
@@ -354,7 +354,7 @@ TEST_F(ApiTest, SchedulerUpdatesEngineStatusToBusy) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     // 2. Register an engine
@@ -394,7 +394,7 @@ TEST_F(ApiTest, SchedulerUpdatesJobStatusToAssigned) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     // 2. Register an engine
@@ -433,7 +433,7 @@ TEST_F(ApiTest, SchedulerRecordsAssignedEngineId) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     // 2. Register an engine
@@ -472,7 +472,7 @@ TEST_F(ApiTest, CompletedJobNotReassigned) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     // 2. Register an engine
@@ -516,7 +516,7 @@ TEST_F(ApiTest, PermanentlyFailedJobIsNotReassigned) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     // 2. Register an engine
