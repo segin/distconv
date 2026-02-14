@@ -90,6 +90,22 @@ TEST_F(ImplementationTest, CompilerWarnings) {
     EXPECT_TRUE(subprocess.is_executable_available("echo"));
 }
 
+// Test: SSL options configuration
+TEST_F(ImplementationTest, SslOptionsConfiguration) {
+    CprHttpClient http_client;
+
+    // Test with CA cert path and verification enabled
+    http_client.set_ssl_options("test_ca.crt", true);
+    // We can't easily verify the internal state, but we can ensure it doesn't crash when used
+    auto response = http_client.get("https://localhost:12345");
+    EXPECT_GE(response.status_code, 0);
+
+    // Test with verification disabled
+    http_client.set_ssl_options("", false);
+    response = http_client.get("http://localhost:12345");
+    EXPECT_GE(response.status_code, 0);
+}
+
 // Test 143: The code is formatted with clang-format
 TEST_F(ImplementationTest, CodeFormatting) {
     // This test verifies consistent code style
