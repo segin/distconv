@@ -8,9 +8,15 @@
 #include <chrono>
 #include <thread>
 #include <poll.h>
-#include <fcntl.h>
-#include <cstring>
-#include <vector>
+#include <sys/syscall.h>
+
+#ifndef SYS_pidfd_open
+#ifdef __x86_64__
+#define SYS_pidfd_open 434
+#elif defined(__aarch64__)
+#define SYS_pidfd_open 434
+#endif
+#endif
 
 namespace distconv {
 namespace TranscodingEngine {
@@ -233,6 +239,64 @@ private:
         bool success = (exit_code == 0);
         
         return {exit_code, stdout_output, stderr_output, success, ""};
+    }
+    
+    std::string read_from_pipe(int pipe_fd) {
+        std::ostringstream output;
+        char buffer[4096];
+        ssize_t bytes_read;
+        
+        while ((bytes_read = read(pipe_fd, buffer, sizeof(buffer) - 1)) > 0) {
+            buffer[bytes_read] = '\0';
+            output << buffer;
+        }
+        
+        return output.str();
+    }
+    
+    bool wait_with_timeout(pid_t pid, int* status, int timeout_seconds) {
+#if defined(__linux__) && defined(SYS_pidfd_open)
+        int pidfd = syscall(SYS_pidfd_open, pid, 0);
+        if (pidfd >= 0) {
+            struct pollfd pfd;
+            pfd.fd = pidfd;
+            pfd.events = POLLIN;
+
+            int ret = poll(&pfd, 1, timeout_seconds * 1000);
+            close(pidfd);
+
+            if (ret > 0) {
+                if (waitpid(pid, status, 0) == pid) {
+                    return true;
+                }
+            } else if (ret == 0) {
+                return false;
+            }
+            // Fallback to polling loop if poll fails
+        }
+#endif
+
+        auto start_time = std::chrono::steady_clock::now();
+        auto timeout_duration = std::chrono::seconds(timeout_seconds);
+        
+        while (true) {
+            pid_t result = waitpid(pid, status, WNOHANG);
+            
+            if (result == pid) {
+                return true; // Process finished
+            }
+            
+            if (result == -1) {
+                return false; // Error
+            }
+            
+            auto current_time = std::chrono::steady_clock::now();
+            if (current_time - start_time >= timeout_duration) {
+                return false; // Timeout
+            }
+            
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
     }
     
 public:
