@@ -92,6 +92,7 @@ public:
     void start(int port, bool block = true);
     void stop();
     httplib::Server* getServer();
+    int get_port() const { return port_; }
     void set_api_key(const std::string& key);
     
     // For testing
@@ -100,6 +101,7 @@ public:
 
 private:
     httplib::Server svr;
+    int port_ = 0;
     std::thread server_thread;
     std::string api_key_;
     

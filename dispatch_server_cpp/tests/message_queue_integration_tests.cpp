@@ -38,6 +38,26 @@ TEST_F(MessageQueueIntegrationTest, JobSubmissionPublishesToQueue) {
     auto* svr = server.getServer();
 
     // Simulate Job Submission
+    httplib::Client cli("localhost", 8080); // We won't actually connect, we'll use the server object directly via internal handler logic if possible, or we need to start it.
+    // Starting the server is asynchronous in tests usually, or we can use `svr->dispatch_request`.
+
+    // httplib::Server::dispatch_request is private? No, let's check.
+    // It seems we can't easily call dispatch_request from outside without hacking httplib.
+
+    // Use dynamic port allocation for testing
+    // Try-catch block to handle port binding failures gracefully or diagnose crash
+    try {
+        server.start(0, false);
+    } catch (...) {
+        FAIL() << "Failed to start server on dynamic port";
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Wait for start
+
+    int port = server.get_port();
+    httplib::Client client("localhost", port);
+    client.set_read_timeout(5); // Increased timeout
+
     nlohmann::json job_req;
     job_req["source_url"] = "http://example.com/video.mp4";
     job_req["target_codec"] = "h264";
