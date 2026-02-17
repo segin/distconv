@@ -3,7 +3,6 @@
 
 #include <string>
 #include <vector>
-#include "cjson/cJSON.h"
 #include <sqlite3.h>
 
 namespace distconv {

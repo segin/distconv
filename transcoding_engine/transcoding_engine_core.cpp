@@ -7,14 +7,12 @@
 #include <random> // For random engine ID
 #include <fstream> // For file operations (e.g., reading thermal sensor data)
 #include <algorithm> // For std::remove
-#include <mutex> // For std::mutex
-#include "cjson/cJSON.h" // Include cJSON header
-#include <curl/curl.h> // Include libcurl header
-#include <cpr/cpr.h> // Include CPR header
-#include <nlohmann/json.hpp> // Include nlohmann/json header
+#include <nlohmann/json.hpp>
+#include <cpr/cpr.h>
 #include <sqlite3.h> // Include SQLite3 header
 #include "transcoding_engine_core.h"
-#include "backoff_timer.h"
+
+using json = nlohmann::json;
 #include <unistd.h> // For gethostname
 
 namespace distconv {
@@ -94,84 +92,41 @@ std::vector<std::string> get_jobs_from_db() {
 }
 
 
-// Callback function for libcurl to write received data
-size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
-    ((std::string*)userp)->append((char*)contents, size * nmemb);
-    return size * nmemb;
-}
-
-namespace {
-// RAII wrapper for CURL handle
-class CurlHandle {
-public:
-    CurlHandle() {
-        handle = curl_easy_init();
-    }
-    ~CurlHandle() {
-        if (handle) {
-            curl_easy_cleanup(handle);
-        }
-    }
-    CURL* get() const { return handle; }
-private:
-    CURL* handle;
-};
-} // namespace
-
-// Generic function to make HTTP requests using libcurl
+// Generic function to make HTTP requests using cpr
 std::string makeHttpRequest(const std::string& url, const std::string& method, const std::string& payload, const std::string& caCertPath, const std::string& apiKey) {
-    // Optimization: Use thread_local RAII wrapper to reuse CURL handle and ensure cleanup
-    thread_local std::unique_ptr<CURL, void(*)(CURL*)> curl(curl_easy_init(), curl_easy_cleanup);
-
-    // Retry initialization if it failed previously (unlikely but safe)
-    if (!curl) {
-        curl.reset(curl_easy_init());
+    cpr::SslOptions sslOpts;
+    if (!caCertPath.empty()) {
+        sslOpts.SetOption(cpr::ssl::CaInfo{caCertPath});
+        sslOpts.SetOption(cpr::ssl::VerifyPeer{true});
+        sslOpts.SetOption(cpr::ssl::VerifyHost{true});
+    } else {
+        sslOpts.SetOption(cpr::ssl::VerifyPeer{false});
+        sslOpts.SetOption(cpr::ssl::VerifyHost{false});
     }
 
-    CURLcode res;
-    std::string readBuffer;
-
-    if(curl) {
-        curl_easy_reset(curl.get());
-        curl_easy_setopt(curl.get(), CURLOPT_URL, url.c_str());
-        curl_easy_setopt(curl.get(), CURLOPT_WRITEFUNCTION, WriteCallback);
-        curl_easy_setopt(curl.get(), CURLOPT_WRITEDATA, &readBuffer);
-
-        // Set CA certificate for HTTPS
-        if (!caCertPath.empty()) {
-            curl_easy_setopt(curl.get(), CURLOPT_CAINFO, caCertPath.c_str());
-            curl_easy_setopt(curl.get(), CURLOPT_SSL_VERIFYPEER, 1L);
-            curl_easy_setopt(curl.get(), CURLOPT_SSL_VERIFYHOST, 2L);
-        } else {
-            // Allow non-secure connections if no CA path is provided
-            curl_easy_setopt(curl.get(), CURLOPT_SSL_VERIFYPEER, 0L);
-            curl_easy_setopt(curl.get(), CURLOPT_SSL_VERIFYHOST, 0L);
-        }
-
-        struct curl_slist *headers = NULL;
-        if (method == "POST") {
-            curl_easy_setopt(curl.get(), CURLOPT_POST, 1L);
-            curl_easy_setopt(curl.get(), CURLOPT_POSTFIELDS, payload.c_str());
-            curl_easy_setopt(curl.get(), CURLOPT_POSTFIELDSIZE, payload.length());
-
-            headers = curl_slist_append(headers, "Content-Type: application/json");
-            if (!apiKey.empty()) {
-                std::string api_key_header = "X-API-Key: " + apiKey;
-                headers = curl_slist_append(headers, api_key_header.c_str());
-            }
-            curl_easy_setopt(curl.get(), CURLOPT_HTTPHEADER, headers);
-        }
-
-        res = curl_easy_perform(curl.get());
-        if(res != CURLE_OK) {
-            std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
-        }
-
-        if (headers) {
-            curl_slist_free_all(headers);
-        }
+    cpr::Header headers{{"Content-Type", "application/json"}};
+    if (!apiKey.empty()) {
+        headers["X-API-Key"] = apiKey;
     }
-    return readBuffer;
+
+    cpr::Response r;
+    // Add a reasonable timeout to prevent hanging threads (especially for heartbeats)
+    cpr::Timeout timeout{10000};
+
+    if (method == "POST") {
+        r = cpr::Post(cpr::Url{url}, cpr::Body{payload}, headers, sslOpts, timeout);
+    } else if (method == "GET") {
+        r = cpr::Get(cpr::Url{url}, headers, sslOpts, timeout);
+    } else {
+        std::cerr << "Unsupported method: " << method << std::endl;
+        return "";
+    }
+
+    if (r.status_code == 0) {
+        std::cerr << "Request failed: " << r.error.message << std::endl;
+        return "";
+    }
+    return r.text;
 }
 
 // Function to convert job queue to JSON string
@@ -246,62 +201,25 @@ void sendHeartbeat(const std::string& dispatchServerUrl, const std::string& engi
 
     std::string url = dispatchServerUrl + "/engines/heartbeat";
 
-    // Construct payload using nlohmann::json for safety and convenience
-    nlohmann::json payload_json = {
-        {"engine_id", engineId},
-        {"status", "idle"},
-        {"storage_capacity_gb", storageCapacityGb},
-        {"streaming_support", streamingSupport},
-        {"encoders", encoders},
-        {"decoders", decoders},
-        {"hwaccels", hwaccels},
-        {"cpu_temperature", cpuTemperature},
-        // localJobQueue is already a JSON string, so we need to parse it or keep it as string?
-        // The original code treated it as string in JSON: "local_job_queue": "..."
-        // Wait, original: "local_job_queue": \"" + localJobQueue + "\""
-        // If localJobQueue is `["job1", "job2"]`, then original payload has: "local_job_queue": "[\"job1\", \"job2\"]" (escaped string)
-        // Or did it mean to include it as a JSON array?
-        // Original: "local_job_queue": \"" + localJobQueue + "\""
-        // If localJobQueue was produced by cJSON_PrintUnformatted, it is a string like "[\"id1\",\"id2\"]".
-        // So it was embedding a JSON string inside a JSON string.
-        // Let's preserve this behavior.
-        {"local_job_queue", localJobQueue},
-        {"hostname", hostname}
-    };
-    std::string payload = payload_json.dump();
+    json j;
+    j["engine_id"] = engineId;
+    j["status"] = "idle";
+    j["storage_capacity_gb"] = storageCapacityGb;
+    j["streaming_support"] = streamingSupport;
+    j["encoders"] = encoders;
+    j["decoders"] = decoders;
+    j["hwaccels"] = hwaccels;
+    j["cpu_temperature"] = cpuTemperature;
+    j["local_job_queue"] = localJobQueue;
+    j["hostname"] = hostname;
 
-    std::cout << "Sending heartbeat (async) to: " << url << " with payload: " << payload << std::endl;
+    std::string payload = j.dump();
+    std::cout << "Sending heartbeat to: " << url << " with payload: " << payload << std::endl;
 
-    // Configure SSL options
-    cpr::SslOptions sslOpts;
-    if (!caCertPath.empty()) {
-        sslOpts.SetOption(cpr::ssl::CaInfo{caCertPath});
-        sslOpts.SetOption(cpr::ssl::VerifyPeer{true});
-        sslOpts.SetOption(cpr::ssl::VerifyHost{true});
-    } else {
-        sslOpts.SetOption(cpr::ssl::VerifyPeer{false});
-        sslOpts.SetOption(cpr::ssl::VerifyHost{false});
-    }
-
-    // Configure Headers
-    cpr::Header headers{{"Content-Type", "application/json"}};
-    if (!apiKey.empty()) {
-        headers.insert({"X-API-Key", apiKey});
-    }
-
-    // Send async request
-    auto future = cpr::PostAsync(
-        cpr::Url{url},
-        cpr::Body{payload},
-        headers,
-        sslOpts,
-        cpr::Timeout{30000} // 30s timeout
-    );
-
-    {
-        std::lock_guard<std::mutex> lock(heartbeats_mutex);
-        pending_heartbeats.push_back(std::move(future));
-    }
+    // Send heartbeat asynchronously to avoid blocking the main loop
+    std::thread([url, payload, caCertPath, apiKey]() {
+        makeHttpRequest(url, "POST", payload, caCertPath, apiKey);
+    }).detach();
 }
 
 // Function to get CPU temperature
@@ -359,35 +277,28 @@ bool uploadFile(const std::string& url, const std::string& file_path);
 
 // Function to download a file
 bool downloadFile(const std::string& url, const std::string& output_path, const std::string& caCertPath, const std::string& apiKey) {
-    CURL *curl;
-    CURLcode res;
-    FILE *fp;
-
-    curl = curl_easy_init();
-    if (curl) {
-        fp = fopen(output_path.c_str(), "wb");
-        if (fp) {
-            curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
-            curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
-            if (!caCertPath.empty()) {
-                curl_easy_setopt(curl, CURLOPT_CAINFO, caCertPath.c_str());
-                curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
-                curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
-            } else {
-                curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-                curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
-            }
-
-            res = curl_easy_perform(curl);
-            if (res != CURLE_OK) {
-                std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
-            }
-            fclose(fp);
-        }
-        curl_easy_cleanup(curl);
+    cpr::SslOptions sslOpts;
+    if (!caCertPath.empty()) {
+        sslOpts.SetOption(cpr::ssl::CaInfo{caCertPath});
+        sslOpts.SetOption(cpr::ssl::VerifyPeer{true});
+        sslOpts.SetOption(cpr::ssl::VerifyHost{true});
+    } else {
+        sslOpts.SetOption(cpr::ssl::VerifyPeer{false});
+        sslOpts.SetOption(cpr::ssl::VerifyHost{false});
     }
-    return res == CURLE_OK;
+
+    std::ofstream of(output_path, std::ios::binary);
+    if (of.is_open()) {
+        cpr::Response r = cpr::Download(of, cpr::Url{url}, sslOpts);
+        if (r.status_code == 200) {
+            return true;
+        } else {
+            std::cerr << "Download failed: " << r.status_code << " " << r.error.message << std::endl;
+        }
+    } else {
+        std::cerr << "Failed to open output file: " << output_path << std::endl;
+    }
+    return false;
 }
 
 // Function to upload a file (placeholder)
@@ -414,15 +325,17 @@ void performStreamingTranscoding(const std::string& dispatchServerUrl, const std
 // Function to report job status to dispatch server
 void reportJobStatus(const std::string& dispatchServerUrl, const std::string& job_id, const std::string& status, const std::string& output_url, const std::string& error_message, const std::string& caCertPath, const std::string& apiKey) {
     std::string url;
-    std::string payload;
+    json j;
 
     if (status == "completed") {
         url = dispatchServerUrl + "/jobs/" + job_id + "/complete";
-        payload = "{\"output_url\": \"" + output_url + "\"}";
+        j["output_url"] = output_url;
     } else if (status == "failed") {
         url = dispatchServerUrl + "/jobs/" + job_id + "/fail";
-        payload = "{\"error_message\": \"" + error_message + "\"}";
+        j["error_message"] = error_message;
     }
+
+    std::string payload = j.dump();
     std::cout << "Reporting job status to: " << url << " with payload: " << payload << std::endl;
     makeHttpRequest(url, "POST", payload, caCertPath, apiKey);
 }
@@ -476,7 +389,10 @@ double performBenchmark() {
 // Function to send benchmark results to dispatch server
 void sendBenchmarkResult(const std::string& dispatchServerUrl, const std::string& engineId, double benchmark_time, const std::string& caCertPath, const std::string& apiKey) {
     std::string url = dispatchServerUrl + "/engines/benchmark_result";
-    std::string payload = "{\"engine_id\": \"" + engineId + "\", \"benchmark_time\": " + std::to_string(benchmark_time) + "}";
+    json j;
+    j["engine_id"] = engineId;
+    j["benchmark_time"] = benchmark_time;
+    std::string payload = j.dump();
     std::cout << "Sending benchmark result to: " << url << " with payload: " << payload << std::endl;
     makeHttpRequest(url, "POST", payload, caCertPath, apiKey);
 }
@@ -484,7 +400,9 @@ void sendBenchmarkResult(const std::string& dispatchServerUrl, const std::string
 // Function to get a job from the dispatch server
 std::string getJob(const std::string& dispatchServerUrl, const std::string& engineId, const std::string& caCertPath, const std::string& apiKey) {
     std::string url = dispatchServerUrl + "/assign_job/";
-    std::string payload = "{\"engine_id\": \"" + engineId + "\"}";
+    json j;
+    j["engine_id"] = engineId;
+    std::string payload = j.dump();
     std::string response = makeHttpRequest(url, "POST", payload, caCertPath, apiKey);
     return response;
 }
@@ -534,6 +452,12 @@ int run_transcoding_engine(int argc, char* argv[]) {
     std::thread heartbeatThread([&]() {
         while (true) {
             double cpuTemperature = getCpuTemperature();
+            // Convert localJobQueue to JSON string
+            json queue_array = json::array();
+            for (const std::string& job_id : localJobQueue) {
+                queue_array.push_back(job_id);
+            }
+            std::string localJobQueueJson = queue_array.dump();
 
             std::string localJobQueueJson;
             {
@@ -612,19 +536,14 @@ int run_transcoding_engine(int argc, char* argv[]) {
     while (true) {
         std::string job_json = getJob(dispatchServerUrl, engineId, caCertPath, apiKey);
         if (!job_json.empty()) {
-            cJSON *root = cJSON_Parse(job_json.c_str());
-            if (root) {
-                cJSON *job_id_json = cJSON_GetObjectItemCaseSensitive(root, "job_id");
-                cJSON *source_url_json = cJSON_GetObjectItemCaseSensitive(root, "source_url");
-                cJSON *target_codec_json = cJSON_GetObjectItemCaseSensitive(root, "target_codec");
+            try {
+                auto root = json::parse(job_json);
+                if (root.contains("job_id") && root.contains("source_url") && root.contains("target_codec") &&
+                    root["job_id"].is_string() && root["source_url"].is_string() && root["target_codec"].is_string()) {
 
-                if (cJSON_IsString(job_id_json) && (job_id_json->valuestring != NULL) &&
-                    cJSON_IsString(source_url_json) && (source_url_json->valuestring != NULL) &&
-                    cJSON_IsString(target_codec_json) && (target_codec_json->valuestring != NULL)) {
-
-                    std::string job_id = job_id_json->valuestring;
-                    std::string source_url = source_url_json->valuestring;
-                    std::string target_codec = target_codec_json->valuestring;
+                    std::string job_id = root["job_id"];
+                    std::string source_url = root["source_url"];
+                    std::string target_codec = root["target_codec"];
 
                     // Reset backoff timer on successful job retrieval
                     backoff_timer.reset();
@@ -650,10 +569,9 @@ int run_transcoding_engine(int argc, char* argv[]) {
                 } else {
                     std::cout << "Failed to parse job details from JSON: " << job_json << std::endl;
                 }
-                cJSON_Delete(root);
             }
-            else {
-                std::cout << "Failed to parse JSON response from getJob: " << job_json << std::endl;
+            catch (const json::parse_error& e) {
+                std::cout << "Failed to parse JSON response from getJob: " << job_json << " Error: " << e.what() << std::endl;
             }
         }
         // No job found or error occurred, back off

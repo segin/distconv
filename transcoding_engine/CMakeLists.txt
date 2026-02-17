@@ -10,98 +10,59 @@ add_compile_options(-Wall -Wextra -Wpedantic)
 find_package(PkgConfig REQUIRED)
 find_package(Threads REQUIRED)
 
-# Find cpr (try package first, fallback to third_party)
-find_package(cpr QUIET)
-if(NOT cpr_FOUND)
-    # Check if we have it in third_party
-    if(EXISTS "${CMAKE_SOURCE_DIR}/../third_party/cpr/include/cpr/cpr.h")
-        # Check if we can build it from source
-        if(EXISTS "${CMAKE_SOURCE_DIR}/../third_party/cpr/CMakeLists.txt")
-           add_subdirectory("${CMAKE_SOURCE_DIR}/../third_party/cpr" "${CMAKE_BINARY_DIR}/cpr")
+# Check for cpr in third_party
+set(CPR_USE_SYSTEM_CURL OFF CACHE BOOL "" FORCE)
+set(CPR_USE_SYSTEM_LIB_PSL ON CACHE BOOL "" FORCE)
+set(CURL_USE_LIBPSL OFF CACHE BOOL "" FORCE)
+set(CPR_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 
-           # Explicitly include curl headers if built via FetchContent
-           if(EXISTS "${CMAKE_BINARY_DIR}/_deps/curl-src/include")
-               include_directories("${CMAKE_BINARY_DIR}/_deps/curl-src/include")
-           endif()
-           # Explicitly include cpr generated headers
-           if(EXISTS "${CMAKE_BINARY_DIR}/cpr/cpr_generated_includes")
-               include_directories("${CMAKE_BINARY_DIR}/cpr/cpr_generated_includes")
-           endif()
-        else()
-            # If not buildable, try to use as header-only (unlikely to work for cpr but kept for legacy fallback)
-            add_library(cpr::cpr INTERFACE IMPORTED)
-            target_include_directories(cpr::cpr INTERFACE "${CMAKE_SOURCE_DIR}/../third_party/cpr/include")
-        endif()
-        set(CPR_AVAILABLE TRUE)
-    elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpr")
-        message(STATUS "Using bundled cpr from third_party")
-        set(CPR_USE_SYSTEM_CURL OFF CACHE BOOL "" FORCE)
-        set(CPR_USE_SYSTEM_LIB_PSL ON CACHE BOOL "" FORCE)
-        set(CURL_USE_LIBPSL OFF CACHE BOOL "" FORCE)
-        add_subdirectory(../third_party/cpr ${CMAKE_BINARY_DIR}/cpr EXCLUDE_FROM_ALL)
-        add_library(cpr::cpr ALIAS cpr)
-        set(CPR_AVAILABLE TRUE)
-    elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpr/CMakeLists.txt")
-        message(STATUS "Using local cpr from third_party")
-
-        set(CPR_USE_SYSTEM_CURL OFF CACHE BOOL "" FORCE)
-        set(CPR_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-        set(CPR_GENERATE_COVERAGE OFF CACHE BOOL "" FORCE)
-        set(CPR_USE_SYSTEM_LIB_PSL ON CACHE BOOL "" FORCE)
-        set(CURL_USE_LIBPSL OFF CACHE BOOL "" FORCE)
-
-        add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpr" "${CMAKE_CURRENT_BINARY_DIR}/cpr")
-
-        # cpr target is created by add_subdirectory
-        if(TARGET cpr::cpr)
-             # Good
-        elseif(TARGET cpr)
-             add_library(cpr::cpr ALIAS cpr)
-        endif()
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpr/CMakeLists.txt")
+    message(STATUS "Using local cpr from third_party")
+    add_subdirectory(../third_party/cpr build/cpr)
+    set(CPR_AVAILABLE TRUE)
+else()
+    find_package(cpr QUIET)
+    if(cpr_FOUND)
         set(CPR_AVAILABLE TRUE)
     else()
-        message(STATUS "cpr system library not found. Checking local third_party...")
-        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpr/CMakeLists.txt")
-            message(STATUS "Using local cpr from third_party")
-            # Set options for cpr to avoid building tests/examples
-            set(CPR_USE_SYSTEM_CURL OFF CACHE BOOL "" FORCE)
-            set(CPR_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-            set(CPR_ENABLE_SSL ON CACHE BOOL "" FORCE)
-            add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpr" "${CMAKE_CURRENT_BINARY_DIR}/cpr")
+        pkg_check_modules(CPR QUIET cpr)
+        if(CPR_FOUND)
+            add_library(cpr::cpr INTERFACE IMPORTED)
+            target_link_libraries(cpr::cpr INTERFACE ${CPR_LIBRARIES})
+            target_include_directories(cpr::cpr INTERFACE ${CPR_INCLUDE_DIRS})
+            target_compile_options(cpr::cpr INTERFACE ${CPR_CFLAGS_OTHER})
             set(CPR_AVAILABLE TRUE)
-        else()
-            message(WARNING "cpr library not found. Building without HTTP functionality.")
-            # Create a dummy cpr target
-            add_library(cpr::cpr INTERFACE IMPORTED)
-            set(CPR_AVAILABLE FALSE)
         endif()
     endif()
 endif()
 
-# Find nlohmann_json
-find_package(nlohmann_json QUIET)
-if(NOT nlohmann_json_FOUND)
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(NLOHMANN_JSON QUIET nlohmann_json)
-    if(NLOHMANN_JSON_FOUND)
-        add_library(nlohmann_json::nlohmann_json INTERFACE IMPORTED)
-        target_include_directories(nlohmann_json::nlohmann_json INTERFACE ${NLOHMANN_JSON_INCLUDE_DIRS})
-    elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/include")
-        message(STATUS "Using local nlohmann_json from third_party")
-        add_library(nlohmann_json::nlohmann_json INTERFACE IMPORTED)
-        target_include_directories(nlohmann_json::nlohmann_json INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/include")
-    else()
-        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/single_include")
-            message(STATUS "Using local nlohmann_json from third_party")
+if(NOT CPR_AVAILABLE)
+     message(WARNING "cpr library not found. HTTP functionality limited.")
+     add_library(cpr::cpr INTERFACE IMPORTED)
+endif()
+
+# Check for nlohmann_json in third_party
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/include/nlohmann/json.hpp")
+    message(STATUS "Using local nlohmann_json from third_party")
+    add_library(nlohmann_json::nlohmann_json INTERFACE IMPORTED)
+    target_include_directories(nlohmann_json::nlohmann_json INTERFACE ../third_party/json/include)
+    set(NLOHMANN_JSON_FOUND TRUE)
+else()
+    find_package(nlohmann_json QUIET)
+    if(NOT nlohmann_json_FOUND)
+        pkg_check_modules(NLOHMANN_JSON REQUIRED nlohmann_json)
+        if(NLOHMANN_JSON_FOUND)
             add_library(nlohmann_json::nlohmann_json INTERFACE IMPORTED)
-            target_include_directories(nlohmann_json::nlohmann_json INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/single_include")
-        else()
-            message(FATAL_ERROR "nlohmann_json not found. Please install nlohmann-json3-dev.")
+            target_include_directories(nlohmann_json::nlohmann_json INTERFACE ${NLOHMANN_JSON_INCLUDE_DIRS})
         endif()
     endif()
 endif()
 
+if(NOT NLOHMANN_JSON_FOUND)
+    message(FATAL_ERROR "nlohmann_json not found.")
+endif()
 
+# Find SQLite3
 find_package(SQLite3 QUIET)
 if(NOT SQLite3_FOUND)
     find_package(PkgConfig REQUIRED)
@@ -189,6 +150,8 @@ target_link_libraries(transcoding_engine_modern
 target_sources(transcoding_engine_modern PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/cpr_http_client_stub.cpp)
 
 
+
+# Create mock library for testing
 add_library(transcoding_engine_mocks
     src/mocks/mock_http_client.cpp
     src/mocks/mock_database.cpp
@@ -260,17 +223,6 @@ write_basic_package_version_file(
     COMPATIBILITY AnyNewerVersion
 )
 
-# Build configuration summary
-message(STATUS "TranscodingEngine build configuration:")
-message(STATUS "  Version: ${PROJECT_VERSION}")
-message(STATUS "  C++ Standard: ${CMAKE_CXX_STANDARD}")
-message(STATUS "  Build Type: ${CMAKE_BUILD_TYPE}")
-message(STATUS "  Testing: ${GTest_FOUND}")
-message(STATUS "  CPR found: ${cpr_FOUND}")
-message(STATUS "  CPR available: ${CPR_AVAILABLE}")
-message(STATUS "  nlohmann_json found: ${nlohmann_json_FOUND}")
-message(STATUS "  SQLite3 found: ${SQLite3_FOUND}")
-
 # Add build info
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/src/utils/build_info.h.in"
@@ -281,12 +233,3 @@ configure_file(
 target_include_directories(transcoding_engine_lib PUBLIC
     ${CMAKE_CURRENT_BINARY_DIR}/src
 )
-
-# Benchmark
-add_executable(secure_subprocess_benchmark
-    tests/secure_subprocess_benchmark.cpp
-    src/implementations/secure_subprocess.cpp
-)
-
-target_include_directories(secure_subprocess_benchmark PRIVATE src)
-target_link_libraries(secure_subprocess_benchmark Threads::Threads)
