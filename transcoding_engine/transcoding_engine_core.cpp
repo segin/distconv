@@ -7,8 +7,9 @@
 #include <random> // For random engine ID
 #include <fstream> // For file operations (e.g., reading thermal sensor data)
 #include <algorithm> // For std::remove
-#include <nlohmann/json.hpp>
-#include <cpr/cpr.h>
+#include <mutex>
+#include "cjson/cJSON.h" // Include cJSON header
+#include <curl/curl.h> // Include libcurl header
 #include <sqlite3.h> // Include SQLite3 header
 #include "transcoding_engine_core.h"
 
@@ -439,9 +440,7 @@ int run_transcoding_engine(int argc, char* argv[]) {
     // Local job queue (simulated)
     std::mutex queue_mutex;
     std::vector<std::string> localJobQueue = get_jobs_from_db();
-    std::mutex jobQueueMutex; // Mutex to protect localJobQueue
-    std::string cachedJobQueueJson = "[]"; // Cache for JSON string
-    bool jobQueueDirty = true; // Flag to indicate if cache needs update
+    std::mutex localJobQueue_mutex;
 
     // Get ffmpeg capabilities
     std::string encoders = getFFmpegCapabilities("encoders");
@@ -453,11 +452,18 @@ int run_transcoding_engine(int argc, char* argv[]) {
         while (true) {
             double cpuTemperature = getCpuTemperature();
             // Convert localJobQueue to JSON string
-            json queue_array = json::array();
-            for (const std::string& job_id : localJobQueue) {
-                queue_array.push_back(job_id);
+            cJSON *queue_array = cJSON_CreateArray();
+            std::string localJobQueueJson;
+            {
+                std::lock_guard<std::mutex> lock(localJobQueue_mutex);
+                for (const std::string& job_id : localJobQueue) {
+                    cJSON_AddItemToArray(queue_array, cJSON_CreateString(job_id.c_str()));
+                }
             }
-            std::string localJobQueueJson = queue_array.dump();
+            char *queue_str = cJSON_PrintUnformatted(queue_array);
+            localJobQueueJson = queue_str;
+            cJSON_Delete(queue_array);
+            free(queue_str);
 
             std::string localJobQueueJson;
             {
@@ -551,9 +557,8 @@ int run_transcoding_engine(int argc, char* argv[]) {
                     // Add job to local queue
                     add_job_to_db(job_id);
                     {
-                        std::lock_guard<std::mutex> lock(jobQueueMutex);
+                        std::lock_guard<std::mutex> lock(localJobQueue_mutex);
                         localJobQueue.push_back(job_id);
-                        jobQueueDirty = true;
                     }
 
                     performTranscoding(dispatchServerUrl, job_id, source_url, target_codec, caCertPath, apiKey);
@@ -561,9 +566,8 @@ int run_transcoding_engine(int argc, char* argv[]) {
                     // Remove job from local queue after completion (or failure)
                     remove_job_from_db(job_id);
                     {
-                        std::lock_guard<std::mutex> lock(jobQueueMutex);
+                        std::lock_guard<std::mutex> lock(localJobQueue_mutex);
                         localJobQueue.erase(std::remove(localJobQueue.begin(), localJobQueue.end(), job_id), localJobQueue.end());
-                        jobQueueDirty = true;
                     }
 
                 } else {
