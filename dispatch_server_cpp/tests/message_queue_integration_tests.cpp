@@ -41,11 +41,7 @@ TEST_F(MessageQueueIntegrationTest, JobSubmissionPublishesToQueue) {
     httplib::Client cli("localhost", 8080); // We won't actually connect, we'll use the server object directly via internal handler logic if possible, or we need to start it.
     // Starting the server is asynchronous in tests usually, or we can use `svr->dispatch_request`.
 
-    // httplib::Server::dispatch_request is private? No, let's check.
-    // It seems we can't easily call dispatch_request from outside without hacking httplib.
-
-    // Use dynamic port allocation for testing
-    // Try-catch block to handle port binding failures gracefully or diagnose crash
+    // Use dynamic port allocation (port 0) to avoid conflicts
     try {
         server.start(0, false);
     } catch (...) {
@@ -55,6 +51,8 @@ TEST_F(MessageQueueIntegrationTest, JobSubmissionPublishesToQueue) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Wait for start
 
     int port = server.get_port();
+    ASSERT_GT(port, 0) << "Server failed to bind to a valid port";
+
     httplib::Client client("localhost", port);
     client.set_read_timeout(5); // Increased timeout
 

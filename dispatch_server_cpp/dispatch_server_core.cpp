@@ -707,17 +707,20 @@ void DispatchServer::start(int port, bool block) {
     start_persistence_thread();
     
     if (port == 0) {
-        port_ = svr.bind_to_any_port("0.0.0.0");
-        if (port_ <= 0) {
-            throw std::runtime_error("Failed to bind to any port");
+        bound_port_ = svr.bind_to_any_port("0.0.0.0");
+        if (bound_port_ < 0) {
+            std::cerr << "Failed to bind to any port." << std::endl;
+            return;
         }
-        std::cout << "Dispatch Server bound to dynamic port " << port_ << std::endl;
     } else {
-        port_ = port;
         if (!svr.bind_to_port("0.0.0.0", port)) {
-            throw std::runtime_error("Failed to bind to port " + std::to_string(port));
+            std::cerr << "Failed to bind to port " << port << std::endl;
+            return;
         }
+        bound_port_ = port;
     }
+
+    std::cout << "Server bound to port " << bound_port_ << std::endl;
 
     if (block) {
         svr.listen_after_bind();

@@ -95,7 +95,7 @@ public:
     void start(int port, bool block = true);
     void stop();
     httplib::Server* getServer();
-    int get_port() const { return port_; }
+    int get_port() const { return bound_port_; }
     void set_api_key(const std::string& key);
     
     // For testing
@@ -107,6 +107,7 @@ private:
     int port_ = 0;
     std::thread server_thread;
     std::string api_key_;
+    int bound_port_ = -1;
     
     // Thread-safe background processing
     std::atomic<bool> shutdown_requested_{false};
