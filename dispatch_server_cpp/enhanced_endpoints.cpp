@@ -4,6 +4,15 @@
 namespace distconv {
 namespace DispatchServer {
 
+// External globals
+extern nlohmann::json jobs_db;
+extern nlohmann::json engines_db;
+extern std::mutex state_mutex;
+extern std::mutex jobs_mutex;
+extern std::mutex engines_mutex;
+extern void save_state_unlocked();
+extern void async_save_state();
+
 // Enhanced endpoint implementations with improved validation and features
 
 namespace EnhancedEndpoints {
@@ -123,10 +132,10 @@ void setup_enhanced_job_endpoints(httplib::Server &svr, const std::string& api_k
             job["retry_state"] = "none"; // none, retry_scheduled, failed_retry
             
             {
-                std::lock_guard<std::mutex> lock(state_mutex);
+                std::lock_guard<std::mutex> lock(jobs_mutex);
                 jobs_db[job_id] = job;
-                save_state_unlocked();
             }
+            async_save_state();
             
             EnhancedEndpoints::success_response(res, job, 201);
             
@@ -143,7 +152,7 @@ void setup_enhanced_job_endpoints(httplib::Server &svr, const std::string& api_k
         
         std::string job_id = req.matches[1];
         
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::lock_guard<std::mutex> lock(jobs_mutex);
         if (!jobs_db.contains(job_id)) {
             EnhancedEndpoints::error_response(res, "NOT_FOUND", "Job with ID '" + job_id + "' not found", 404);
             return;
@@ -158,33 +167,34 @@ void setup_enhanced_job_endpoints(httplib::Server &svr, const std::string& api_k
         
         std::string job_id = req.matches[1];
         
-        std::lock_guard<std::mutex> lock(state_mutex);
-        if (!jobs_db.contains(job_id)) {
-            EnhancedEndpoints::error_response(res, "NOT_FOUND", "Job with ID '" + job_id + "' not found", 404);
-            return;
-        }
-        
-        std::string current_status = jobs_db[job_id]["status"];
-        if (current_status == "completed" || current_status == "failed_permanently" || current_status == "cancelled") {
-            EnhancedEndpoints::error_response(res, "INVALID_OPERATION", "Cannot cancel job in '" + current_status + "' state");
-            return;
-        }
-        
-        // Cancel the job
-        jobs_db[job_id]["status"] = "cancelled";
-        jobs_db[job_id]["updated_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch()).count();
-        
-        // Free up engine if assigned
-        if (!jobs_db[job_id]["assigned_engine"].is_null()) {
-            std::string engine_id = jobs_db[job_id]["assigned_engine"];
-            if (engines_db.contains(engine_id)) {
-                engines_db[engine_id]["status"] = "idle";
-                engines_db[engine_id]["current_job_id"] = "";
+        {
+            std::scoped_lock lock(jobs_mutex, engines_mutex);
+            if (!jobs_db.contains(job_id)) {
+                EnhancedEndpoints::error_response(res, "NOT_FOUND", "Job with ID '" + job_id + "' not found", 404);
+                return;
+            }
+
+            std::string current_status = jobs_db[job_id]["status"];
+            if (current_status == "completed" || current_status == "failed_permanently" || current_status == "cancelled") {
+                EnhancedEndpoints::error_response(res, "INVALID_OPERATION", "Cannot cancel job in '" + current_status + "' state");
+                return;
+            }
+
+            // Cancel the job
+            jobs_db[job_id]["status"] = "cancelled";
+            jobs_db[job_id]["updated_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::system_clock::now().time_since_epoch()).count();
+
+            // Free up engine if assigned
+            if (!jobs_db[job_id]["assigned_engine"].is_null()) {
+                std::string engine_id = jobs_db[job_id]["assigned_engine"];
+                if (engines_db.contains(engine_id)) {
+                    engines_db[engine_id]["status"] = "idle";
+                    engines_db[engine_id]["current_job_id"] = "";
+                }
             }
         }
-        
-        save_state_unlocked();
+        async_save_state();
         
         nlohmann::json response;
         response["message"] = "Job cancelled successfully";
@@ -198,27 +208,28 @@ void setup_enhanced_job_endpoints(httplib::Server &svr, const std::string& api_k
         
         std::string job_id = req.matches[1];
         
-        std::lock_guard<std::mutex> lock(state_mutex);
-        if (!jobs_db.contains(job_id)) {
-            EnhancedEndpoints::error_response(res, "NOT_FOUND", "Job with ID '" + job_id + "' not found", 404);
-            return;
+        {
+            std::lock_guard<std::mutex> lock(jobs_mutex);
+            if (!jobs_db.contains(job_id)) {
+                EnhancedEndpoints::error_response(res, "NOT_FOUND", "Job with ID '" + job_id + "' not found", 404);
+                return;
+            }
+
+            std::string current_status = jobs_db[job_id]["status"];
+            if (current_status != "failed" && current_status != "failed_permanently") {
+                EnhancedEndpoints::error_response(res, "INVALID_OPERATION", "Can only retry failed jobs, current status: " + current_status);
+                return;
+            }
+
+            // Reset job for retry
+            jobs_db[job_id]["status"] = "pending";
+            jobs_db[job_id]["assigned_engine"] = nullptr;
+            jobs_db[job_id]["output_url"] = nullptr;
+            jobs_db[job_id]["retry_state"] = "none";
+            jobs_db[job_id]["updated_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::system_clock::now().time_since_epoch()).count();
         }
-        
-        std::string current_status = jobs_db[job_id]["status"];
-        if (current_status != "failed" && current_status != "failed_permanently") {
-            EnhancedEndpoints::error_response(res, "INVALID_OPERATION", "Can only retry failed jobs, current status: " + current_status);
-            return;
-        }
-        
-        // Reset job for retry
-        jobs_db[job_id]["status"] = "pending";
-        jobs_db[job_id]["assigned_engine"] = nullptr;
-        jobs_db[job_id]["output_url"] = nullptr;
-        jobs_db[job_id]["retry_state"] = "none";
-        jobs_db[job_id]["updated_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch()).count();
-        
-        save_state_unlocked();
+        async_save_state();
         
         nlohmann::json response;
         response["message"] = "Job queued for retry";
@@ -242,34 +253,35 @@ void setup_enhanced_job_endpoints(httplib::Server &svr, const std::string& api_k
                 return;
             }
             
-            std::lock_guard<std::mutex> lock(state_mutex);
-            if (!jobs_db.contains(job_id)) {
-                EnhancedEndpoints::error_response(res, "NOT_FOUND", "Job with ID '" + job_id + "' not found", 404);
-                return;
-            }
-            
-            std::string current_status = jobs_db[job_id]["status"];
-            if (current_status == "completed" || current_status == "failed_permanently") {
-                EnhancedEndpoints::error_response(res, "INVALID_OPERATION", "Job is already in a final state: " + current_status);
-                return;
-            }
-            
-            // Complete the job
-            jobs_db[job_id]["status"] = "completed";
-            jobs_db[job_id]["output_url"] = request_json["output_url"];
-            jobs_db[job_id]["updated_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::system_clock::now().time_since_epoch()).count();
-            
-            // Free up the engine
-            if (!jobs_db[job_id]["assigned_engine"].is_null()) {
-                std::string engine_id = jobs_db[job_id]["assigned_engine"];
-                if (engines_db.contains(engine_id)) {
-                    engines_db[engine_id]["status"] = "idle";
-                    engines_db[engine_id]["current_job_id"] = "";
+            {
+                std::scoped_lock lock(jobs_mutex, engines_mutex);
+                if (!jobs_db.contains(job_id)) {
+                    EnhancedEndpoints::error_response(res, "NOT_FOUND", "Job with ID '" + job_id + "' not found", 404);
+                    return;
+                }
+
+                std::string current_status = jobs_db[job_id]["status"];
+                if (current_status == "completed" || current_status == "failed_permanently") {
+                    EnhancedEndpoints::error_response(res, "INVALID_OPERATION", "Job is already in a final state: " + current_status);
+                    return;
+                }
+
+                // Complete the job
+                jobs_db[job_id]["status"] = "completed";
+                jobs_db[job_id]["output_url"] = request_json["output_url"];
+                jobs_db[job_id]["updated_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::system_clock::now().time_since_epoch()).count();
+
+                // Free up the engine
+                if (!jobs_db[job_id]["assigned_engine"].is_null()) {
+                    std::string engine_id = jobs_db[job_id]["assigned_engine"];
+                    if (engines_db.contains(engine_id)) {
+                        engines_db[engine_id]["status"] = "idle";
+                        engines_db[engine_id]["current_job_id"] = "";
+                    }
                 }
             }
-            
-            save_state_unlocked();
+            async_save_state();
             
             nlohmann::json response;
             response["message"] = "Job completed successfully";
@@ -299,54 +311,61 @@ void setup_enhanced_job_endpoints(httplib::Server &svr, const std::string& api_k
                 return;
             }
             
-            std::lock_guard<std::mutex> lock(state_mutex);
-            if (!jobs_db.contains(job_id)) {
-                EnhancedEndpoints::error_response(res, "NOT_FOUND", "Job with ID '" + job_id + "' not found", 404);
-                return;
-            }
-            
-            std::string current_status = jobs_db[job_id]["status"];
-            if (current_status == "completed" || current_status == "failed_permanently") {
-                EnhancedEndpoints::error_response(res, "INVALID_OPERATION", "Job is already in a final state: " + current_status);
-                return;
-            }
-            
-            // Increment retries
-            jobs_db[job_id]["retries"] = jobs_db[job_id].value("retries", 0) + 1;
-            jobs_db[job_id]["error_message"] = request_json["error_message"];
-            jobs_db[job_id]["updated_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::system_clock::now().time_since_epoch()).count();
-            
-            // Check if we should retry or fail permanently
-            int current_retries = jobs_db[job_id]["retries"];
-            int max_retries = jobs_db[job_id].value("max_retries", 3);
-            
-            if (current_retries < max_retries) {
-                // Re-queue for retry
-                jobs_db[job_id]["status"] = "pending";
-                jobs_db[job_id]["assigned_engine"] = nullptr;
-                jobs_db[job_id]["retry_state"] = "retry_scheduled";
-            } else {
-                // Fail permanently
-                jobs_db[job_id]["status"] = "failed_permanently";
-                jobs_db[job_id]["retry_state"] = "failed_retry";
-            }
-            
-            // Free up the engine
-            if (!jobs_db[job_id]["assigned_engine"].is_null()) {
-                std::string engine_id = jobs_db[job_id]["assigned_engine"];
-                if (engines_db.contains(engine_id)) {
-                    engines_db[engine_id]["status"] = "idle";
-                    engines_db[engine_id]["current_job_id"] = "";
+            int current_retries = 0;
+            int max_retries = 3;
+            std::string job_status_val;
+
+            {
+                std::scoped_lock lock(jobs_mutex, engines_mutex);
+                if (!jobs_db.contains(job_id)) {
+                    EnhancedEndpoints::error_response(res, "NOT_FOUND", "Job with ID '" + job_id + "' not found", 404);
+                    return;
+                }
+
+                std::string current_status = jobs_db[job_id]["status"];
+                if (current_status == "completed" || current_status == "failed_permanently") {
+                    EnhancedEndpoints::error_response(res, "INVALID_OPERATION", "Job is already in a final state: " + current_status);
+                    return;
+                }
+
+                // Increment retries
+                jobs_db[job_id]["retries"] = jobs_db[job_id].value("retries", 0) + 1;
+                jobs_db[job_id]["error_message"] = request_json["error_message"];
+                jobs_db[job_id]["updated_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::system_clock::now().time_since_epoch()).count();
+
+                // Check if we should retry or fail permanently
+                current_retries = jobs_db[job_id]["retries"];
+                max_retries = jobs_db[job_id].value("max_retries", 3);
+
+                if (current_retries < max_retries) {
+                    // Re-queue for retry
+                    jobs_db[job_id]["status"] = "pending";
+                    jobs_db[job_id]["assigned_engine"] = nullptr;
+                    jobs_db[job_id]["retry_state"] = "retry_scheduled";
+                } else {
+                    // Fail permanently
+                    jobs_db[job_id]["status"] = "failed_permanently";
+                    jobs_db[job_id]["retry_state"] = "failed_retry";
+                }
+
+                job_status_val = jobs_db[job_id]["status"];
+
+                // Free up the engine
+                if (!jobs_db[job_id]["assigned_engine"].is_null()) {
+                    std::string engine_id = jobs_db[job_id]["assigned_engine"];
+                    if (engines_db.contains(engine_id)) {
+                        engines_db[engine_id]["status"] = "idle";
+                        engines_db[engine_id]["current_job_id"] = "";
+                    }
                 }
             }
-            
-            save_state_unlocked();
+            async_save_state();
             
             nlohmann::json response;
             response["message"] = (current_retries < max_retries) ? "Job queued for retry" : "Job failed permanently";
             response["job_id"] = job_id;
-            response["status"] = jobs_db[job_id]["status"];
+            response["status"] = job_status_val;
             response["retries"] = current_retries;
             response["max_retries"] = max_retries;
             EnhancedEndpoints::success_response(res, response);
@@ -491,7 +510,7 @@ void setup_enhanced_system_endpoints(httplib::Server &svr, const std::string& ap
     
     // Enhanced status endpoint
     svr.Get("/api/v1/status", [](const httplib::Request&, httplib::Response& res) {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         
         nlohmann::json status;
         status["status"] = "healthy";
@@ -529,25 +548,27 @@ void setup_enhanced_system_endpoints(httplib::Server &svr, const std::string& ap
         
         std::string engine_id = req.matches[1];
         
-        std::lock_guard<std::mutex> lock(state_mutex);
-        if (!engines_db.contains(engine_id)) {
-            EnhancedEndpoints::error_response(res, "NOT_FOUND", "Engine with ID '" + engine_id + "' not found", 404);
-            return;
-        }
-        
-        // Free up any assigned jobs
-        for (auto& [job_id, job_data] : jobs_db.items()) {
-            if (!job_data["assigned_engine"].is_null() && job_data["assigned_engine"] == engine_id) {
-                job_data["status"] = "pending";
-                job_data["assigned_engine"] = nullptr;
-                job_data["updated_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(
-                    std::chrono::system_clock::now().time_since_epoch()).count();
+        {
+            std::scoped_lock lock(jobs_mutex, engines_mutex);
+            if (!engines_db.contains(engine_id)) {
+                EnhancedEndpoints::error_response(res, "NOT_FOUND", "Engine with ID '" + engine_id + "' not found", 404);
+                return;
             }
+
+            // Free up any assigned jobs
+            for (auto& [job_id, job_data] : jobs_db.items()) {
+                if (!job_data["assigned_engine"].is_null() && job_data["assigned_engine"] == engine_id) {
+                    job_data["status"] = "pending";
+                    job_data["assigned_engine"] = nullptr;
+                    job_data["updated_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(
+                        std::chrono::system_clock::now().time_since_epoch()).count();
+                }
+            }
+
+            // Remove engine
+            engines_db.erase(engine_id);
         }
-        
-        // Remove engine
-        engines_db.erase(engine_id);
-        save_state_unlocked();
+        async_save_state();
         
         nlohmann::json response;
         response["message"] = "Engine deregistered successfully";

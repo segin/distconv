@@ -37,7 +37,7 @@ TEST(JobHandlersTest, JobStatusHandlerFound) {
     job["job_id"] = job_id;
     job["status"] = "pending";
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::lock_guard<std::mutex> lock(jobs_mutex);
         jobs_db[job_id] = job;
     }
     httplib::Response res;
@@ -61,7 +61,7 @@ TEST(JobHandlersTest, JobStatusHandlerNotFound) {
 TEST(JobHandlersTest, JobListHandlerEmpty) {
     // Ensure DB is empty
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::lock_guard<std::mutex> lock(jobs_mutex);
         jobs_db.clear();
     }
     auto auth = std::make_shared<AuthMiddleware>("");
@@ -78,7 +78,7 @@ TEST(JobHandlersTest, JobListHandlerEmpty) {
 TEST(JobHandlersTest, JobListHandlerWithJobs) {
     // Populate DB with two jobs
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::lock_guard<std::mutex> lock(jobs_mutex);
         jobs_db.clear();
         for (int i = 0; i < 2; ++i) {
             std::string id = "job-" + std::to_string(i);
@@ -103,7 +103,7 @@ TEST(JobHandlersTest, JobCompletionValid) {
     // Setup job
     std::string job_id = "job-complete-1";
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::lock_guard<std::mutex> lock(jobs_mutex);
         nlohmann::json job;
         job["job_id"] = job_id;
         job["status"] = "pending";
@@ -150,7 +150,7 @@ static httplib::Request make_completion_request(const std::string& job_id) {
 TEST(JobHandlersTest, JobCompletionHandlerSuccess) {
     std::string job_id = "job-complete-1";
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::lock_guard<std::mutex> lock(jobs_mutex);
         nlohmann::json job;
         job["job_id"] = job_id;
         job["status"] = "pending";
@@ -170,7 +170,7 @@ TEST(JobHandlersTest, JobCompletionHandlerSuccess) {
     EXPECT_EQ(res.status, 200);
     
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::lock_guard<std::mutex> lock(jobs_mutex);
         EXPECT_EQ(jobs_db[job_id]["status"], "completed");
         EXPECT_EQ(jobs_db[job_id]["output_url"], "http://example.com/out.mp4");
     }
@@ -181,7 +181,7 @@ TEST(JobHandlersTest, JobAssignmentSuccess) {
     auto job_repo = std::make_shared<InMemoryJobRepository>();
     
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::lock_guard<std::mutex> lock(jobs_mutex);
         jobs_db.clear();
         engines_db.clear();
         
@@ -220,7 +220,7 @@ TEST(JobHandlersTest, JobAssignmentSuccess) {
     EXPECT_EQ(parsed["assigned_engine"], "engine-idle");
     
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::lock_guard<std::mutex> lock(jobs_mutex);
         EXPECT_EQ(jobs_db["job-assign-1"]["status"], "assigned");
         EXPECT_EQ(engines_db["engine-idle"]["status"], "busy");
     }

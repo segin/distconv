@@ -10,13 +10,13 @@ class URLValidationTest : public ::testing::Test {
 protected:
     void SetUp() override {
         // Clear global state
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::lock_guard<std::mutex> lock(jobs_mutex);
         jobs_db.clear();
         engines_db.clear();
     }
     
     void TearDown() override {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::lock_guard<std::mutex> lock(jobs_mutex);
         jobs_db.clear();
         engines_db.clear();
     }
@@ -31,7 +31,7 @@ TEST_F(URLValidationTest, ValidURL) {
     // Setup job
     std::string job_id = "job-1";
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::lock_guard<std::mutex> lock(jobs_mutex);
         jobs_db[job_id] = {{"job_id", job_id}, {"status", "assigned"}};
     }
     
@@ -55,7 +55,7 @@ TEST_F(URLValidationTest, ValidURL) {
     
     // Verify DB update
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::lock_guard<std::mutex> lock(jobs_mutex);
         EXPECT_EQ(jobs_db[job_id]["status"], "completed");
         EXPECT_EQ(jobs_db[job_id]["output_url"], "https://example.com/output.mp4");
     }
@@ -68,7 +68,7 @@ TEST_F(URLValidationTest, InvalidURLNoProtocol) {
     
     std::string job_id = "job-1";
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::lock_guard<std::mutex> lock(jobs_mutex);
         jobs_db[job_id] = {{"job_id", job_id}, {"status", "assigned"}};
     }
     
@@ -97,7 +97,7 @@ TEST_F(URLValidationTest, InvalidURLFtpProtocol) {
     
     std::string job_id = "job-1";
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::lock_guard<std::mutex> lock(jobs_mutex);
         jobs_db[job_id] = {{"job_id", job_id}, {"status", "assigned"}};
     }
     

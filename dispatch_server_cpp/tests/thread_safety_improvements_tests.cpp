@@ -94,7 +94,7 @@ TEST_F(ThreadSafetyImprovementsTest, JobPrioritySupport) {
         // Verify job was stored with correct priority
         std::string job_id = response_json["job_id"];
         {
-            std::lock_guard<std::mutex> lock(state_mutex);
+            std::scoped_lock lock(jobs_mutex, engines_mutex);
             ASSERT_TRUE(jobs_db.contains(job_id));
             EXPECT_EQ(jobs_db[job_id]["priority"], priority);
         }
@@ -118,7 +118,7 @@ TEST_F(ThreadSafetyImprovementsTest, EnhancedJobDataStructure) {
     
     // Verify job structure includes all new fields
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         ASSERT_TRUE(jobs_db.contains(job_id));
         const auto& job = jobs_db[job_id];
         

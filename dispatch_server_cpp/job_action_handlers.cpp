@@ -48,24 +48,26 @@ void JobCompletionHandler::handle(const httplib::Request& req, httplib::Response
 
     // 5. Update Job Status
     try {
-        std::lock_guard<std::mutex> lock(state_mutex);
-        if (jobs_db.contains(job_id)) {
-            jobs_db[job_id]["status"] = "completed";
-            jobs_db[job_id]["output_url"] = request_json["output_url"];
-            
-            // Free up the engine that was working on this job
-            if (jobs_db[job_id].contains("assigned_engine") && !jobs_db[job_id]["assigned_engine"].is_null()) {
-                std::string engine_id = jobs_db[job_id]["assigned_engine"];
-                if (engines_db.contains(engine_id)) {
-                    engines_db[engine_id]["status"] = "idle";
+        {
+            std::scoped_lock lock(jobs_mutex, engines_mutex);
+            if (jobs_db.contains(job_id)) {
+                jobs_db[job_id]["status"] = "completed";
+                jobs_db[job_id]["output_url"] = request_json["output_url"];
+
+                // Free up the engine that was working on this job
+                if (jobs_db[job_id].contains("assigned_engine") && !jobs_db[job_id]["assigned_engine"].is_null()) {
+                    std::string engine_id = jobs_db[job_id]["assigned_engine"];
+                    if (engines_db.contains(engine_id)) {
+                        engines_db[engine_id]["status"] = "idle";
+                    }
                 }
+            } else {
+                res.status = 404;
+                res.set_content("Job not found", "text/plain");
+                return;
             }
-            save_state_unlocked();
-        } else {
-            res.status = 404;
-            res.set_content("Job not found", "text/plain");
-            return;
         }
+        async_save_state();
     } catch (const std::exception& e) {
         set_json_error_response(res, "Internal server error", "server_error", 500, e.what());
         return;
@@ -111,41 +113,45 @@ void JobFailureHandler::handle(const httplib::Request& req, httplib::Response& r
 
     // 5. Update Job Status with Retry Logic
     try {
-        std::lock_guard<std::mutex> lock(state_mutex);
-        if (jobs_db.contains(job_id)) {
-            // Check if job is already in a final state
-            if (jobs_db[job_id]["status"] == "completed" || jobs_db[job_id]["status"] == "failed_permanently") {
-                set_json_error_response(res, "Bad Request: Job is already in a final state.", "validation_error", 400, "Job ID: " + job_id);
+        bool saved = false;
+        {
+            std::lock_guard<std::mutex> lock(jobs_mutex);
+            if (jobs_db.contains(job_id)) {
+                // Check if job is already in a final state
+                if (jobs_db[job_id]["status"] == "completed" || jobs_db[job_id]["status"] == "failed_permanently") {
+                    set_json_error_response(res, "Bad Request: Job is already in a final state.", "validation_error", 400, "Job ID: " + job_id);
+                    return;
+                }
+
+                // Increment retries
+                jobs_db[job_id]["retries"] = jobs_db[job_id].value("retries", 0) + 1;
+
+                // Check if we should retry or fail permanently
+                int current_retries = jobs_db[job_id]["retries"];
+                int max_retries = jobs_db[job_id].value("max_retries", 3);
+
+                if (current_retries < max_retries) {
+                    // Re-queue for retry
+                    jobs_db[job_id]["status"] = "pending";
+                    jobs_db[job_id]["error_message"] = request_json["error_message"];
+                    saved = true;
+                    res.status = 200;
+                    res.set_content("Job " + job_id + " re-queued", "text/plain");
+                } else {
+                    // Fail permanently
+                    jobs_db[job_id]["status"] = "failed_permanently";
+                    jobs_db[job_id]["error_message"] = request_json["error_message"];
+                    saved = true;
+                    res.status = 200;
+                    res.set_content("Job " + job_id + " failed permanently", "text/plain");
+                }
+            } else {
+                res.status = 404;
+                res.set_content("Job not found", "text/plain");
                 return;
             }
-
-            // Increment retries
-            jobs_db[job_id]["retries"] = jobs_db[job_id].value("retries", 0) + 1;
-            
-            // Check if we should retry or fail permanently
-            int current_retries = jobs_db[job_id]["retries"];
-            int max_retries = jobs_db[job_id].value("max_retries", 3);
-            
-            if (current_retries < max_retries) {
-                // Re-queue for retry
-                jobs_db[job_id]["status"] = "pending";
-                jobs_db[job_id]["error_message"] = request_json["error_message"];
-                save_state_unlocked();
-                res.status = 200;
-                res.set_content("Job " + job_id + " re-queued", "text/plain");
-            } else {
-                // Fail permanently
-                jobs_db[job_id]["status"] = "failed_permanently";
-                jobs_db[job_id]["error_message"] = request_json["error_message"];
-                save_state_unlocked();
-                res.status = 200;
-                res.set_content("Job " + job_id + " failed permanently", "text/plain");
-            }
-        } else {
-            res.status = 404;
-            res.set_content("Job not found", "text/plain");
-            return;
         }
+        if (saved) async_save_state();
     } catch (const std::exception& e) {
         set_json_error_response(res, "Internal server error", "server_error", 500, e.what());
         return;

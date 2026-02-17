@@ -114,15 +114,12 @@ gtest_discover_tests(dispatch_server_tests
     TIMEOUT 10
 )
 
-# Benchmark for Timeout Optimization
-add_executable(timeout_benchmark
-    tests/timeout_benchmark.cpp
-)
-target_link_libraries(timeout_benchmark dispatch_server_core)
-target_include_directories(timeout_benchmark PRIVATE
+# Benchmark target
+add_executable(lock_contention_benchmark tests/lock_contention_benchmark.cpp)
+target_link_libraries(lock_contention_benchmark dispatch_server_core pthread)
+target_include_directories(lock_contention_benchmark PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/../third_party/json/single_include
-    ${CMAKE_CURRENT_SOURCE_DIR}/tests
 )
 gtest_discover_tests(mq_tests
     PROPERTIES
