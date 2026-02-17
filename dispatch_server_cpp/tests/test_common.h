@@ -36,6 +36,7 @@ protected:
     static std::string api_key;
     static httplib::Headers admin_headers;
     static std::string persistent_storage_file;
+    static bool use_legacy_mode;
 
     static void SetUpTestSuite() {
         persistent_storage_file = "dispatch_server_state_" + std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count()) + ".json";
@@ -47,12 +48,8 @@ protected:
 
         // Initialize API key for authentication
         api_key = "test_api_key";
-
-        auto job_repo = std::make_shared<InMemoryJobRepository>();
-        auto engine_repo = std::make_shared<InMemoryEngineRepository>();
-
-        server = new DispatchServer(job_repo, engine_repo, api_key);
-        // server->set_api_key(api_key); // Passed in constructor
+        server = new DispatchServer(use_legacy_mode);
+        server->set_api_key(api_key);
         server->start(port, false);
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
 

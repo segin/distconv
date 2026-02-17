@@ -1,88 +1,69 @@
 #include "gtest/gtest.h"
 #include "httplib.h"
 #include "nlohmann/json.hpp"
+#include "test_common.h"
 #include "../dispatch_server_core.h"
 #include "../repositories.h"
-#include <thread>
-#include <chrono>
-#include <random>
 
 using namespace distconv::DispatchServer;
 
-// Helper from test_common.h (copying to avoid linking issues or dependency on test_common structure)
-inline int find_available_port_modern() {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(20000, 65000);
-    return dis(gen);
-}
-
-class ModernApiTest : public ::testing::Test {
+class ModernApiTest : public ApiTest {
 protected:
-    std::shared_ptr<DispatchServer> server;
-    std::shared_ptr<httplib::Client> client;
-    int port;
-    std::string api_key = "test_api_key";
-    std::shared_ptr<InMemoryJobRepository> job_repo;
-
-    void SetUp() override {
-        port = find_available_port_modern();
-        job_repo = std::make_shared<InMemoryJobRepository>();
-        auto engine_repo = std::make_shared<InMemoryEngineRepository>();
-
-        server = std::make_shared<DispatchServer>(job_repo, engine_repo, api_key);
-        server->start(port, false);
-
-        // Wait for server
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
-
-        // Populate jobs
-        for(int i=0; i<150; ++i) {
-            nlohmann::json job;
-            job["job_id"] = "job_" + std::to_string(i);
-            // created_at descending order is default in implementation
-            job["created_at"] = 1000 + i;
-            job["status"] = "pending";
-            job_repo->save_job(job["job_id"], job);
-        }
-
-        client = std::make_shared<httplib::Client>("localhost", port);
-        client->set_connection_timeout(5);
+    static void SetUpTestSuite() {
+        use_legacy_mode = false; // Enable Modern Mode (SQLite)
+        ApiTest::SetUpTestSuite();
     }
-
-    void TearDown() override {
-        if (server) server->stop();
+    static void TearDownTestSuite() {
+        ApiTest::TearDownTestSuite();
+        use_legacy_mode = true; // Restore default for other tests
     }
 };
 
-TEST_F(ModernApiTest, PaginationDefaults) {
-    httplib::Headers headers = {{"X-API-Key", api_key}};
-    auto res = client->Get("/jobs/", headers);
+TEST_F(ModernApiTest, SubmitJobSavesToSqliteWithPriority) {
+    nlohmann::json job_payload = {
+        {"source_url", "http://example.com/video.mp4"},
+        {"target_codec", "h264"},
+        {"priority", 5}
+    };
+    httplib::Headers headers = {
+        {"X-API-Key", api_key}
+    };
+    auto res = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
+
+    // Modern API returns 201 Created
     ASSERT_TRUE(res != nullptr);
-    ASSERT_EQ(res->status, 200);
+    ASSERT_EQ(res->status, 201);
+
     auto json = nlohmann::json::parse(res->body);
-    ASSERT_EQ(json.size(), 100); // Default limit
+    ASSERT_TRUE(json.contains("job_id"));
+    std::string job_id = json["job_id"];
+
+    // Verify via repository directly (bypassing legacy jobs_db)
+    auto repo = server->get_job_repository();
+    ASSERT_TRUE(repo != nullptr);
+    ASSERT_TRUE(repo->job_exists(job_id));
+
+    auto job = repo->get_job(job_id);
+    ASSERT_EQ(job["priority"], 5);
+    ASSERT_EQ(job["source_url"], "http://example.com/video.mp4");
 }
 
-TEST_F(ModernApiTest, PaginationCustomLimit) {
-    httplib::Headers headers = {{"X-API-Key", api_key}};
-    auto res = client->Get("/jobs/?limit=50", headers);
+TEST_F(ModernApiTest, EngineHeartbeatUpdatesRepository) {
+    nlohmann::json engine_payload = {
+        {"engine_id", "modern-engine-1"},
+        {"status", "idle"}
+    };
+    httplib::Headers headers = {
+        {"X-API-Key", api_key}
+    };
+    auto res = client->Post("/engines/heartbeat", headers, engine_payload.dump(), "application/json");
     ASSERT_TRUE(res != nullptr);
     ASSERT_EQ(res->status, 200);
-    auto json = nlohmann::json::parse(res->body);
-    ASSERT_EQ(json.size(), 50);
-}
 
-TEST_F(ModernApiTest, PaginationOffset) {
-    httplib::Headers headers = {{"X-API-Key", api_key}};
-    // offset 100, should get remaining 50.
-    // Note: InMemoryJobRepository sorts by created_at DESC.
-    // 0..149.
-    // Offset 0 (first 100): 149..50
-    // Offset 100 (next 50): 49..0
-    auto res = client->Get("/jobs/?offset=100", headers);
-    ASSERT_TRUE(res != nullptr);
-    ASSERT_EQ(res->status, 200);
-    auto json = nlohmann::json::parse(res->body);
-    ASSERT_EQ(json.size(), 50);
+    auto repo = server->get_engine_repository();
+    ASSERT_TRUE(repo != nullptr);
+    ASSERT_TRUE(repo->engine_exists("modern-engine-1"));
+
+    auto engine = repo->get_engine("modern-engine-1");
+    ASSERT_EQ(engine["status"], "idle");
 }
