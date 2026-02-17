@@ -185,7 +185,7 @@ if(GTest_FOUND)
         tests_modern/test_transcoding_engine.cpp
         tests_modern/test_implementations.cpp
         tests_modern/test_refactoring.cpp
-        tests_modern/performance_reproduction_test.cpp
+        tests_modern/test_ssl_config.cpp
     )
     
     target_link_libraries(transcoding_engine_modern_tests
