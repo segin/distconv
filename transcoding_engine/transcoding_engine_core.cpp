@@ -10,6 +10,7 @@
 #include <curl/curl.h> // Include libcurl header
 #include <sqlite3.h> // Include SQLite3 header
 #include "transcoding_engine_core.h"
+#include "backoff_timer.h"
 #include <unistd.h> // For gethostname
 
 namespace distconv {
@@ -443,6 +444,9 @@ int run_transcoding_engine(int argc, char* argv[]) {
     });
     benchmarkThread.detach(); // Detach to run in background
 
+    // Initialize backoff timer with 1s min and 30s max delay
+    BackoffTimer backoff_timer(std::chrono::seconds(1), std::chrono::seconds(30));
+
     // Main loop for listening for jobs
     std::cout << "Engine " << engineId << " is idle, waiting for jobs..." << std::endl;
     while (true) {
@@ -462,6 +466,9 @@ int run_transcoding_engine(int argc, char* argv[]) {
                     std::string source_url = source_url_json->valuestring;
                     std::string target_codec = target_codec_json->valuestring;
 
+                    // Reset backoff timer on successful job retrieval
+                    backoff_timer.reset();
+
                     // Add job to local queue
                     add_job_to_db(job_id);
                     localJobQueue.push_back(job_id);
@@ -472,6 +479,9 @@ int run_transcoding_engine(int argc, char* argv[]) {
                     remove_job_from_db(job_id);
                     localJobQueue.erase(std::remove(localJobQueue.begin(), localJobQueue.end(), job_id), localJobQueue.end());
 
+                    // Poll for next job immediately
+                    continue;
+
                 } else {
                     std::cout << "Failed to parse job details from JSON: " << job_json << std::endl;
                 }
@@ -481,7 +491,8 @@ int run_transcoding_engine(int argc, char* argv[]) {
                 std::cout << "Failed to parse JSON response from getJob: " << job_json << std::endl;
             }
         }
-        std::this_thread::sleep_for(std::chrono::seconds(1)); // Poll for jobs every second
+        // No job found or error occurred, back off
+        backoff_timer.sleep();
     }
 
     sqlite3_close(db); // Close SQLite database on shutdown
