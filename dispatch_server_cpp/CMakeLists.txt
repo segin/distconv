@@ -99,3 +99,22 @@ gtest_discover_tests(mq_tests
     PROPERTIES
     TIMEOUT 10
 )
+
+# Assignment Benchmark
+add_executable(assignment_benchmark tests/assignment_benchmark.cpp)
+target_link_libraries(assignment_benchmark dispatch_server_core sqlite3)
+target_include_directories(assignment_benchmark PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/../third_party/json/single_include
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests
+)
+
+# Modern Assignment Verification Test
+add_executable(modern_assignment_verification tests/modern_assignment_verification.cpp)
+target_link_libraries(modern_assignment_verification dispatch_server_core gtest gmock sqlite3)
+target_include_directories(modern_assignment_verification PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/../third_party/json/single_include
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests
+    ${CMAKE_SOURCE_DIR}/../third_party/trompeloeil/include
+)
