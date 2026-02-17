@@ -38,20 +38,17 @@ TEST_F(MessageQueueIntegrationTest, JobSubmissionPublishesToQueue) {
     auto* svr = server.getServer();
 
     // Simulate Job Submission
-    httplib::Client cli("localhost", 8080); // We won't actually connect, we'll use the server object directly via internal handler logic if possible, or we need to start it.
-    // Starting the server is asynchronous in tests usually, or we can use `svr->dispatch_request`.
-
     // Use dynamic port allocation (port 0) to avoid conflicts
     try {
         server.start(0, false);
     } catch (...) {
-        FAIL() << "Failed to start server on dynamic port";
+        FAIL() << "Failed to start server";
     }
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Wait for start
 
     int port = server.get_port();
     ASSERT_GT(port, 0) << "Server failed to bind to a valid port";
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Wait for start
 
     httplib::Client client("localhost", port);
     client.set_read_timeout(5); // Increased timeout

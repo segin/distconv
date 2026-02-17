@@ -101,6 +101,7 @@ public:
     // For testing
     IJobRepository* get_job_repository() { return job_repo_.get(); }
     IEngineRepository* get_engine_repository() { return engine_repo_.get(); }
+    int get_port() const { return bound_port_; }
 
 private:
     httplib::Server svr;

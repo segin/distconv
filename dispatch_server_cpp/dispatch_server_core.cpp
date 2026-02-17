@@ -704,24 +704,24 @@ void DispatchServer::start(int port, bool block) {
     // Start background worker thread
     shutdown_requested_.store(false);
     background_worker_ = std::thread(&DispatchServer::background_worker, this);
-    start_persistence_thread();
-    
+
+    int bound_port = -1;
     if (port == 0) {
-        bound_port_ = svr.bind_to_any_port("0.0.0.0");
-        if (bound_port_ < 0) {
-            std::cerr << "Failed to bind to any port." << std::endl;
-            return;
-        }
+        bound_port = svr.bind_to_any_port("0.0.0.0");
     } else {
-        if (!svr.bind_to_port("0.0.0.0", port)) {
-            std::cerr << "Failed to bind to port " << port << std::endl;
-            return;
+        if (svr.bind_to_port("0.0.0.0", port)) {
+            bound_port = port;
         }
-        bound_port_ = port;
     }
 
-    std::cout << "Server bound to port " << bound_port_ << std::endl;
+    if (bound_port == -1) {
+        // Handle error, maybe throw or log
+        std::cerr << "Failed to bind to port " << port << std::endl;
+        return;
+    }
 
+    bound_port_ = bound_port; // Store in member variable
+    
     if (block) {
         svr.listen_after_bind();
     } else {
