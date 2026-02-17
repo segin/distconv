@@ -38,38 +38,24 @@ TEST_F(MessageQueueIntegrationTest, JobSubmissionPublishesToQueue) {
     auto* svr = server.getServer();
 
     // Simulate Job Submission
-    httplib::Client cli("localhost", 8080); // We won't actually connect, we'll use the server object directly via internal handler logic if possible, or we need to start it.
-    // Starting the server is asynchronous in tests usually, or we can use `svr->dispatch_request`.
-
-    // httplib::Server::dispatch_request is private? No, let's check.
-    // It seems we can't easily call dispatch_request from outside without hacking httplib.
-
-    // Let's use a fixed port for testing, hoping it's free. 8089.
-    // Try-catch block to handle port binding failures gracefully or diagnose crash
-    try {
-        server.start(8089, false);
-    } catch (...) {
-        FAIL() << "Failed to start server on port 8089";
-    }
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Wait for start
-
-    httplib::Client client("localhost", 8089);
-    client.set_read_timeout(5); // Increased timeout
-
     nlohmann::json job_req;
     job_req["source_url"] = "http://example.com/video.mp4";
     job_req["target_codec"] = "h264";
 
-    auto res = client.Post("/jobs/", {{"X-API-KEY", "test-api-key"}}, job_req.dump(), "application/json");
+    httplib::Request req;
+    req.method = "POST";
+    req.path = "/jobs/";
+    req.headers.emplace("X-API-KEY", "test-api-key");
+    req.body = job_req.dump();
+    req.set_header("Content-Type", "application/json");
 
-    if (!res) {
-        // If request failed, stop server and fail test
-        server.stop();
-        FAIL() << "HTTP Request failed. Error: " << res.error();
-    }
+    httplib::Response res;
+    httplib::detail::BufferStream strm;
 
-    EXPECT_EQ(res->status, 201);
+    // Use internal routing method exposed for testing
+    svr->routing(req, res, strm);
+
+    EXPECT_EQ(res.status, 201);
 
     // Check if message was received by consumer
     // We need to trigger the consumer poll because MemoryMessageQueue might be passive or active.
