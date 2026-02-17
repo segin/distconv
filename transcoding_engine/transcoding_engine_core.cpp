@@ -408,7 +408,7 @@ std::string getJob(const std::string& dispatchServerUrl, const std::string& engi
     return response;
 }
 
-int run_transcoding_engine(int argc, char* argv[]) {
+int run_transcoding_engine(int argc, char* argv[], GetJobFunc getJobImpl, PerformTranscodingFunc performTranscodingImpl) {
     std::cout << "Transcoding Engine Starting..." << std::endl;
 
     // Configuration
@@ -539,7 +539,8 @@ int run_transcoding_engine(int argc, char* argv[]) {
     // Main loop for listening for jobs
     std::cout << "Engine " << engineId << " is idle, waiting for jobs..." << std::endl;
     while (true) {
-        std::string job_json = getJob(dispatchServerUrl, engineId, caCertPath, apiKey);
+        bool job_processed = false;
+        std::string job_json = getJobImpl(dispatchServerUrl, engineId, caCertPath, apiKey);
         if (!job_json.empty()) {
             try {
                 auto root = json::parse(job_json);
@@ -560,14 +561,12 @@ int run_transcoding_engine(int argc, char* argv[]) {
                         localJobQueue.push_back(job_id);
                     }
 
-                    performTranscoding(dispatchServerUrl, job_id, source_url, target_codec, caCertPath, apiKey);
+                    performTranscodingImpl(dispatchServerUrl, job_id, source_url, target_codec, caCertPath, apiKey);
 
                     // Remove job from local queue after completion (or failure)
                     remove_job_from_db(job_id);
-                    {
-                        std::lock_guard<std::mutex> lock(localJobQueueMutex);
-                        localJobQueue.erase(std::remove(localJobQueue.begin(), localJobQueue.end(), job_id), localJobQueue.end());
-                    }
+                    localJobQueue.erase(std::remove(localJobQueue.begin(), localJobQueue.end(), job_id), localJobQueue.end());
+                    job_processed = true;
 
                 } else {
                     std::cout << "Failed to parse job details from JSON: " << job_json << std::endl;
@@ -577,8 +576,10 @@ int run_transcoding_engine(int argc, char* argv[]) {
                 std::cout << "Failed to parse JSON response from getJob: " << job_json << " Error: " << e.what() << std::endl;
             }
         }
-        // No job found or error occurred, back off
-        backoff_timer.sleep();
+
+        if (!job_processed) {
+            std::this_thread::sleep_for(std::chrono::seconds(1)); // Poll for jobs every second
+        }
     }
 
     sqlite3_close(db); // Close SQLite database on shutdown
