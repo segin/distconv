@@ -521,9 +521,9 @@ int run_transcoding_engine(int argc, char* argv[]) {
     // Local job queue (simulated)
     std::mutex queue_mutex;
     std::vector<std::string> localJobQueue = get_jobs_from_db();
-    std::mutex jobQueueMutex;
-    std::string cachedJobQueueJson;
-    bool jobQueueDirty = true;
+    std::mutex jobQueueMutex; // Mutex to protect localJobQueue
+    std::string cachedJobQueueJson = "[]"; // Cache for JSON string
+    bool jobQueueDirty = true; // Flag to indicate if cache needs update
 
     // Get ffmpeg capabilities
     std::string encoders = getFFmpegCapabilities("encoders");
@@ -534,6 +534,24 @@ int run_transcoding_engine(int argc, char* argv[]) {
     std::thread heartbeatThread([&]() {
         while (true) {
             double cpuTemperature = getCpuTemperature();
+
+            std::string localJobQueueJson;
+            {
+                std::lock_guard<std::mutex> lock(jobQueueMutex);
+                if (jobQueueDirty) {
+                    // Convert localJobQueue to JSON string
+                    cJSON *queue_array = cJSON_CreateArray();
+                    for (const std::string& job_id : localJobQueue) {
+                        cJSON_AddItemToArray(queue_array, cJSON_CreateString(job_id.c_str()));
+                    }
+                    char *queue_str = cJSON_PrintUnformatted(queue_array);
+                    cachedJobQueueJson = queue_str;
+                    cJSON_Delete(queue_array);
+                    free(queue_str);
+                    jobQueueDirty = false;
+                }
+                localJobQueueJson = cachedJobQueueJson;
+            }
 
             std::string localJobQueueJson;
             {
