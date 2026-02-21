@@ -38,6 +38,7 @@ public:
     virtual nlohmann::json get_next_pending_job_by_priority(const std::vector<std::string>& capable_engines) = 0;
     virtual void mark_job_as_failed_retry(const std::string& job_id, int64_t retry_after_timestamp) = 0;
     virtual std::vector<std::string> get_stale_pending_jobs(int64_t timeout_seconds) = 0;
+    virtual std::vector<nlohmann::json> get_jobs_to_timeout(int timeout_minutes) = 0;
     
     // Methods for new API endpoints
     virtual bool update_job(const std::string& job_id, const nlohmann::json& updates) = 0;
@@ -97,6 +98,7 @@ public:
     nlohmann::json get_next_pending_job_by_priority(const std::vector<std::string>& capable_engines) override;
     void mark_job_as_failed_retry(const std::string& job_id, int64_t retry_after_timestamp) override;
     std::vector<std::string> get_stale_pending_jobs(int64_t timeout_seconds) override;
+    std::vector<nlohmann::json> get_jobs_to_timeout(int timeout_minutes) override;
     
     bool update_job(const std::string& job_id, const nlohmann::json& updates) override;
     std::vector<nlohmann::json> get_jobs_by_engine(const std::string& engine_id) override;
@@ -152,6 +154,7 @@ public:
     nlohmann::json get_next_pending_job_by_priority(const std::vector<std::string>& capable_engines) override;
     void mark_job_as_failed_retry(const std::string& job_id, int64_t retry_after_timestamp) override;
     std::vector<std::string> get_stale_pending_jobs(int64_t timeout_seconds) override;
+    std::vector<nlohmann::json> get_jobs_to_timeout(int timeout_minutes) override;
     
     bool update_job(const std::string& job_id, const nlohmann::json& updates) override;
     std::vector<nlohmann::json> get_jobs_by_engine(const std::string& engine_id) override;

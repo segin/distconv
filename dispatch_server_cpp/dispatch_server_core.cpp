@@ -428,18 +428,9 @@ void DispatchServer::cleanup_stale_engines() {
 void DispatchServer::handle_job_timeouts() {
     // Use repository if available
     if (!use_legacy_storage_ && job_repo_) {
-        // Optimized to fetch only relevant jobs
-        auto assigned_jobs = job_repo_->get_jobs_by_status("assigned");
-        auto processing_jobs = job_repo_->get_jobs_by_status("processing");
-        std::vector<nlohmann::json> jobs = std::move(assigned_jobs);
-        jobs.insert(jobs.end(), processing_jobs.begin(), processing_jobs.end());
-        
+        // Find assigned or processing jobs that haven't been updated in a while
         auto now = std::chrono::system_clock::now();
-        int64_t now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
-        int64_t timeout_ms = std::chrono::duration_cast<std::chrono::milliseconds>(JOB_TIMEOUT).count();
-        int64_t older_than = now_ms - timeout_ms;
-
-        auto jobs = job_repo_->get_timed_out_jobs(older_than);
+        auto jobs = job_repo_->get_jobs_to_timeout(JOB_TIMEOUT.count());
         
         for (auto& job : jobs) {
             std::string job_id = job["job_id"];
@@ -463,7 +454,7 @@ void DispatchServer::handle_job_timeouts() {
                 job["error_message"] = "Job timed out and exceeded max retries";
             }
 
-            job["updated_at"] = now_ms;
+            job["updated_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
 
             // Free up the engine
             if (job.contains("assigned_engine") && !job["assigned_engine"].is_null()) {
