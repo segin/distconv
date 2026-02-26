@@ -7,24 +7,24 @@
 
 namespace transcoding_engine {
 
-class MockHttpClient : public IHttpClient {
+class MockHttpClient : public distconv::TranscodingEngine::IHttpClient {
 public:
     MockHttpClient() = default;
     ~MockHttpClient() override = default;
     
     // IHttpClient interface
-    HttpResponse get(const std::string& url, 
+    distconv::TranscodingEngine::HttpResponse get(const std::string& url,
                     const std::map<std::string, std::string>& headers = {}) override;
     
-    HttpResponse post(const std::string& url, 
+    distconv::TranscodingEngine::HttpResponse post(const std::string& url,
                      const std::string& body,
                      const std::map<std::string, std::string>& headers = {}) override;
     
-    HttpResponse download_file(const std::string& url, 
+    distconv::TranscodingEngine::HttpResponse download_file(const std::string& url,
                               const std::string& output_path,
                               const std::map<std::string, std::string>& headers = {}) override;
     
-    HttpResponse upload_file(const std::string& url,
+    distconv::TranscodingEngine::HttpResponse upload_file(const std::string& url,
                             const std::string& file_path,
                             const std::map<std::string, std::string>& headers = {}) override;
     
@@ -32,9 +32,9 @@ public:
     void set_timeout(int timeout_seconds) override;
     
     // Mock-specific methods
-    void set_response_for_url(const std::string& url, const HttpResponse& response);
-    void set_default_response(const HttpResponse& response);
-    void add_response_queue(const std::string& url, const std::queue<HttpResponse>& responses);
+    void set_response_for_url(const std::string& url, const distconv::TranscodingEngine::HttpResponse& response);
+    void set_default_response(const distconv::TranscodingEngine::HttpResponse& response);
+    void add_response_queue(const std::string& url, const std::queue<distconv::TranscodingEngine::HttpResponse>& responses);
     void clear_responses();
     
     // Call tracking
@@ -55,12 +55,12 @@ public:
     CallInfo get_last_call() const;
     
 private:
-    std::map<std::string, HttpResponse> url_responses_;
-    std::map<std::string, std::queue<HttpResponse>> url_response_queues_;
-    HttpResponse default_response_{200, "", {}, true, ""};
+    std::map<std::string, distconv::TranscodingEngine::HttpResponse> url_responses_;
+    std::map<std::string, std::queue<distconv::TranscodingEngine::HttpResponse>> url_response_queues_;
+    distconv::TranscodingEngine::HttpResponse default_response_{200, "", {}, true, ""};
     std::vector<CallInfo> call_history_;
     
-    HttpResponse get_response_for_url(const std::string& url);
+    distconv::TranscodingEngine::HttpResponse get_response_for_url(const std::string& url);
     void record_call(const std::string& method, const std::string& url, 
                     const std::string& body, const std::map<std::string, std::string>& headers);
 };

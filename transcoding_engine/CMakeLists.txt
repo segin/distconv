@@ -24,6 +24,10 @@ if(NOT cpr_FOUND)
         target_include_directories(cpr::cpr INTERFACE ${CPR_INCLUDE_DIRS})
         target_compile_options(cpr::cpr INTERFACE ${CPR_CFLAGS_OTHER})
         set(CPR_AVAILABLE TRUE)
+    elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpr/CMakeLists.txt")
+        message(STATUS "Using local cpr from third_party")
+        add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpr" cpr_build)
+        set(CPR_AVAILABLE TRUE)
     else()
         message(WARNING "cpr library not found. Building without HTTP functionality.")
         # Create a dummy cpr target
@@ -37,13 +41,19 @@ endif()
 # Find nlohmann_json
 find_package(nlohmann_json QUIET)
 if(NOT nlohmann_json_FOUND)
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(NLOHMANN_JSON REQUIRED nlohmann_json)
-    if(NLOHMANN_JSON_FOUND)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/include")
+        message(STATUS "Using local nlohmann_json from third_party")
         add_library(nlohmann_json::nlohmann_json INTERFACE IMPORTED)
-        target_include_directories(nlohmann_json::nlohmann_json INTERFACE ${NLOHMANN_JSON_INCLUDE_DIRS})
+        target_include_directories(nlohmann_json::nlohmann_json INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/include")
     else()
-        message(FATAL_ERROR "nlohmann_json not found. Please install nlohmann-json3-dev.")
+        find_package(PkgConfig REQUIRED)
+        pkg_check_modules(NLOHMANN_JSON REQUIRED nlohmann_json)
+        if(NLOHMANN_JSON_FOUND)
+            add_library(nlohmann_json::nlohmann_json INTERFACE IMPORTED)
+            target_include_directories(nlohmann_json::nlohmann_json INTERFACE ${NLOHMANN_JSON_INCLUDE_DIRS})
+        else()
+            message(FATAL_ERROR "nlohmann_json not found. Please install nlohmann-json3-dev.")
+        endif()
     endif()
 endif()
 
@@ -63,6 +73,17 @@ endif()
 
 # Find GTest for testing
 find_package(GTest QUIET)
+if(NOT GTest_FOUND)
+    include(FetchContent)
+    FetchContent_Declare(
+      googletest
+      URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+    )
+    # For Windows: Prevent overriding the parent project's compiler/linker settings
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(googletest)
+    set(GTest_FOUND TRUE)
+endif()
 
 # Include directories
 include_directories(src)

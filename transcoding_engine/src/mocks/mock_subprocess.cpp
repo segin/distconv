@@ -5,6 +5,8 @@
 
 namespace transcoding_engine {
 
+using namespace distconv::TranscodingEngine;
+
 SubprocessResult MockSubprocess::run(const std::vector<std::string>& command,
                                     const std::string& working_directory,
                                     int timeout_seconds) {

@@ -13,6 +13,7 @@
 #include <cstdint>
 
 using namespace distconv::TranscodingEngine;
+using namespace transcoding_engine;
 
 class TranscodingEngineTest : public ::testing::Test {
 protected:
