@@ -79,7 +79,7 @@ TEST_F(ApiTest, JsonParsingValidJobCompletionRequest) {
     };
     httplib::Headers headers = {{"X-API-Key", api_key}};
     auto res_submit = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
     
     // Register an engine
@@ -125,7 +125,7 @@ TEST_F(ApiTest, JsonParsingValidJobFailureRequest) {
     };
     httplib::Headers headers = {{"X-API-Key", api_key}};
     auto res_submit = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
     
     // Register an engine
@@ -362,7 +362,7 @@ TEST_F(ApiTest, ServerHandlesJobIdThatLooksLikeNumber) {
     };
     httplib::Headers headers = {{"X-API-Key", api_key}};
     auto res_submit = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
     
     // Try to access with numeric-looking but non-existent job ID
@@ -400,7 +400,7 @@ TEST_F(ApiTest, ServerHandlesHeartbeatForEngineAssignedJobThatNoLongerExists) {
         {"target_codec", "h264"}
     };
     auto res_submit = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
     
     nlohmann::json engine_payload = {
@@ -459,7 +459,7 @@ TEST_F(ApiTest, ServerHandlesRequestToCompleteJobThatWasNeverAssigned) {
     };
     httplib::Headers headers = {{"X-API-Key", api_key}};
     auto res_submit = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
     
     // Verify job is in pending state
@@ -493,7 +493,7 @@ TEST_F(ApiTest, ServerHandlesRequestToFailJobThatWasNeverAssigned) {
     };
     httplib::Headers headers = {{"X-API-Key", api_key}};
     auto res_submit = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
     
     // Verify job is in pending state

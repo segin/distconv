@@ -9,119 +9,95 @@
 
 using namespace distconv::DispatchServer;
 
-// Helper to generate a random string
-std::string random_string(size_t length) {
-    auto randchar = []() -> char {
-        const char charset[] =
-        "0123456789"
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        "abcdefghijklmnopqrstuvwxyz";
-        const size_t max_index = (sizeof(charset) - 1);
-        return charset[rand() % max_index];
-    };
-    std::string str(length, 0);
-    std::generate_n(str.begin(), length, randchar);
-    return str;
+void print_result(const std::string& name, long long duration_ms, size_t result_count) {
+    std::cout << name << ": " << duration_ms << " ms (Found " << result_count << " jobs)" << std::endl;
 }
 
-void setup_benchmark_data(IJobRepository& repo, int total_jobs, int pending_position) {
-    std::cout << "Seeding repository with " << total_jobs << " jobs..." << std::endl;
+int main() {
+    std::string db_path = "benchmark_test.db";
+    // Clean up previous run
+    if (std::filesystem::exists(db_path)) {
+        std::filesystem::remove(db_path);
+    }
 
-    // Batch operations if possible, but our interface is one-by-one.
-    // We'll just do it in a loop.
+    std::cout << "Initializing Repository..." << std::endl;
+    auto repo = std::make_unique<SqliteJobRepository>(db_path);
 
-    for (int i = 0; i < total_jobs; ++i) {
+    // Config
+    const int NUM_JOBS = 100000;
+
+    std::cout << "Seeding " << NUM_JOBS << " jobs..." << std::endl;
+    auto start_seed = std::chrono::high_resolution_clock::now();
+
+    // We want the pending job to be hard to find for the linear scan (at the end),
+    // but easy for the optimized query (which filters by status).
+    // Actually, get_all_jobs fetches EVERYTHING regardless of status.
+    // So if we have 99,999 completed jobs and 1 pending job,
+    // get_all_jobs will deserialize 100,000 JSONs.
+    // get_next_pending_job will query WHERE status='pending' LIMIT 1.
+
+    for (int i = 0; i < NUM_JOBS; ++i) {
         nlohmann::json job;
         job["job_id"] = "job_" + std::to_string(i);
         job["created_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch()).count() - (total_jobs - i) * 1000; // spread out timestamps
+            std::chrono::system_clock::now().time_since_epoch()).count() + i; // increasing timestamp
         job["priority"] = 0;
 
-        if (i == pending_position) {
-            job["status"] = "pending";
+        if (i == NUM_JOBS - 1) {
+             job["status"] = "pending";
         } else {
-            job["status"] = "completed";
+             job["status"] = "completed";
         }
 
-        // Add some payload to make deserialization non-trivial
-        job["source_url"] = "http://example.com/" + random_string(20);
-        job["output_url"] = "http://example.com/out/" + random_string(20);
-        job["logs"] = random_string(100);
+        repo->save_job(job["job_id"], job);
 
-        repo.save_job(job["job_id"], job);
+        if (i % 10000 == 0) std::cout << "." << std::flush;
     }
-    std::cout << "Seeding complete." << std::endl;
-}
+    std::cout << " Done." << std::endl;
+    auto end_seed = std::chrono::high_resolution_clock::now();
+    std::cout << "Seeding took " << std::chrono::duration_cast<std::chrono::milliseconds>(end_seed - start_seed).count() << " ms" << std::endl;
 
-void benchmark_linear_scan(IJobRepository& repo) {
-    auto start = std::chrono::high_resolution_clock::now();
+    // --- Benchmark 1: Linear Scan (Current Implementation) ---
+    std::cout << "Running Linear Scan Benchmark..." << std::endl;
+    auto start_linear = std::chrono::high_resolution_clock::now();
 
-    // Logic from dispatch_server_core.cpp
-    std::vector<nlohmann::json> jobs = repo.get_all_jobs();
-    nlohmann::json selected_job;
+    std::vector<nlohmann::json> jobs = repo->get_all_jobs();
+    nlohmann::json selected_job_linear;
 
     for (const auto& job : jobs) {
         if (job["status"] == "pending") {
-            selected_job = job;
+            selected_job_linear = job;
             break;
         }
     }
 
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> elapsed = end - start;
+    auto end_linear = std::chrono::high_resolution_clock::now();
+    long long duration_linear = std::chrono::duration_cast<std::chrono::milliseconds>(end_linear - start_linear).count();
+    print_result("Linear Scan", duration_linear, selected_job_linear.is_null() ? 0 : 1);
 
-    std::cout << "Linear Scan Time: " << elapsed.count() << " ms" << std::endl;
-    if (!selected_job.is_null()) {
-        std::cout << "Found job: " << selected_job["job_id"] << std::endl;
+    // --- Benchmark 2: Optimized Query ---
+    std::cout << "Running Optimized Query Benchmark..." << std::endl;
+    auto start_opt = std::chrono::high_resolution_clock::now();
+
+    nlohmann::json selected_job_opt = repo->get_next_pending_job({});
+
+    auto end_opt = std::chrono::high_resolution_clock::now();
+    long long duration_opt = std::chrono::duration_cast<std::chrono::milliseconds>(end_opt - start_opt).count();
+    print_result("Optimized Query", duration_opt, selected_job_opt.is_null() ? 0 : 1);
+
+    // Validation
+    if (selected_job_linear != selected_job_opt) {
+        std::cerr << "ERROR: Results mismatch!" << std::endl;
+        if (!selected_job_linear.is_null()) std::cerr << "Linear found: " << selected_job_linear["job_id"] << std::endl;
+        if (!selected_job_opt.is_null()) std::cerr << "Optimized found: " << selected_job_opt["job_id"] << std::endl;
     } else {
-        std::cout << "No pending job found." << std::endl;
-    }
-}
-
-void benchmark_optimized_query(IJobRepository& repo) {
-    auto start = std::chrono::high_resolution_clock::now();
-
-    // Optimized logic
-    nlohmann::json selected_job = repo.get_next_pending_job({});
-
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> elapsed = end - start;
-
-    std::cout << "Optimized Query Time: " << elapsed.count() << " ms" << std::endl;
-    if (!selected_job.is_null()) {
-        std::cout << "Found job: " << selected_job["job_id"] << std::endl;
-    } else {
-        std::cout << "No pending job found." << std::endl;
-    }
-}
-
-int main(int argc, char** argv) {
-    std::string db_path = "benchmark_test.db";
-
-    // Clean up previous run
-    std::remove(db_path.c_str());
-
-    {
-        SqliteJobRepository repo(db_path);
-
-        // Scenario 1: Many jobs, pending job is recent (near the top of get_all_jobs sorted by created_at DESC?)
-        // SqliteJobRepository::get_all_jobs sorts by created_at DESC.
-        // If we put the pending job at the end (oldest), linear scan has to scan everything.
-        // If we put it at the start (newest), linear scan is fast (best case).
-        // Let's test the worst case for linear scan: Pending job is old, or buried deep.
-
-        int total_jobs = 5000;
-        int pending_index = 0; // The oldest job (created first)
-
-        setup_benchmark_data(repo, total_jobs, pending_index);
-
-        std::cout << "\n--- Benchmarking ---" << std::endl;
-        benchmark_linear_scan(repo);
-        benchmark_optimized_query(repo);
+        std::cout << "Validation Passed: Both methods returned the same result." << std::endl;
     }
 
-    // Cleanup
-    std::remove(db_path.c_str());
+    // Clean up
+    if (std::filesystem::exists(db_path)) {
+        std::filesystem::remove(db_path);
+    }
 
     return 0;
 }

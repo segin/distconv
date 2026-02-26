@@ -22,7 +22,7 @@ TEST_F(ApiTest, FailedJobHasRetriesCountIncremented) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     // 2. Register an engine
@@ -69,7 +69,7 @@ TEST_F(ApiTest, FailedJobIsRequeued) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     // 2. Register an engine
@@ -116,7 +116,7 @@ TEST_F(ApiTest, FailedJobBecomesPermanentlyFailed) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     // 2. Register an engine
@@ -162,7 +162,7 @@ TEST_F(ApiTest, MaxRetriesDefaultsToThree) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     // 2. Check the job's max_retries
@@ -184,7 +184,7 @@ TEST_F(ApiTest, MaxRetriesCanBeSetToZero) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     // 2. Check the job's max_retries
@@ -206,7 +206,7 @@ TEST_F(ApiTest, JobWithZeroMaxRetriesFailsPermanently) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     // 2. Register an engine

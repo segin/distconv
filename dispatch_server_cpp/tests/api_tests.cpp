@@ -66,7 +66,7 @@ TEST_F(ApiTest, JsonParsingValidJobCompletionRequest) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     // 2. Register an engine
@@ -107,7 +107,7 @@ TEST_F(ApiTest, JsonParsingValidJobFailureRequest) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     // 2. Register an engine
@@ -326,7 +326,7 @@ TEST_F(ApiTest, ServerHandlesNumericJobIdAsString) {
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
     ASSERT_TRUE(res_submit != nullptr);
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     
     // Extract the job_id from the response, which should be a string
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
@@ -357,7 +357,7 @@ TEST_F(ApiTest, ServerHandlesHeartbeatForNonExistentAssignedJob) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     nlohmann::json engine_payload = {

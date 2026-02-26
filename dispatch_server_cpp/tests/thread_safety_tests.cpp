@@ -232,7 +232,7 @@ TEST_F(ApiTest, ConcurrentlyAssignJobsAndCompleteJobs) {
             {"target_codec", "h264"}
         };
         auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-        ASSERT_EQ(res_submit->status, 200);
+        ASSERT_EQ(res_submit->status, 201);
         std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
         job_ids.push_back(job_id);
     }

@@ -5,6 +5,7 @@
 #include "httplib.h"
 #include "nlohmann/json.hpp"
 #include "../dispatch_server_core.h"
+#include "../repositories.h"
 #include <fstream> // Required for std::ofstream
 #include <cstdio> // Required for std::remove
 #include <thread>
@@ -13,12 +14,8 @@
 
 using namespace distconv::DispatchServer;
 
-// Helper function to clear the database before each test
-inline void clear_db() {
-    std::lock_guard<std::mutex> lock(state_mutex);
-    jobs_db = nlohmann::json::object();
-    engines_db = nlohmann::json::object();
-}
+// Forward declaration
+inline void clear_db();
 
 // Helper function to find an available port
 inline int find_available_port() {
@@ -31,6 +28,7 @@ inline int find_available_port() {
 
 // Test fixture for API tests
 class ApiTest : public ::testing::Test {
+    friend void clear_db();
 protected:
     static DispatchServer *server;
     static httplib::Client *client;
@@ -43,16 +41,23 @@ protected:
         persistent_storage_file = "dispatch_server_state_" + std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count()) + ".json";
         PERSISTENT_STORAGE_FILE = persistent_storage_file;
 
-        clear_db(); 
+        //clear_db(); // Can't clear yet, server is null
         
         port = find_available_port();
 
         // Initialize API key for authentication
         api_key = "test_api_key";
-        server = new DispatchServer();
-        server->set_api_key(api_key);
+
+        auto job_repo = std::make_shared<InMemoryJobRepository>();
+        auto engine_repo = std::make_shared<InMemoryEngineRepository>();
+
+        server = new DispatchServer(job_repo, engine_repo, api_key);
+        // server->set_api_key(api_key); // Passed in constructor
         server->start(port, false);
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+        clear_db(); // Now we can clear
+
         client = new httplib::Client("localhost", port);
         client->set_connection_timeout(30);
         wait_for_server_ready();
@@ -93,5 +98,21 @@ protected:
         FAIL() << "Server did not become ready in time.";
     }
 };
+
+// Helper function to clear the database before each test
+inline void clear_db() {
+    std::lock_guard<std::mutex> lock(state_mutex);
+    jobs_db = nlohmann::json::object();
+    engines_db = nlohmann::json::object();
+
+    if (ApiTest::server) {
+        if (auto job_repo = ApiTest::server->get_job_repository()) {
+            job_repo->clear_all_jobs();
+        }
+        if (auto engine_repo = ApiTest::server->get_engine_repository()) {
+            engine_repo->clear_all_engines();
+        }
+    }
+}
 
 #endif // DISPATCH_SERVER_TEST_COMMON_H

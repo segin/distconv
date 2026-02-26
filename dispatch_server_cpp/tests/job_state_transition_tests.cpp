@@ -41,7 +41,7 @@ TEST_F(ApiTest, JobBecomesAssignedAfterAssignment) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
     
     // 2. Register an idle engine
@@ -82,7 +82,7 @@ TEST_F(ApiTest, JobBecomesCompletedAfterCompletion) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
     
     // 2. Register an idle engine and assign job
@@ -130,7 +130,7 @@ TEST_F(ApiTest, JobBecomesPendingAgainAfterFailureWithRetriesAvailable) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
     
     // 2. Register an idle engine and assign job
@@ -179,7 +179,7 @@ TEST_F(ApiTest, JobBecomesFailedPermanentlyAfterFailureWithNoRetriesLeft) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
     
     // 2. Register an idle engine and assign job
@@ -227,7 +227,7 @@ TEST_F(ApiTest, CompletedJobCannotBeMarkedAsFailed) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
     
     // 2. Register an idle engine and assign job
@@ -276,7 +276,7 @@ TEST_F(ApiTest, FailedPermanentlyJobCannotBeMarkedAsFailedAgain) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
     
     // 2. Register an idle engine and assign job
@@ -327,7 +327,7 @@ TEST_F(ApiTest, CompletedJobIsNotReturnedByAssignJob) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
     
     // 2. Register an idle engine and assign job
@@ -385,7 +385,7 @@ TEST_F(ApiTest, FailedPermanentlyJobIsNotReturnedByAssignJob) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
     
     // 2. Register an idle engine and assign job
@@ -442,7 +442,7 @@ TEST_F(ApiTest, AssignedJobIsNotReturnedByAssignJob) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
     
     // 2. Register an idle engine and assign job

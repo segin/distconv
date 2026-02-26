@@ -1156,6 +1156,18 @@ void DispatchServer::setup_engine_endpoints() {
                 
                 std::string engine_id = request_json["engine_id"];
                 
+                // Validate engine status
+                if (!engine_repo_->engine_exists(engine_id)) {
+                    res.status = 204; // Treat unknown engine as no content (or 404 depending on spec, but tests expect 204)
+                    return;
+                }
+                
+                nlohmann::json engine = engine_repo_->get_engine(engine_id);
+                if (engine.value("status", "idle") != "idle") {
+                    res.status = 204; // Busy engines don't get jobs
+                    return;
+                }
+
                 // Find a pending job
                 nlohmann::json selected_job = job_repo_->get_next_pending_job({});
                 

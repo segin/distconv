@@ -23,7 +23,7 @@ TEST_F(ApiTest, SaveStateWritesJobsAndEngines) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     // 2. Register an engine
@@ -68,7 +68,7 @@ TEST_F(ApiTest, LoadStateLoadsJobs) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
     save_state();
 
@@ -204,7 +204,7 @@ TEST_F(ApiTest, StateIsPreservedAfterRestart) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     nlohmann::json engine_payload = {
@@ -250,7 +250,7 @@ TEST_F(ApiTest, SubmitJobTriggersSaveState) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     // 2. Verify that the state file was written to
@@ -302,7 +302,7 @@ TEST_F(ApiTest, CompleteJobTriggersSaveState) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     nlohmann::json engine_payload = {
@@ -351,7 +351,7 @@ TEST_F(ApiTest, FailJobTriggersSaveState) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     nlohmann::json engine_payload = {
@@ -400,7 +400,7 @@ TEST_F(ApiTest, AssignJobTriggersSaveState) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     // 2. Register an engine
@@ -444,7 +444,7 @@ TEST_F(ApiTest, SaveStateWritesToTemporaryFileAndRenames) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     // 2. Call save_state (which should use a temporary file and rename)
@@ -606,7 +606,7 @@ TEST_F(ApiTest, SaveStateWithSingleJob) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     // 2. Save the state
@@ -714,7 +714,7 @@ TEST_F(ApiTest, JobIdGenerationIsUnique) {
             {"target_codec", "h264"}
         };
         auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-        ASSERT_EQ(res_submit->status, 200);
+        ASSERT_EQ(res_submit->status, 201);
         std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
         
         // Check if the job ID already exists in the set
@@ -836,7 +836,7 @@ TEST_F(ApiTest, PersistentStorageFileCanBePointedToTemporaryFile) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
     save_state();
 
@@ -873,7 +873,7 @@ TEST_F(ApiTest, SaveStateCanBeMocked) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", admin_headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
 
     // Verify that save_state was called (mocked version)
     ASSERT_EQ(save_state_call_count, 1);
@@ -939,7 +939,7 @@ TEST_F(ApiTest, SaveStateProducesFormattedJson) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     
     nlohmann::json engine_payload = {
         {"engine_id", "engine-123"},
@@ -1005,7 +1005,7 @@ TEST_F(ApiTest, SaveStateHandlesSpecialCharacters) {
         {"X-API-Key", api_key}
     };
     auto res_submit = client->Post("/jobs/", headers, job_payload.dump(), "application/json");
-    ASSERT_EQ(res_submit->status, 200);
+    ASSERT_EQ(res_submit->status, 201);
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
     
     // 2. Create an engine with special characters

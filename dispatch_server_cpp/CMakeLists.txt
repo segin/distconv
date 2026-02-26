@@ -91,7 +91,7 @@ target_include_directories(mq_tests PRIVATE
     ${CMAKE_SOURCE_DIR}/../third_party/trompeloeil/include
 )
 
-# Benchmark for job assignment
+# Benchmark
 add_executable(assignment_benchmark tests/assignment_benchmark.cpp)
 target_link_libraries(assignment_benchmark dispatch_server_core)
 target_include_directories(assignment_benchmark PRIVATE
