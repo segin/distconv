@@ -2,14 +2,21 @@
 #define ENHANCED_ENDPOINTS_H
 
 #include "httplib.h"
+#include "repositories.h"
 #include <string>
+#include <memory>
 
 namespace distconv {
 namespace DispatchServer {
 
 // Enhanced API endpoints with improved validation and features
-void setup_enhanced_job_endpoints(httplib::Server &svr, const std::string& api_key);
-void setup_enhanced_system_endpoints(httplib::Server &svr, const std::string& api_key);
+void setup_enhanced_job_endpoints(httplib::Server &svr, const std::string& api_key, 
+                                 std::shared_ptr<IJobRepository> job_repo, 
+                                 std::shared_ptr<IEngineRepository> engine_repo);
+
+void setup_enhanced_system_endpoints(httplib::Server &svr, const std::string& api_key,
+                                    std::shared_ptr<IJobRepository> job_repo,
+                                    std::shared_ptr<IEngineRepository> engine_repo);
 
 } // namespace DispatchServer
 } // namespace distconv

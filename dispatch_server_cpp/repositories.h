@@ -11,14 +11,6 @@
 struct sqlite3;
 struct sqlite3_stmt;
 
-struct sqlite3;
-
-struct sqlite3;
-
-struct sqlite3;
-
-struct sqlite3;
-
 namespace distconv {
 namespace DispatchServer {
 
@@ -44,6 +36,7 @@ public:
     virtual bool update_job(const std::string& job_id, const nlohmann::json& updates) = 0;
     virtual std::vector<nlohmann::json> get_jobs_by_engine(const std::string& engine_id) = 0;
     virtual bool update_job_progress(const std::string& job_id, int progress, const std::string& message) = 0;
+    virtual std::vector<nlohmann::json> get_jobs_by_status(const std::string& status) = 0;
 
     // Optimization for timeout check
     virtual std::vector<nlohmann::json> get_timed_out_jobs(int64_t older_than_timestamp) = 0;
@@ -67,9 +60,6 @@ private:
     std::string db_path_;
     sqlite3* db_ = nullptr;
     mutable std::mutex mutex_;
-    sqlite3* db_ = nullptr;
-    
-    sqlite3* db_ = nullptr;
     std::map<std::string, sqlite3_stmt*> statements_;
 
     sqlite3_stmt* get_prepared_statement(const std::string& sql);
@@ -103,6 +93,7 @@ public:
     bool update_job(const std::string& job_id, const nlohmann::json& updates) override;
     std::vector<nlohmann::json> get_jobs_by_engine(const std::string& engine_id) override;
     bool update_job_progress(const std::string& job_id, int progress, const std::string& message) override;
+    std::vector<nlohmann::json> get_jobs_by_status(const std::string& status) override;
 
     std::vector<nlohmann::json> get_timed_out_jobs(int64_t older_than_timestamp) override;
 };
@@ -113,7 +104,6 @@ private:
     std::string db_path_;
     sqlite3* db_ = nullptr;
     mutable std::mutex mutex_;
-    sqlite3* db_ = nullptr;
     
     void initialize_database();
     void execute_sql(const std::string& sql);
@@ -139,7 +129,7 @@ public:
 // In-memory implementations for testing
 class InMemoryJobRepository : public IJobRepository {
 private:
-    nlohmann::json jobs_;
+    nlohmann::json jobs_ = nlohmann::json::object();
     mutable std::mutex mutex_;
     
 public:
@@ -159,13 +149,14 @@ public:
     bool update_job(const std::string& job_id, const nlohmann::json& updates) override;
     std::vector<nlohmann::json> get_jobs_by_engine(const std::string& engine_id) override;
     bool update_job_progress(const std::string& job_id, int progress, const std::string& message) override;
+    std::vector<nlohmann::json> get_jobs_by_status(const std::string& status) override;
 
     std::vector<nlohmann::json> get_timed_out_jobs(int64_t older_than_timestamp) override;
 };
 
 class InMemoryEngineRepository : public IEngineRepository {
 private:
-    nlohmann::json engines_;
+    nlohmann::json engines_ = nlohmann::json::object();
     mutable std::mutex mutex_;
     
 public:

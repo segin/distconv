@@ -44,7 +44,6 @@ add_library(dispatch_server_core STATIC
     status_subscriber.cpp status_subscriber.h
     message_queue.h
     memory_message_queue.h
-    job_scheduler.cpp job_scheduler.h
 )
 
 # Include directories for httplib and nlohmann/json
@@ -144,3 +143,13 @@ target_include_directories(modern_assignment_verification PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tests
     ${CMAKE_SOURCE_DIR}/../third_party/trompeloeil/include
 )
+
+# SQLite Repository Tests (Standalone)
+add_executable(sqlite_repository_tests tests/sqlite_repository_tests.cpp)
+target_link_libraries(sqlite_repository_tests dispatch_server_core gtest gmock sqlite3)
+target_include_directories(sqlite_repository_tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/../third_party/json/single_include
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests
+)
+gtest_discover_tests(sqlite_repository_tests)

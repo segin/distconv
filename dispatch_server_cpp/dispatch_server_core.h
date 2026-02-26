@@ -19,24 +19,9 @@
 namespace distconv {
 namespace DispatchServer {
 
-// Legacy global state (for backward compatibility with tests)
-extern nlohmann::json jobs_db;
-extern nlohmann::json engines_db;
-extern std::mutex state_mutex;
-extern std::mutex jobs_mutex;
-extern std::mutex engines_mutex;
-
-// Persistent storage file
-extern std::string PERSISTENT_STORAGE_FILE;
-
-// Global flag and counter for mocking save_state
+// Global flag for mocking (kept for tests)
 extern bool mock_save_state_enabled;
-extern std::atomic<bool> use_async_save;
 extern std::atomic<int> save_state_call_count;
-
-// Global flag and data for mocking load_state
-extern bool mock_load_state_enabled;
-extern nlohmann::json mock_load_state_data;
 
 // Job and Engine domain classes
 struct Job {
@@ -87,11 +72,11 @@ public:
                    std::unique_ptr<MessageQueueFactory> mq_factory,
                    const std::string& api_key = "");
     
-    // Default constructor (for backward compatibility)
+    // Default constructor
     DispatchServer();
 
-    // Constructor to explicitly set legacy storage mode
-    explicit DispatchServer(bool use_legacy_storage);
+    // Constructor for specific API key
+    explicit DispatchServer(const std::string& api_key);
 
     ~DispatchServer();
     
@@ -104,11 +89,9 @@ public:
     // For testing
     IJobRepository* get_job_repository() { return job_repo_.get(); }
     IEngineRepository* get_engine_repository() { return engine_repo_.get(); }
-    int get_port() const { return bound_port_; }
 
 private:
     httplib::Server svr;
-    int port_ = 0;
     std::thread server_thread;
     std::string api_key_;
     int bound_port_ = -1;
@@ -117,11 +100,8 @@ private:
     std::atomic<bool> shutdown_requested_{false};
     std::condition_variable shutdown_cv_;
     std::mutex shutdown_mutex_;
-    std::thread background_worker_;
-    std::future<void> state_save_future_;
-    std::mutex save_mutex_;
+    std::thread background_worker_thread_;
     
-    // Injected dependencies
     // Injected dependencies
     std::shared_ptr<IJobRepository> job_repo_;
     std::shared_ptr<IEngineRepository> engine_repo_;
@@ -131,9 +111,6 @@ private:
     std::shared_ptr<JobPublisher> job_publisher_;
     std::shared_ptr<StatusSubscriber> status_subscriber_;
 
-    // Whether to use legacy global state or repositories
-    bool use_legacy_storage_;
-    
     void setup_endpoints();
     void setup_job_endpoints();
     void setup_engine_endpoints();
@@ -146,20 +123,13 @@ private:
     void handle_job_timeouts();
     void requeue_failed_jobs();
     void expire_pending_jobs();
-    void async_save_state();
     
     // Thread-safe job operations
     Job* find_next_pending_job();
     Engine* find_best_engine_for_job(const Job& job);
 };
 
-// Function declarations (for backward compatibility)
-void load_state();
-void save_state();
-void save_state_unlocked(bool async = true);
-void async_save_state();
-void start_persistence_thread();
-void stop_persistence_thread();
+// Function declarations
 std::string generate_uuid();
 void setup_endpoints(httplib::Server &svr, const std::string& api_key);
 DispatchServer* run_dispatch_server(int argc, char* argv[], DispatchServer* server_instance);

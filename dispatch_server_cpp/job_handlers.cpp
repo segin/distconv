@@ -7,23 +7,17 @@
 namespace distconv {
 namespace DispatchServer {
 
-// External globals (from dispatch_server_core.cpp)
-// Note: jobs_db, engines_db, jobs_mutex, engines_mutex are declared in dispatch_server_core.h
-extern void save_state_unlocked();
+// External globals (to be removed)
 extern std::string generate_uuid();
 
 using namespace Constants;
 
-JobSubmissionHandler::JobSubmissionHandler(std::shared_ptr<AuthMiddleware> auth)
-    : auth_(auth) {}
+JobSubmissionHandler::JobSubmissionHandler(std::shared_ptr<AuthMiddleware> auth, std::shared_ptr<IJobRepository> job_repo)
+    : auth_(auth), job_repo_(job_repo) {}
 
 void JobSubmissionHandler::handle(const httplib::Request& req, httplib::Response& res) {
-    // 1. Authentication
-    if (!auth_->authenticate(req, res)) {
-        return;
-    }
+    if (!auth_->authenticate(req, res)) return;
     
-    // 2. Parse JSON
     nlohmann::json request_json;
     try {
         request_json = nlohmann::json::parse(req.body);
@@ -32,87 +26,33 @@ void JobSubmissionHandler::handle(const httplib::Request& req, httplib::Response
         return;
     }
     
-    // 3. Validate input
-    if (!validate_job_input(request_json, res)) {
-        return;
-    }
+    if (!validate_job_input(request_json, res)) return;
     
-    // 4. Create and save job
     try {
         nlohmann::json job = create_job(request_json);
-        
-        // Save to database with lock
-        {
-            std::lock_guard<std::mutex> lock(jobs_mutex);
-            jobs_db[job["job_id"]] = job;
-        }
-        async_save_state();
-        
-        // Return success response
+        job_repo_->save_job(job["job_id"], job);
         set_json_response(res, job, 200);
-        
-    } catch (const nlohmann::json::type_error& e) {
-        set_json_error_response(res, "Bad Request", "validation_error", 400, e.what());
     } catch (const std::exception& e) {
         set_json_error_response(res, "Internal server error", "server_error", 500, e.what());
     }
 }
 
-bool JobSubmissionHandler::validate_job_input(const nlohmann::json& input, 
-                                                httplib::Response& res) {
-    // Validate source_url
+bool JobSubmissionHandler::validate_job_input(const nlohmann::json& input, httplib::Response& res) {
     if (!input.contains("source_url") || !input["source_url"].is_string()) {
         set_json_error_response(res, "Bad Request: 'source_url' is missing or not a string.", "validation_error", 400);
         return false;
     }
-    
-    // Validate target_codec
     if (!input.contains("target_codec") || !input["target_codec"].is_string()) {
         set_json_error_response(res, "Bad Request: 'target_codec' is missing or not a string.", "validation_error", 400);
         return false;
     }
-    
-    // Validate job_size if present
-    if (input.contains("job_size")) {
-        if (!input["job_size"].is_number()) {
-            set_json_error_response(res, "Bad Request: 'job_size' must be a number.", "validation_error", 400);
-            return false;
-        }
-        if (input["job_size"].get<double>() < 0) {
-            set_json_error_response(res, "Bad Request: 'job_size' must be a non-negative number.", "validation_error", 400);
-            return false;
-        }
-    }
-    
-    // Validate max_retries if present
-    if (input.contains("max_retries")) {
-        if (!input["max_retries"].is_number_integer()) {
-            set_json_error_response(res, "Bad Request: 'max_retries' must be an integer.", "validation_error", 400);
-            return false;
-        }
-        if (input["max_retries"].get<int>() < 0) {
-            set_json_error_response(res, "Bad Request: 'max_retries' must be a non-negative integer.", "validation_error", 400);
-            return false;
-        }
-    }
-    
-    // Validate priority if present
-    if (input.contains("priority")) {
-        if (!input["priority"].is_number_integer()) {
-             set_json_error_response(res, "Bad Request: 'priority' must be an integer.", "validation_error", 400);
-            return false;
-        }
-    }
-
     return true;
 }
 
 nlohmann::json JobSubmissionHandler::create_job(const nlohmann::json& input) {
     std::string job_id = generate_uuid();
-    
-    auto now = std::chrono::system_clock::now();
     auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-        now.time_since_epoch()).count();
+        std::chrono::system_clock::now().time_since_epoch()).count();
     
     nlohmann::json job;
     job["job_id"] = job_id;
@@ -132,163 +72,106 @@ nlohmann::json JobSubmissionHandler::create_job(const nlohmann::json& input) {
     return job;
 }
 
-JobStatusHandler::JobStatusHandler(std::shared_ptr<AuthMiddleware> auth)
-    : auth_(auth) {}
+JobStatusHandler::JobStatusHandler(std::shared_ptr<AuthMiddleware> auth, std::shared_ptr<IJobRepository> job_repo)
+    : auth_(auth), job_repo_(job_repo) {}
 
 void JobStatusHandler::handle(const httplib::Request& req, httplib::Response& res) {
-    // 1. Authentication
-    if (!auth_->authenticate(req, res)) {
-        return;
-    }
-
-    // 2. Get Job ID
-    // Note: req.matches is populated by httplib when using regex paths
+    if (!auth_->authenticate(req, res)) return;
     if (req.matches.size() < 2) {
         set_json_error_response(res, "Internal Server Error: Job ID not found in path", "server_error", 500);
         return;
     }
     std::string job_id = req.matches[1];
-
-    // 3. Retrieve Job
-    std::lock_guard<std::mutex> lock(jobs_mutex);
-    if (jobs_db.contains(job_id)) {
-        set_json_response(res, jobs_db[job_id], 200);
+    nlohmann::json job = job_repo_->get_job(job_id);
+    if (!job.is_null() && !job.empty()) {
+        set_json_response(res, job, 200);
     } else {
         res.status = 404;
         res.set_content("Job not found", "text/plain");
     }
 }
 
-JobListHandler::JobListHandler(std::shared_ptr<AuthMiddleware> auth)
-    : auth_(auth) {}
+JobListHandler::JobListHandler(std::shared_ptr<AuthMiddleware> auth, std::shared_ptr<IJobRepository> job_repo)
+    : auth_(auth), job_repo_(job_repo) {}
 
 void JobListHandler::handle(const httplib::Request& req, httplib::Response& res) {
-    // 1. Authentication
-    if (!auth_->authenticate(req, res)) {
-        return;
-    }
-
-    // 2. Retrieve All Jobs
+    if (!auth_->authenticate(req, res)) return;
+    auto all_jobs_vec = job_repo_->get_all_jobs();
     nlohmann::json all_jobs = nlohmann::json::array();
-    {
-        std::lock_guard<std::mutex> lock(jobs_mutex);
-        if (!jobs_db.empty()) {
-            for (auto const& [key, val] : jobs_db.items()) {
-                all_jobs.push_back(val);
-            }
-        }
+    for (const auto& job : all_jobs_vec) {
+        all_jobs.push_back(job);
     }
-
-    // 3. Return Response
     set_json_response(res, all_jobs, 200);
 }
 
-// ==================== JobRetryHandler ====================
-
-JobRetryHandler::JobRetryHandler(std::shared_ptr<AuthMiddleware> auth)
-    : auth_(auth) {}
+JobRetryHandler::JobRetryHandler(std::shared_ptr<AuthMiddleware> auth, std::shared_ptr<IJobRepository> job_repo)
+    : auth_(auth), job_repo_(job_repo) {}
 
 void JobRetryHandler::handle(const httplib::Request& req, httplib::Response& res) {
     if (!auth_->authenticate(req, res)) return;
-
     if (req.matches.size() < 2) {
         set_json_error_response(res, "Internal Server Error: Job ID not found in path", "server_error", 500);
         return;
     }
     std::string job_id = req.matches[1];
-
-    // Use scoped_lock because we access jobs_db and might need to save state
-    {
-        std::lock_guard<std::mutex> lock(jobs_mutex);
-        if (jobs_db.contains(job_id)) {
-            // Only allow retry if failed or failed_permanently or failed_retry
-            std::string status = jobs_db[job_id]["status"];
-            if (status == "failed" || status == "failed_permanently" || status == "failed_retry" || status == "cancelled") {
-                jobs_db[job_id]["status"] = "pending";
-                jobs_db[job_id]["retries"] = 0; // Reset retries on manual retry
-                jobs_db[job_id]["assigned_engine"] = nullptr;
-                jobs_db[job_id]["updated_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(
-                    std::chrono::system_clock::now().time_since_epoch()).count();
-
-                // We don't call save_state_unlocked here directly to avoid needing engines_mutex
-                // Instead we rely on async_save_state outside or implicitly
-            } else {
-                set_json_error_response(res, "Job is not in a failed or cancelled state", "validation_error", 400, "Job ID: " + job_id);
-                return;
-            }
-        } else {
-            res.status = 404;
-            res.set_content("Job not found", "text/plain");
-            return;
-        }
+    nlohmann::json job = job_repo_->get_job(job_id);
+    if (job.is_null() || job.empty()) {
+        res.status = 404;
+        res.set_content("Job not found", "text/plain");
+        return;
     }
-    // Perform save outside the lock
-    async_save_state();
 
-    // Need to fetch job again to return it? Or just return success?
-    // The original code returned the job object.
-    // We can't access jobs_db[job_id] here without lock.
-    // Let's just return a success message or re-fetch.
-    // Re-fetching is safer.
-    std::lock_guard<std::mutex> lock(jobs_mutex);
-    if (jobs_db.contains(job_id)) {
-        set_json_response(res, jobs_db[job_id], 200);
+    std::string status = job.value("status", "");
+    if (status == "failed" || status == "failed_permanently" || status == "failed_retry" || status == "cancelled") {
+        job["status"] = "pending";
+        job["retries"] = 0;
+        job["assigned_engine"] = nullptr;
+        job["updated_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        job_repo_->save_job(job_id, job);
+        set_json_response(res, job, 200);
+    } else {
+        set_json_error_response(res, "Job is not in a failed or cancelled state", "validation_error", 400, "Job ID: " + job_id);
     }
 }
 
-// ==================== JobCancelHandler ====================
-
-JobCancelHandler::JobCancelHandler(std::shared_ptr<AuthMiddleware> auth)
-    : auth_(auth) {}
+JobCancelHandler::JobCancelHandler(std::shared_ptr<AuthMiddleware> auth, 
+                                   std::shared_ptr<IJobRepository> job_repo,
+                                   std::shared_ptr<IEngineRepository> engine_repo)
+    : auth_(auth), job_repo_(job_repo), engine_repo_(engine_repo) {}
 
 void JobCancelHandler::handle(const httplib::Request& req, httplib::Response& res) {
     if (!auth_->authenticate(req, res)) return;
-
     if (req.matches.size() < 2) {
         set_json_error_response(res, "Internal Server Error: Job ID not found in path", "server_error", 500);
         return;
     }
     std::string job_id = req.matches[1];
-
-    // JobCancel touches both jobs and engines
-    {
-        std::scoped_lock lock(jobs_mutex, engines_mutex);
-        if (jobs_db.contains(job_id)) {
-            std::string status = jobs_db[job_id]["status"];
-            // Can cancel pending, assigned, processing, failed_retry
-            if (status != "completed" && status != "failed_permanently" && status != "cancelled") {
-                jobs_db[job_id]["status"] = "cancelled";
-                jobs_db[job_id]["updated_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(
-                    std::chrono::system_clock::now().time_since_epoch()).count();
-
-                // If assigned, free the engine
-                if (!jobs_db[job_id]["assigned_engine"].is_null()) {
-                    std::string engine_id = jobs_db[job_id]["assigned_engine"];
-                    if (engines_db.contains(engine_id)) {
-                        engines_db[engine_id]["status"] = "idle";
-                        engines_db[engine_id]["current_job_id"] = "";
-                    }
-                    jobs_db[job_id]["assigned_engine"] = nullptr;
-                }
-            } else {
-                set_json_error_response(res, "Job cannot be cancelled in current state", "validation_error", 400, "Current status: " + status);
-                return;
-            }
-        } else {
-            res.status = 404;
-            res.set_content("Job not found", "text/plain");
-            return;
-        }
+    nlohmann::json job = job_repo_->get_job(job_id);
+    if (job.is_null() || job.empty()) {
+        res.status = 404;
+        res.set_content("Job not found", "text/plain");
+        return;
     }
 
-    async_save_state();
-
-    // Return response (re-fetch to be safe)
-    {
-        std::lock_guard<std::mutex> lock(jobs_mutex);
-        if (jobs_db.contains(job_id)) {
-            set_json_response(res, jobs_db[job_id], 200);
+    std::string status = job.value("status", "");
+    if (status != "completed" && status != "failed_permanently" && status != "cancelled") {
+        job["status"] = "cancelled";
+        job["updated_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        
+        if (!job["assigned_engine"].is_null()) {
+            std::string engine_id = job["assigned_engine"];
+            nlohmann::json engine = engine_repo_->get_engine(engine_id);
+            if (!engine.is_null() && !engine.empty()) {
+                engine["status"] = "idle";
+                engine["current_job_id"] = "";
+                engine_repo_->save_engine(engine_id, engine);
+            }
+            job["assigned_engine"] = nullptr;
         }
+        job_repo_->save_job(job_id, job);
+        set_json_response(res, job, 200);
+    } else {
+        set_json_error_response(res, "Job cannot be cancelled in current state", "validation_error", 400, "Current status: " + status);
     }
 }
 
