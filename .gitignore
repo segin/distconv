@@ -49,3 +49,6 @@ test_results.xml
 dispatch_server_state_*.json
 
 Testing/Temporary/
+
+# Log files
+*.log
