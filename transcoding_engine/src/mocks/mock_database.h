@@ -8,7 +8,7 @@ using distconv::TranscodingEngine::IDatabase;
 
 namespace transcoding_engine {
 
-using namespace distconv::TranscodingEngine;
+using distconv::TranscodingEngine::IDatabase;
 
 class MockDatabase : public IDatabase {
 public:

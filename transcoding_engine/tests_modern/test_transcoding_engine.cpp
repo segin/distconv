@@ -43,16 +43,10 @@ protected:
         config.database_path = "test_db.sqlite";
         config.test_mode = true; // Disable background threads for testing
 
-        // Configure default mock behavior for initialization
-        database_ptr->set_initialize_result(true);
-        database_ptr->set_connected_state(true);
-        subprocess_ptr->set_executable_available("ffmpeg", true);
-
-        // Initialize and warm up
-        if (engine->initialize(config)) {
-            engine->get_ffmpeg_capabilities("encoders");
-            engine->get_ffmpeg_capabilities("decoders");
-            engine->get_ffmpeg_hw_accels();
+        // Enable warm-up
+        createDummyMediaFiles();
+        if (!engine->initialize(config)) {
+             FAIL() << "Engine initialization failed during warm-up";
         }
     }
     
@@ -134,9 +128,6 @@ protected:
 
 // Test 127: performTranscoding can be tested without actual file I/O (mock downloadFile, uploadFile)
 TEST_F(TranscodingEngineTest, PerformTranscodingMockedFileIO) {
-    // Initialize engine
-    ASSERT_TRUE(engine->initialize(config));
-    
     // Configure default successful HTTP responses for all calls
     http_client_ptr->set_default_response({200, "", {}, true, ""});
     
@@ -164,8 +155,6 @@ TEST_F(TranscodingEngineTest, PerformTranscodingMockedFileIO) {
 
 // Test 128: performTranscoding can be tested without running ffmpeg (mock the subprocess call)
 TEST_F(TranscodingEngineTest, PerformTranscodingMockedFFmpeg) {
-    ASSERT_TRUE(engine->initialize(config));
-    
     // Mock successful download and upload
     http_client_ptr->set_default_response({200, "", {}, true, ""});
     
@@ -199,8 +188,6 @@ TEST_F(TranscodingEngineTest, PerformTranscodingMockedFFmpeg) {
 
 // Test 129: sendHeartbeat can be tested without making a real HTTP call (mock the network client)
 TEST_F(TranscodingEngineTest, SendHeartbeatMockedNetwork) {
-    ASSERT_TRUE(engine->initialize(config));
-    
     // Mock heartbeat response
     http_client_ptr->set_response_for_url("http://test-dispatcher:8080/engines/heartbeat",
         {200, "Heartbeat received", {}, true, ""});
@@ -231,8 +218,6 @@ TEST_F(TranscodingEngineTest, SendHeartbeatMockedNetwork) {
 
 // Test 130: getJob can be tested by providing a mock HTTP response
 TEST_F(TranscodingEngineTest, GetJobMockedResponse) {
-    ASSERT_TRUE(engine->initialize(config));
-    
     // Mock job assignment response
     std::string job_json = R"({
         "job_id": "mock-job-789",
@@ -301,8 +286,6 @@ TEST_F(TranscodingEngineTest, DatabaseTemporaryFileForTests) {
 
 // Test 133: The main engine loop can be run for a single iteration for testing purposes
 TEST_F(TranscodingEngineTest, MainLoopSingleIteration) {
-    ASSERT_TRUE(engine->initialize(config));
-    
     // Mock no jobs available (204 No Content)
     http_client_ptr->set_response_for_url("http://test-dispatcher:8080/assign_job/",
         {204, "", {}, true, ""});
@@ -322,9 +305,6 @@ TEST_F(TranscodingEngineTest, MainLoopSingleIteration) {
 
 // Test 134: The worker threads (heartbeatThread, benchmarkThread) are not started in test mode
 TEST_F(TranscodingEngineTest, NoBackgroundThreadsInTestMode) {
-    config.test_mode = true;
-    
-    ASSERT_TRUE(engine->initialize(config));
     ASSERT_TRUE(engine->start());
     
     EXPECT_TRUE(engine->is_running());
@@ -366,7 +346,6 @@ TEST_F(TranscodingEngineTest, EngineConfigTestMode) {
 // Test 136: All core logic is refactored out of run_transcoding_engine into a testable TranscodingEngine class
 TEST_F(TranscodingEngineTest, CoreLogicInTestableClass) {
     // Verify that TranscodingEngine class encapsulates all functionality
-    ASSERT_TRUE(engine->initialize(config));
     
     // Test all major functionality through the class interface
     EXPECT_TRUE(engine->add_job_to_queue("test-encapsulation"));
@@ -393,7 +372,6 @@ TEST_F(TranscodingEngineTest, CoreLogicInTestableClass) {
 // Test 137: The TranscodingEngine class takes a mockable network client in its constructor
 TEST_F(TranscodingEngineTest, MockableNetworkClientInjection) {
     // Verify HTTP client is properly injected and mockable
-    ASSERT_TRUE(engine->initialize(config));
     
     // Configure specific mock behavior
     http_client_ptr->set_response_for_url("http://test-url", 
@@ -411,8 +389,6 @@ TEST_F(TranscodingEngineTest, MockableNetworkClientInjection) {
 
 // Test 138: The TranscodingEngine class takes a mockable subprocess runner in its constructor
 TEST_F(TranscodingEngineTest, MockableSubprocessRunnerInjection) {
-    ASSERT_TRUE(engine->initialize(config));
-    
     // Configure mock subprocess behavior
     subprocess_ptr->set_result_for_command({"test-command", "arg1", "arg2"},
         {42, "test output", "test error", false, "Command failed"});
@@ -431,8 +407,6 @@ TEST_F(TranscodingEngineTest, MockableSubprocessRunnerInjection) {
 TEST_F(TranscodingEngineTest, MockableDatabaseInjection) {
     // Configure mock database behavior
     database_ptr->set_add_job_result(false); // Simulate database failure
-    
-    ASSERT_TRUE(engine->initialize(config));
     
     // Test database operation through engine
     bool result = engine->add_job_to_queue("test-db-failure");
