@@ -18,8 +18,6 @@ using namespace transcoding_engine;
 class TranscodingEngineTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        // Simplified setup - no warm-up for now to fix segfault
-        
         // Create mocks
         auto mock_http_client = std::make_unique<MockHttpClient>();
         auto mock_database = std::make_unique<MockDatabase>();
@@ -44,6 +42,18 @@ protected:
         config.hostname = "test-hostname";
         config.database_path = "test_db.sqlite";
         config.test_mode = true; // Disable background threads for testing
+
+        // Configure default mock behavior for initialization
+        database_ptr->set_initialize_result(true);
+        database_ptr->set_connected_state(true);
+        subprocess_ptr->set_executable_available("ffmpeg", true);
+
+        // Initialize and warm up
+        if (engine->initialize(config)) {
+            engine->get_ffmpeg_capabilities("encoders");
+            engine->get_ffmpeg_capabilities("decoders");
+            engine->get_ffmpeg_hw_accels();
+        }
     }
     
     void TearDown() override {
