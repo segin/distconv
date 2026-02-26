@@ -36,6 +36,7 @@ add_library(dispatch_server_core STATIC
     status_subscriber.cpp status_subscriber.h
     message_queue.h
     memory_message_queue.h
+    job_scheduler.cpp job_scheduler.h
 )
 
 # Include directories for httplib and nlohmann/json
