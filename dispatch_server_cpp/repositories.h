@@ -7,6 +7,8 @@
 #include <memory>
 #include <mutex>
 
+struct sqlite3;
+
 namespace distconv {
 namespace DispatchServer {
 
@@ -49,6 +51,7 @@ public:
 class SqliteJobRepository : public IJobRepository {
 private:
     std::string db_path_;
+    sqlite3* db_;
     mutable std::mutex mutex_;
     
     void initialize_database();
@@ -80,6 +83,7 @@ public:
 class SqliteEngineRepository : public IEngineRepository {
 private:
     std::string db_path_;
+    sqlite3* db_;
     mutable std::mutex mutex_;
     
     void initialize_database();
