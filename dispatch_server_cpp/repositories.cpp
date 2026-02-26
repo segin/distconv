@@ -60,6 +60,7 @@ void SqliteJobRepository::initialize_database() {
         );
         
         CREATE INDEX IF NOT EXISTS idx_jobs_created_at ON jobs(created_at);
+        CREATE INDEX IF NOT EXISTS idx_jobs_updated_at ON jobs(updated_at);
     )";
     
     char* err_msg = nullptr;
@@ -263,6 +264,26 @@ std::vector<std::string> SqliteJobRepository::get_stale_pending_jobs(int64_t tim
         }
     }
     return stale_jobs;
+}
+
+std::vector<nlohmann::json> SqliteJobRepository::get_jobs_to_timeout(int timeout_minutes) {
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    // Select jobs with status 'assigned' or 'processing' that haven't been updated in timeout_minutes
+    // Optimized to use the index on updated_at
+    std::string sql = "SELECT job_data FROM jobs WHERE (json_extract(job_data, '$.status') = 'assigned' OR json_extract(job_data, '$.status') = 'processing') AND "
+                      "updated_at < datetime('now', '-" + std::to_string(timeout_minutes) + " minutes')";
+
+    nlohmann::json result = execute_query(sql);
+    std::vector<nlohmann::json> jobs;
+    for (const auto& row : result) {
+        if (row.contains("job_data")) {
+            try {
+                jobs.push_back(nlohmann::json::parse(row["job_data"].get<std::string>()));
+            } catch (...) {}
+        }
+    }
+    return jobs;
 }
 
 
@@ -654,6 +675,28 @@ std::vector<std::string> InMemoryJobRepository::get_stale_pending_jobs(int64_t t
         }
     }
     return stale_jobs;
+}
+
+std::vector<nlohmann::json> InMemoryJobRepository::get_jobs_to_timeout(int timeout_minutes) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    std::vector<nlohmann::json> result;
+    auto now = std::chrono::system_clock::now();
+
+    for (const auto& [id, job] : jobs_.items()) {
+        std::string status = job.value("status", "");
+        if (status == "assigned" || status == "processing") {
+            if (job.contains("updated_at")) {
+                auto updated_at = std::chrono::system_clock::time_point{
+                    std::chrono::milliseconds{job["updated_at"].get<int64_t>()}
+                };
+                auto duration = std::chrono::duration_cast<std::chrono::minutes>(now - updated_at);
+                if (duration.count() > timeout_minutes) {
+                    result.push_back(job);
+                }
+            }
+        }
+    }
+    return result;
 }
 
 
