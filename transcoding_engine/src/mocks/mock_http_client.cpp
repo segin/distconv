@@ -2,8 +2,8 @@
 #include <fstream>
 #include <filesystem>
 
-namespace distconv {
-namespace TranscodingEngine {
+namespace transcoding_engine {
+using namespace distconv::TranscodingEngine;
 
 HttpResponse MockHttpClient::get(const std::string& url, 
                                 const std::map<std::string, std::string>& headers) {

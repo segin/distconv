@@ -4,10 +4,8 @@
 #include "../interfaces/database_interface.h"
 #include <set>
 
-namespace distconv {
-namespace TranscodingEngine {
-
-using distconv::TranscodingEngine::IDatabase;
+namespace transcoding_engine {
+using namespace distconv::TranscodingEngine;
 
 class MockDatabase : public IDatabase {
 public:
