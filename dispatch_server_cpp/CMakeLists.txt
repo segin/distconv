@@ -106,10 +106,22 @@ gtest_discover_tests(dispatch_server_tests
     TIMEOUT 10
 )
 
-# Benchmark for job assignment optimization
-add_executable(assignment_benchmark tests/assignment_benchmark.cpp)
-target_link_libraries(assignment_benchmark dispatch_server_core)
-target_include_directories(assignment_benchmark PRIVATE
+# SQLite Repository Tests
+add_executable(sqlite_repository_tests
+    tests/sqlite_repository_tests.cpp
+)
+target_link_libraries(sqlite_repository_tests dispatch_server_core gtest gmock)
+target_include_directories(sqlite_repository_tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/../third_party/json/single_include
+)
+
+# Performance Benchmark
+add_executable(performance_benchmark
+    tests/performance_benchmark.cpp
+)
+target_link_libraries(performance_benchmark dispatch_server_core)
+target_include_directories(performance_benchmark PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/../third_party/json/single_include
 )
