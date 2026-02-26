@@ -17,6 +17,14 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
+# Google Benchmark
+FetchContent_Declare(
+  benchmark
+  URL https://github.com/google/benchmark/archive/refs/tags/v1.8.3.zip
+)
+FetchContent_MakeAvailable(benchmark)
+
+
 add_library(dispatch_server_core STATIC 
     dispatch_server_core.cpp dispatch_server_core.h 
     api_middleware.cpp api_middleware.h 
@@ -91,10 +99,10 @@ target_include_directories(mq_tests PRIVATE
     ${CMAKE_SOURCE_DIR}/../third_party/trompeloeil/include
 )
 
-# Benchmark for blocking save state
-add_executable(save_benchmark tests/save_benchmark.cpp)
-target_link_libraries(save_benchmark dispatch_server_core)
-target_include_directories(save_benchmark PRIVATE
+# Job Assignment Benchmark
+add_executable(job_assignment_benchmark tests/job_assignment_benchmark.cpp)
+target_link_libraries(job_assignment_benchmark dispatch_server_core benchmark::benchmark benchmark::benchmark_main)
+target_include_directories(job_assignment_benchmark PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/../third_party/json/single_include
 )

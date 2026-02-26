@@ -102,7 +102,7 @@ void JobAssignmentHandler::handle(const httplib::Request& req, httplib::Response
     std::string engine_id = request_json["engine_id"];
 
     // 3. Find Pending Job for THIS Engine
-    std::lock_guard<std::mutex> lock(state_mutex);
+    std::lock_guard<std::recursive_mutex> lock(reinterpret_cast<std::recursive_mutex&>(state_mutex));
     
     if (!engines_db.contains(engine_id)) {
         set_error_response(res, "Engine not registered", 404);
