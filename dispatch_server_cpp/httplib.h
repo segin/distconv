@@ -1097,6 +1097,9 @@ public:
 
   std::function<TaskQueue *(void)> new_task_queue;
 
+  // Exposed for testing purposes
+  bool routing(Request &req, Response &res, Stream &strm);
+
 protected:
   bool process_request(Stream &strm, const std::string &remote_addr,
                        int remote_port, const std::string &local_addr,
@@ -1134,7 +1137,6 @@ private:
   int bind_internal(const std::string &host, int port, int socket_flags);
   bool listen_internal();
 
-  bool routing(Request &req, Response &res, Stream &strm);
   bool handle_file_request(const Request &req, Response &res);
   bool dispatch_request(Request &req, Response &res,
                         const Handlers &handlers) const;
