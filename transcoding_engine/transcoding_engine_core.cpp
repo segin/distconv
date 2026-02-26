@@ -95,14 +95,33 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
     return size * nmemb;
 }
 
+namespace {
+// RAII wrapper for CURL handle
+class CurlHandle {
+public:
+    CurlHandle() {
+        handle = curl_easy_init();
+    }
+    ~CurlHandle() {
+        if (handle) {
+            curl_easy_cleanup(handle);
+        }
+    }
+    CURL* get() const { return handle; }
+private:
+    CURL* handle;
+};
+} // namespace
+
 // Generic function to make HTTP requests using libcurl
 std::string makeHttpRequest(const std::string& url, const std::string& method, const std::string& payload, const std::string& caCertPath, const std::string& apiKey) {
-    CURL *curl;
+    thread_local CurlHandle curlSession; // Thread-local instance for connection reuse
+    CURL *curl = curlSession.get();
     CURLcode res;
     std::string readBuffer;
 
-    curl = curl_easy_init();
     if(curl) {
+        curl_easy_reset(curl); // Reset options to reuse handle cleanly
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
@@ -135,7 +154,6 @@ std::string makeHttpRequest(const std::string& url, const std::string& method, c
         if(res != CURLE_OK) {
             std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
         }
-        curl_easy_cleanup(curl);
     }
     return readBuffer;
 }
