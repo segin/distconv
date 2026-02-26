@@ -87,6 +87,9 @@ public:
     // Default constructor (for backward compatibility)
     DispatchServer();
 
+    // Constructor to explicitly set legacy storage mode
+    explicit DispatchServer(bool use_legacy_storage);
+
     ~DispatchServer();
     
     void start(int port, bool block = true);

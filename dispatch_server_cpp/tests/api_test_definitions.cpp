@@ -9,3 +9,4 @@ int ApiTest::port = 0;
 std::string ApiTest::api_key = "test_api_key";
 httplib::Headers ApiTest::admin_headers;
 std::string ApiTest::persistent_storage_file;
+bool ApiTest::use_legacy_mode = true;

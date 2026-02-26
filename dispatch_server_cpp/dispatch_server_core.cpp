@@ -642,9 +642,16 @@ DispatchServer::DispatchServer(std::shared_ptr<IJobRepository> job_repo,
 
 // Default constructor (for backward compatibility)
 DispatchServer::DispatchServer() 
-    : job_repo_(nullptr), 
-      engine_repo_(nullptr),
-      use_legacy_storage_(true) {
+    : job_repo_(std::make_shared<SqliteJobRepository>("dispatch_jobs.db")),
+      engine_repo_(std::make_shared<SqliteEngineRepository>("dispatch_engines.db")),
+      use_legacy_storage_(false) {
+    // Endpoints will be set up when set_api_key is called
+}
+
+DispatchServer::DispatchServer(bool use_legacy_storage)
+    : job_repo_(use_legacy_storage ? nullptr : std::make_shared<SqliteJobRepository>("dispatch_jobs.db")),
+      engine_repo_(use_legacy_storage ? nullptr : std::make_shared<SqliteEngineRepository>("dispatch_engines.db")),
+      use_legacy_storage_(use_legacy_storage) {
     // Endpoints will be set up when set_api_key is called
 }
 
@@ -740,9 +747,11 @@ void DispatchServer::stop() {
     if (server_thread.joinable()) {
         server_thread.join();
     }
-
-    stop_persistence_thread();
-    save_state();
+    if (use_legacy_storage_) {
+        save_state();
+    } else {
+        std::cout << "DispatchServer stopped. State managed by repositories." << std::endl;
+    }
 }
 
 httplib::Server* DispatchServer::getServer() {
@@ -945,6 +954,7 @@ void DispatchServer::setup_job_endpoints() {
                 job["output_url"] = nullptr;
                 job["retries"] = 0;
                 job["max_retries"] = request_json.value("max_retries", 3);
+                job["priority"] = request_json.value("priority", 0);
 
                 // Save job
                 job_repo_->save_job(job_id, job);
