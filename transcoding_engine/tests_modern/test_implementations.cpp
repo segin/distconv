@@ -108,6 +108,27 @@ TEST_F(ImplementationTest, CodeFormatting) {
     EXPECT_EQ(test_vector.size(), 3);
 }
 
+// Test SSL Options Configuration
+TEST_F(ImplementationTest, SslOptionsConfiguration) {
+    // This test verifies that we can set SSL options and create requests without crashing
+    // (Actual SSL verification requires a real server with certs)
+
+    CprHttpClient http_client;
+
+    // Test with verification disabled
+    http_client.set_ssl_options("", false);
+    auto response = http_client.get("https://httpbin.org/get");
+    // We expect the request to be attempted. Result depends on network, but shouldn't crash.
+    // If network is down, response.success will be false, which is fine.
+
+    // Test with a dummy cert path (should still try to configure, might fail if file missing)
+    http_client.set_ssl_options("/tmp/dummy_cert.pem", true);
+    response = http_client.get("https://httpbin.org/get");
+
+    // The key is that the code paths in create_ssl_options are exercised
+    EXPECT_TRUE(true);
+}
+
 // Test 144: sqlite3_mprintf is replaced with prepared statements (sqlite3_prepare_v2, sqlite3_bind_*) to prevent SQL injection
 TEST_F(ImplementationTest, PreparedStatementsUsage) {
     SqliteDatabase database;

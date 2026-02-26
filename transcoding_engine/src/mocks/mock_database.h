@@ -4,7 +4,7 @@
 #include "../interfaces/database_interface.h"
 #include <set>
 
-using namespace distconv::TranscodingEngine;
+using distconv::TranscodingEngine::IDatabase;
 
 namespace transcoding_engine {
 

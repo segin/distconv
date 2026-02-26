@@ -19,9 +19,9 @@ class TranscodingEngineTest : public ::testing::Test {
 protected:
     void SetUp() override {
         // Create mocks
-        auto mock_http_client = std::make_unique<MockHttpClient>();
-        auto mock_database = std::make_unique<MockDatabase>();
-        auto mock_subprocess = std::make_unique<MockSubprocess>();
+        auto mock_http_client = std::make_unique<transcoding_engine::MockHttpClient>();
+        auto mock_database = std::make_unique<transcoding_engine::MockDatabase>();
+        auto mock_subprocess = std::make_unique<transcoding_engine::MockSubprocess>();
         
         // Get raw pointers for test access (before moving to engine)
         http_client_ptr = mock_http_client.get();
@@ -125,9 +125,9 @@ protected:
     
     
     std::unique_ptr<TranscodingEngine> engine;
-    MockHttpClient* http_client_ptr;
-    MockDatabase* database_ptr;
-    MockSubprocess* subprocess_ptr;
+    transcoding_engine::MockHttpClient* http_client_ptr;
+    transcoding_engine::MockDatabase* database_ptr;
+    transcoding_engine::MockSubprocess* subprocess_ptr;
     EngineConfig config;
     std::vector<std::string> dummy_files_;
 };
