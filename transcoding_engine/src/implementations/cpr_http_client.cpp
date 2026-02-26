@@ -1,4 +1,53 @@
 #include "cpr_http_client.h"
+
+#ifdef NO_CPR_AVAILABLE
+// Stub implementation when CPR is not available
+#include <fstream>
+#include <iostream>
+
+namespace distconv {
+namespace TranscodingEngine {
+
+class CprHttpClient::Impl {
+public:
+    std::string ca_cert_path_;
+    bool ssl_verify_ = true;
+    int timeout_seconds_ = 30;
+};
+
+CprHttpClient::CprHttpClient() : pimpl_(std::make_unique<Impl>()) {}
+CprHttpClient::~CprHttpClient() = default;
+
+HttpResponse CprHttpClient::get(const std::string&, const std::map<std::string, std::string>&) {
+    return {0, "", {}, false, "CPR library not available"};
+}
+
+HttpResponse CprHttpClient::post(const std::string&, const std::string&, const std::map<std::string, std::string>&) {
+    return {0, "", {}, false, "CPR library not available"};
+}
+
+HttpResponse CprHttpClient::download_file(const std::string&, const std::string&, const std::map<std::string, std::string>&) {
+    return {0, "", {}, false, "CPR library not available"};
+}
+
+HttpResponse CprHttpClient::upload_file(const std::string&, const std::string&, const std::map<std::string, std::string>&) {
+    return {0, "", {}, false, "CPR library not available"};
+}
+
+void CprHttpClient::set_ssl_options(const std::string& ca_cert_path, bool verify_ssl) {
+    pimpl_->ca_cert_path_ = ca_cert_path;
+    pimpl_->ssl_verify_ = verify_ssl;
+}
+
+void CprHttpClient::set_timeout(int timeout_seconds) {
+    pimpl_->timeout_seconds_ = timeout_seconds;
+}
+
+} // namespace TranscodingEngine
+} // namespace distconv
+
+#else
+// Original implementation
 #include <cpr/cpr.h>
 #include <fstream>
 #include <iostream>
@@ -160,3 +209,5 @@ void CprHttpClient::set_timeout(int timeout_seconds) {
 
 } // namespace TranscodingEngine
 } // namespace distconv
+
+#endif

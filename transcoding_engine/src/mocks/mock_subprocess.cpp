@@ -6,10 +6,6 @@
 namespace distconv {
 namespace TranscodingEngine {
 
-using namespace distconv::TranscodingEngine;
-
-using distconv::TranscodingEngine::SubprocessResult;
-
 SubprocessResult MockSubprocess::run(const std::vector<std::string>& command,
                                     const std::string& working_directory,
                                     int timeout_seconds) {
@@ -159,4 +155,5 @@ std::string MockSubprocess::command_to_string(const std::vector<std::string>& co
     return oss.str();
 }
 
-}} // namespace distconv::TranscodingEngine
+} // namespace TranscodingEngine
+} // namespace distconv

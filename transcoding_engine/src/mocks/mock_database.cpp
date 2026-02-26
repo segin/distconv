@@ -4,8 +4,6 @@
 namespace distconv {
 namespace TranscodingEngine {
 
-using namespace distconv::TranscodingEngine;
-
 bool MockDatabase::initialize(const std::string& db_path) {
     initialize_call_count_++;
     db_path_ = db_path;
@@ -55,4 +53,5 @@ bool MockDatabase::is_connected() const {
     return is_connected_;
 }
 
-}} // namespace distconv::TranscodingEngine
+} // namespace TranscodingEngine
+} // namespace distconv

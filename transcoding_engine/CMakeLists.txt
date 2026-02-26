@@ -42,26 +42,39 @@ else()
              endif()
         endif()
     else()
-        message(STATUS "cpr not found via find_package or pkg-config. Using local third_party/cpr.")
+        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpr/include")
+            message(STATUS "Checking dependencies for local CPR build...")
 
-        # Configure cpr to use internal curl if needed, but per memory guidance:
-        # CPR_USE_SYSTEM_CURL must be OFF for local build
-        # We set CPR_USE_SYSTEM_LIB_PSL to ON to prevent cpr from trying to build libpsl with meson (which is missing).
-        # We then disable libpsl in curl via CURL_USE_LIBPSL=OFF.
-        set(CPR_USE_SYSTEM_CURL OFF CACHE BOOL "Use system curl" FORCE)
-        set(CPR_USE_SYSTEM_LIB_PSL ON CACHE BOOL "Use system libpsl (skip internal build)" FORCE)
-        set(CURL_USE_LIBPSL OFF CACHE BOOL "Disable libpsl in curl" FORCE)
-        set(CPR_ENABLE_SSL ON CACHE BOOL "Enable SSL" FORCE)
+            find_program(MESON_PATH meson)
+            pkg_check_modules(LIBPSL QUIET libpsl)
 
-        # Prevent cpr from building its tests
-        set(CPR_BUILD_TESTS OFF CACHE BOOL "Build cpr tests" FORCE)
+            if(LIBPSL_FOUND OR MESON_PATH)
+                message(STATUS "Dependencies found. Building local CPR...")
+                if(LIBPSL_FOUND)
+                     set(CPR_USE_SYSTEM_LIB_PSL ON CACHE BOOL "" FORCE)
+                else()
+                     set(CPR_USE_SYSTEM_LIB_PSL OFF CACHE BOOL "" FORCE)
+                endif()
 
-        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpr ${CMAKE_CURRENT_BINARY_DIR}/cpr)
+                set(CPR_USE_SYSTEM_CURL OFF CACHE BOOL "" FORCE)
+                set(CPR_ENABLE_SSL OFF CACHE BOOL "" FORCE) # Disable SSL to avoid complications
 
-        if(NOT TARGET cpr::cpr)
-            add_library(cpr::cpr ALIAS cpr)
+                add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpr" cpr_build EXCLUDE_FROM_ALL)
+                set(CPR_AVAILABLE TRUE)
+            else()
+                 message(WARNING "CPR dependencies missing (meson and libpsl). Building without HTTP functionality.")
+                 # Create a dummy cpr target to satisfy linking
+                 add_library(cpr::cpr INTERFACE IMPORTED)
+                 set(CPR_AVAILABLE FALSE)
+                 add_compile_definitions(NO_CPR_AVAILABLE)
+            endif()
+        else()
+             message(WARNING "cpr library not found. Building without HTTP functionality.")
+             # Create a dummy cpr target to satisfy linking
+             add_library(cpr::cpr INTERFACE IMPORTED)
+             set(CPR_AVAILABLE FALSE)
+             add_compile_definitions(NO_CPR_AVAILABLE)
         endif()
-        set(CPR_AVAILABLE TRUE)
     endif()
 endif()
 
@@ -73,12 +86,10 @@ if(NOT nlohmann_json_FOUND)
     if(NLOHMANN_JSON_FOUND)
         add_library(nlohmann_json::nlohmann_json INTERFACE IMPORTED)
         target_include_directories(nlohmann_json::nlohmann_json INTERFACE ${NLOHMANN_JSON_INCLUDE_DIRS})
-    elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/CMakeLists.txt")
+    elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/include")
         message(STATUS "Using local nlohmann_json from third_party")
-        add_subdirectory("../third_party/json" "${CMAKE_CURRENT_BINARY_DIR}/json")
-        if(NOT TARGET nlohmann_json::nlohmann_json)
-             add_library(nlohmann_json::nlohmann_json ALIAS nlohmann_json)
-        endif()
+        add_library(nlohmann_json::nlohmann_json INTERFACE IMPORTED)
+        target_include_directories(nlohmann_json::nlohmann_json INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/include")
     else()
         message(STATUS "nlohmann_json not found via find_package or pkg-config. Using local third_party/json.")
         add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json ${CMAKE_CURRENT_BINARY_DIR}/json)
@@ -100,20 +111,17 @@ if(NOT SQLite3_FOUND)
     endif()
 endif()
 
-# Find GTest for testing
-find_package(GTest QUIET)
-if(NOT GTest_FOUND)
-    include(FetchContent)
-    FetchContent_Declare(
-      googletest
-      URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
-    )
-    # For Windows: Prevent overriding the parent project's compiler/linker settings
-    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-    FetchContent_MakeAvailable(googletest)
+# Fetch GTest content
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
+)
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
 
-    set(GTest_FOUND TRUE)
-endif()
+set(GTest_FOUND TRUE)
 
 include_directories(src)
 
@@ -193,13 +201,14 @@ if(GTest_FOUND)
         tests_modern/test_transcoding_engine.cpp
         tests_modern/test_implementations.cpp
         tests_modern/test_refactoring.cpp
+        tests_modern/performance_reproduction_test.cpp
     )
     
     target_link_libraries(transcoding_engine_modern_tests
         transcoding_engine_lib
         transcoding_engine_mocks
-        GTest::gtest
-        GTest::gtest_main
+        gtest
+        gtest_main
         Threads::Threads
     )
     
@@ -207,9 +216,47 @@ if(GTest_FOUND)
     gtest_discover_tests(transcoding_engine_modern_tests)
 endif()
 
+# Installation
+install(TARGETS transcoding_engine_modern
+    RUNTIME DESTINATION bin
+)
+
+install(TARGETS transcoding_engine_lib
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+)
+
+install(DIRECTORY src/
+    DESTINATION include/transcoding_engine
+    FILES_MATCHING PATTERN "*.h"
+)
+
+# Package configuration
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+    TranscodingEngineConfigVersion.cmake
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY AnyNewerVersion
+)
+
+# Build configuration summary
+message(STATUS "TranscodingEngine build configuration:")
+message(STATUS "  Version: ${PROJECT_VERSION}")
+message(STATUS "  C++ Standard: ${CMAKE_CXX_STANDARD}")
+message(STATUS "  Build Type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "  Testing: ${GTest_FOUND}")
+message(STATUS "  CPR found: ${cpr_FOUND}")
+message(STATUS "  CPR Available: ${CPR_AVAILABLE}")
+message(STATUS "  nlohmann_json found: ${nlohmann_json_FOUND}")
+message(STATUS "  SQLite3 found: ${SQLite3_FOUND}")
+
+# Add build info
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/src/utils/build_info.h.in"
     "${CMAKE_CURRENT_BINARY_DIR}/src/utils/build_info.h"
     @ONLY
 )
-target_include_directories(transcoding_engine_lib PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/src)
+
+target_include_directories(transcoding_engine_lib PUBLIC
+    ${CMAKE_CURRENT_BINARY_DIR}/src
+)

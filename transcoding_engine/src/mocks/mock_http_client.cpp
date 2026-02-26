@@ -5,10 +5,6 @@
 namespace distconv {
 namespace TranscodingEngine {
 
-using namespace distconv::TranscodingEngine;
-
-using distconv::TranscodingEngine::HttpResponse;
-
 HttpResponse MockHttpClient::get(const std::string& url, 
                                 const std::map<std::string, std::string>& headers) {
     record_call("GET", url, "", headers);
@@ -127,4 +123,5 @@ void MockHttpClient::record_call(const std::string& method, const std::string& u
     call_history_.push_back({method, url, body, headers});
 }
 
-}} // namespace distconv::TranscodingEngine
+} // namespace TranscodingEngine
+} // namespace distconv
