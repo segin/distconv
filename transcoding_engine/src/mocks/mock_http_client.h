@@ -11,7 +11,9 @@ using distconv::TranscodingEngine::HttpResponse;
 
 namespace transcoding_engine {
 
-class MockHttpClient : public distconv::TranscodingEngine::IHttpClient {
+using namespace distconv::TranscodingEngine;
+
+class MockHttpClient : public IHttpClient {
 public:
     MockHttpClient() = default;
     ~MockHttpClient() override = default;
