@@ -6,6 +6,7 @@
 #include <chrono>
 #include <atomic>
 #include <future>
+#include <stdexcept>
 #include <uuid/uuid.h>
 #include "httplib.h"
 #include "nlohmann/json.hpp"
@@ -698,11 +699,24 @@ void DispatchServer::start(int port, bool block) {
     background_worker_ = std::thread(&DispatchServer::background_worker, this);
     start_persistence_thread();
     
-    if (block) {
-        svr.listen("0.0.0.0", port);
+    if (port == 0) {
+        port_ = svr.bind_to_any_port("0.0.0.0");
+        if (port_ <= 0) {
+            throw std::runtime_error("Failed to bind to any port");
+        }
+        std::cout << "Dispatch Server bound to dynamic port " << port_ << std::endl;
     } else {
-        server_thread = std::thread([this, port]() {
-            this->svr.listen("0.0.0.0", port);
+        port_ = port;
+        if (!svr.bind_to_port("0.0.0.0", port)) {
+            throw std::runtime_error("Failed to bind to port " + std::to_string(port));
+        }
+    }
+
+    if (block) {
+        svr.listen_after_bind();
+    } else {
+        server_thread = std::thread([this]() {
+            this->svr.listen_after_bind();
         });
     }
 }
