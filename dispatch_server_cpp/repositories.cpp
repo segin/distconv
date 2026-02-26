@@ -321,12 +321,47 @@ bool SqliteJobRepository::update_job_progress(const std::string& job_id, int pro
     return true;
 }
 
+std::vector<nlohmann::json> SqliteJobRepository::get_jobs_paginated(int limit, int offset) {
+    std::lock_guard<std::mutex> lock(mutex_);
 
+    std::string sql = "SELECT job_data FROM jobs ORDER BY created_at DESC LIMIT " + std::to_string(limit) + " OFFSET " + std::to_string(offset);
 
+    nlohmann::json query_result = execute_query(sql);
+    std::vector<nlohmann::json> jobs;
 
+    for (const auto& row : query_result) {
+        if (row.contains("job_data")) {
+            try {
+                jobs.push_back(nlohmann::json::parse(row["job_data"].get<std::string>()));
+            } catch (const std::exception&) {
+                // Skip invalid JSON
+            }
+        }
+    }
 
+    return jobs;
+}
 
+std::vector<nlohmann::json> SqliteJobRepository::get_jobs_by_status(const std::string& status) {
+    std::lock_guard<std::mutex> lock(mutex_);
 
+    std::string sql = "SELECT job_data FROM jobs WHERE json_extract(job_data, '$.status') = '" + status + "'";
+
+    nlohmann::json query_result = execute_query(sql);
+    std::vector<nlohmann::json> jobs;
+
+    for (const auto& row : query_result) {
+        if (row.contains("job_data")) {
+            try {
+                jobs.push_back(nlohmann::json::parse(row["job_data"].get<std::string>()));
+            } catch (const std::exception&) {
+                // Skip invalid JSON
+            }
+        }
+    }
+
+    return jobs;
+}
 
 // SqliteEngineRepository implementation
 SqliteEngineRepository::SqliteEngineRepository(const std::string& db_path) : db_path_(db_path), db_(nullptr) {
@@ -646,6 +681,41 @@ bool InMemoryJobRepository::update_job_progress(const std::string& job_id, int p
         std::chrono::system_clock::now().time_since_epoch()).count();
     
     return true;
+}
+
+std::vector<nlohmann::json> InMemoryJobRepository::get_jobs_paginated(int limit, int offset) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    std::vector<nlohmann::json> result;
+
+    std::vector<nlohmann::json> all_jobs;
+    all_jobs.reserve(jobs_.size());
+    for (const auto& [id, job] : jobs_.items()) {
+        all_jobs.push_back(job);
+    }
+
+    std::sort(all_jobs.begin(), all_jobs.end(), [](const nlohmann::json& a, const nlohmann::json& b) {
+        return a.value("created_at", 0LL) > b.value("created_at", 0LL);
+    });
+
+    if (static_cast<size_t>(offset) < all_jobs.size()) {
+        int count = 0;
+        for (size_t i = offset; i < all_jobs.size() && count < limit; ++i, ++count) {
+            result.push_back(all_jobs[i]);
+        }
+    }
+
+    return result;
+}
+
+std::vector<nlohmann::json> InMemoryJobRepository::get_jobs_by_status(const std::string& status) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    std::vector<nlohmann::json> result;
+    for (const auto& [id, job] : jobs_.items()) {
+        if (job.value("status", "") == status) {
+            result.push_back(job);
+        }
+    }
+    return result;
 }
 
 nlohmann::json InMemoryJobRepository::get_next_pending_job_by_priority(const std::vector<std::string>& capable_engines) {

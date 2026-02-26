@@ -33,6 +33,10 @@ public:
     virtual bool update_job(const std::string& job_id, const nlohmann::json& updates) = 0;
     virtual std::vector<nlohmann::json> get_jobs_by_engine(const std::string& engine_id) = 0;
     virtual bool update_job_progress(const std::string& job_id, int progress, const std::string& message) = 0;
+
+    // Optimized Fetching
+    virtual std::vector<nlohmann::json> get_jobs_paginated(int limit, int offset) = 0;
+    virtual std::vector<nlohmann::json> get_jobs_by_status(const std::string& status) = 0;
 };
 
 // Abstract interface for engine repository
@@ -77,6 +81,9 @@ public:
     bool update_job(const std::string& job_id, const nlohmann::json& updates) override;
     std::vector<nlohmann::json> get_jobs_by_engine(const std::string& engine_id) override;
     bool update_job_progress(const std::string& job_id, int progress, const std::string& message) override;
+
+    std::vector<nlohmann::json> get_jobs_paginated(int limit, int offset) override;
+    std::vector<nlohmann::json> get_jobs_by_status(const std::string& status) override;
 };
 
 // SQLite-based engine repository implementation
@@ -124,6 +131,9 @@ public:
     bool update_job(const std::string& job_id, const nlohmann::json& updates) override;
     std::vector<nlohmann::json> get_jobs_by_engine(const std::string& engine_id) override;
     bool update_job_progress(const std::string& job_id, int progress, const std::string& message) override;
+
+    std::vector<nlohmann::json> get_jobs_paginated(int limit, int offset) override;
+    std::vector<nlohmann::json> get_jobs_by_status(const std::string& status) override;
 };
 
 class InMemoryEngineRepository : public IEngineRepository {

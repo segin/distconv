@@ -7,14 +7,15 @@
 #include "server_config.h"
 #include "memory_message_queue.h"
 
-using namespace distconv::DispatchServer;
-using namespace distconv;
+// Removing using namespace to avoid ambiguity between namespace DispatchServer and class DispatchServer
+// using namespace distconv::DispatchServer;
+// using namespace distconv;
 
 int main(int argc, char* argv[]) {
     std::cout << "Modern Dispatch Server Application Starting..." << std::endl;
     
     // Parse command line arguments
-    ServerConfig config = parse_arguments(argc, argv);
+    distconv::DispatchServer::ServerConfig config = distconv::DispatchServer::parse_arguments(argc, argv);
     
     if (config.parse_error) {
         std::cerr << "Error: " << config.error_message << std::endl;
@@ -42,14 +43,14 @@ int main(int argc, char* argv[]) {
     
     try {
         // Create repositories with dependency injection
-        auto job_repo = std::make_shared<SqliteJobRepository>(database_path);
-        auto engine_repo = std::make_shared<SqliteEngineRepository>(database_path);
+        auto job_repo = std::make_shared<distconv::DispatchServer::SqliteJobRepository>(database_path);
+        auto engine_repo = std::make_shared<distconv::DispatchServer::SqliteEngineRepository>(database_path);
         
         // Create Message Queue Factory (Memory for now)
-        auto mq_factory = std::make_unique<MemoryMessageQueueFactory>();
+        auto mq_factory = std::make_unique<distconv::MemoryMessageQueueFactory>();
 
         // Create server with injected dependencies
-        DispatchServer server(job_repo, engine_repo, std::move(mq_factory), api_key);
+        distconv::DispatchServer::DispatchServer server(job_repo, engine_repo, std::move(mq_factory), api_key);
         
         std::cout << "Starting server on port " << port << " with database: " << database_path << std::endl;
         std::cout << "API key authentication enabled" << std::endl;
