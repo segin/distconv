@@ -71,11 +71,11 @@ public:
     
     cpr::SslOptions create_ssl_options() {
         cpr::SslOptions options;
-        options.SetOption(cpr::ssl::VerifyPeer{ssl_verify_});
-        options.SetOption(cpr::ssl::VerifyHost{ssl_verify_});
         if (!ca_cert_path_.empty()) {
             options.SetOption(cpr::ssl::CaInfo{ca_cert_path_});
         }
+        options.SetOption(cpr::ssl::VerifyPeer{ssl_verify_});
+        options.SetOption(cpr::ssl::VerifyHost{ssl_verify_});
         return options;
     }
     
