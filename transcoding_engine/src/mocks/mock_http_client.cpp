@@ -2,7 +2,8 @@
 #include <fstream>
 #include <filesystem>
 
-namespace transcoding_engine {
+namespace distconv {
+namespace TranscodingEngine {
 
 using namespace distconv::TranscodingEngine;
 
@@ -124,4 +125,4 @@ void MockHttpClient::record_call(const std::string& method, const std::string& u
     call_history_.push_back({method, url, body, headers});
 }
 
-} // namespace transcoding_engine
+}} // namespace distconv::TranscodingEngine

@@ -3,7 +3,8 @@
 #include <algorithm>
 #include <fstream>
 
-namespace transcoding_engine {
+namespace distconv {
+namespace TranscodingEngine {
 
 using namespace distconv::TranscodingEngine;
 
@@ -156,4 +157,4 @@ std::string MockSubprocess::command_to_string(const std::vector<std::string>& co
     return oss.str();
 }
 
-} // namespace transcoding_engine
+}} // namespace distconv::TranscodingEngine
