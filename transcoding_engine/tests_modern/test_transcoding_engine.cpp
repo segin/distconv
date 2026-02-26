@@ -43,7 +43,7 @@ protected:
         config.database_path = "test_db.sqlite";
         config.test_mode = true; // Disable background threads for testing
 
-        // Restore warm-up
+        // Initialize and warm up
         engine->initialize(config);
         engine->run_benchmark();
     }

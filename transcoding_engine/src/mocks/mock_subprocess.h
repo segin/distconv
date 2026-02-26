@@ -8,6 +8,9 @@
 namespace distconv {
 namespace TranscodingEngine {
 
+using distconv::TranscodingEngine::ISubprocessRunner;
+using distconv::TranscodingEngine::SubprocessResult;
+
 class MockSubprocess : public ISubprocessRunner {
 public:
     MockSubprocess() = default;
