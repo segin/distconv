@@ -17,7 +17,6 @@ public:
     // Priority-based job scheduling
     std::string get_next_pending_job();
     void add_job_to_queue(const std::string& job_id, int priority);
-    void remove_job_from_queue(const std::string& job_id);
     
     // Engine selection
     std::string select_best_engine_for_job(const std::string& job_id);

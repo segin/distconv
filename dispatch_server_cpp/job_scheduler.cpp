@@ -14,17 +14,18 @@ JobScheduler::JobScheduler() {
 }
 
 std::string JobScheduler::get_next_pending_job() {
-    std::lock_guard<std::mutex> scheduler_lock(scheduler_mutex_);
-    
+    std::lock(state_mutex_, scheduler_mutex_);
+    std::lock_guard<std::mutex> state_lock(state_mutex_, std::adopt_lock);
+    std::lock_guard<std::mutex> scheduler_lock(scheduler_mutex_, std::adopt_lock);
+
     // Check retry jobs first
     auto now = std::chrono::system_clock::now();
     for (auto it = retry_jobs_.begin(); it != retry_jobs_.end(); ++it) {
         if (now >= it->retry_after) {
             std::string job_id = it->job_id;
             retry_jobs_.erase(it);
-            
+
             // Add back to pending queue with current time
-            std::lock_guard<std::mutex> state_lock(state_mutex);
             if (jobs_db.contains(job_id)) {
                 int priority = jobs_db[job_id].value("priority", 0);
                 pending_jobs_.push({job_id, priority, now});
@@ -32,20 +33,19 @@ std::string JobScheduler::get_next_pending_job() {
             break;
         }
     }
-    
+
     // Get next pending job by priority
     while (!pending_jobs_.empty()) {
         PendingJob next_job = pending_jobs_.top();
         pending_jobs_.pop();
-        
+
         // Verify job still exists and is pending
-        std::lock_guard<std::mutex> state_lock(state_mutex);
-        if (jobs_db.contains(next_job.job_id) && 
+        if (jobs_db.contains(next_job.job_id) &&
             jobs_db[next_job.job_id]["status"] == "pending") {
             return next_job.job_id;
         }
     }
-    
+
     return "";
 }
 
@@ -54,18 +54,6 @@ void JobScheduler::add_job_to_queue(const std::string& job_id, int priority) {
     pending_jobs_.push({job_id, priority, std::chrono::system_clock::now()});
 }
 
-void JobScheduler::remove_job_from_queue(const std::string& job_id) {
-    std::lock_guard<std::mutex> lock(scheduler_mutex_);
-    
-    // Remove from retry jobs
-    retry_jobs_.erase(
-        std::remove_if(retry_jobs_.begin(), retry_jobs_.end(),
-                      [&job_id](const RetryJob& rj) { return rj.job_id == job_id; }),
-        retry_jobs_.end());
-    
-    // Note: Can't efficiently remove from priority_queue, but get_next_pending_job() 
-    // will filter out invalid jobs
-}
 
 std::string JobScheduler::select_best_engine_for_job(const std::string& job_id) {
     update_engine_cache();
@@ -113,20 +101,27 @@ bool JobScheduler::is_job_ready_for_retry(const std::string& job_id) {
 }
 
 void JobScheduler::expire_old_pending_jobs(std::chrono::minutes max_age) {
-    std::lock_guard<std::mutex> state_lock(state_mutex);
+    std::lock(state_mutex_, scheduler_mutex_);
+    std::lock_guard<std::mutex> state_lock(state_mutex_, std::adopt_lock);
+    std::lock_guard<std::mutex> scheduler_lock(scheduler_mutex_, std::adopt_lock);
     auto now = std::chrono::system_clock::now();
-    
+
     for (auto& [job_id, job_data] : jobs_db.items()) {
         if (job_data["status"] == "pending" && job_data.contains("created_at")) {
             auto created_at = std::chrono::system_clock::time_point{
                 std::chrono::milliseconds{job_data["created_at"]}
             };
-            
+
             if (now - created_at > max_age) {
                 job_data["status"] = "expired";
                 job_data["updated_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(
                     now.time_since_epoch()).count();
-                remove_job_from_queue(job_id);
+
+                // Remove from retry jobs
+                retry_jobs_.erase(
+                    std::remove_if(retry_jobs_.begin(), retry_jobs_.end(),
+                                  [&job_id](const RetryJob& rj) { return rj.job_id == job_id; }),
+                    retry_jobs_.end());
             }
         }
     }
