@@ -67,7 +67,7 @@ target_include_directories(dispatch_server_modern PRIVATE
 )
 
 # Unit Tests
-add_executable(dispatch_server_tests tests/main.cpp tests/jobs_post_api_tests.cpp tests/jobs_get_api_tests.cpp tests/engines_api_tests.cpp tests/jobs_status_update_tests.cpp tests/job_resubmission_tests.cpp tests/scheduling_logic_tests.cpp tests/persistent_storage_tests.cpp tests/jobs_assign_api_tests.cpp tests/job_state_transition_tests.cpp tests/command_line_tests.cpp tests/thread_safety_tests.cpp tests/api_test_definitions.cpp tests/json_parsing_edge_case_tests.cpp tests/final_edge_case_tests.cpp tests/thread_safety_improvements_tests.cpp tests/job_handlers_tests.cpp tests/engine_handlers_tests.cpp tests/job_management_tests.cpp tests/api_endpoint_tests.cpp tests/error_handling_tests.cpp tests/url_validation_tests.cpp tests/server_config_tests.cpp tests/max_retries_validation_tests.cpp tests/message_queue_tests.cpp tests/message_queue_integration_tests.cpp tests/timeout_logic_tests.cpp)
+add_executable(dispatch_server_tests tests/main.cpp tests/jobs_post_api_tests.cpp tests/jobs_get_api_tests.cpp tests/engines_api_tests.cpp tests/jobs_status_update_tests.cpp tests/job_resubmission_tests.cpp tests/scheduling_logic_tests.cpp tests/persistent_storage_tests.cpp tests/jobs_assign_api_tests.cpp tests/job_state_transition_tests.cpp tests/command_line_tests.cpp tests/thread_safety_tests.cpp tests/api_test_definitions.cpp tests/json_parsing_edge_case_tests.cpp tests/final_edge_case_tests.cpp tests/thread_safety_improvements_tests.cpp tests/job_handlers_tests.cpp tests/engine_handlers_tests.cpp tests/job_management_tests.cpp tests/api_endpoint_tests.cpp tests/error_handling_tests.cpp tests/url_validation_tests.cpp tests/server_config_tests.cpp tests/max_retries_validation_tests.cpp tests/message_queue_tests.cpp tests/message_queue_integration_tests.cpp tests/modern_assignment_tests.cpp)
 target_link_libraries(dispatch_server_tests dispatch_server_core gtest gmock)
 target_include_directories(dispatch_server_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -91,10 +91,10 @@ target_include_directories(mq_tests PRIVATE
     ${CMAKE_SOURCE_DIR}/../third_party/trompeloeil/include
 )
 
-# Benchmark
-add_executable(benchmark_sqlite tests/benchmark_sqlite.cpp)
-target_link_libraries(benchmark_sqlite dispatch_server_core)
-target_include_directories(benchmark_sqlite PRIVATE
+# Benchmark for job assignment
+add_executable(assignment_benchmark tests/assignment_benchmark.cpp)
+target_link_libraries(assignment_benchmark dispatch_server_core)
+target_include_directories(assignment_benchmark PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/../third_party/json/single_include
 )
