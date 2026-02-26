@@ -91,10 +91,10 @@ target_include_directories(mq_tests PRIVATE
     ${CMAKE_SOURCE_DIR}/../third_party/trompeloeil/include
 )
 
-# Benchmark
-add_executable(benchmark_save_state tests/benchmark_save_state.cpp)
-target_link_libraries(benchmark_save_state dispatch_server_core)
-target_include_directories(benchmark_save_state PRIVATE
+# Benchmark Tool
+add_executable(repository_benchmark tests/repository_benchmark.cpp)
+target_link_libraries(repository_benchmark dispatch_server_core)
+target_include_directories(repository_benchmark PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/../third_party/json/single_include
 )

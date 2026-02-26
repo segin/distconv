@@ -13,6 +13,8 @@ struct sqlite3_stmt;
 
 struct sqlite3;
 
+struct sqlite3;
+
 namespace distconv {
 namespace DispatchServer {
 
@@ -59,7 +61,7 @@ public:
 class SqliteJobRepository : public IJobRepository {
 private:
     std::string db_path_;
-    sqlite3* db_;
+    sqlite3* db_ = nullptr;
     mutable std::mutex mutex_;
     
     sqlite3* db_ = nullptr;
@@ -71,6 +73,11 @@ private:
     void execute_sql(const std::string& sql);
     nlohmann::json execute_query(const std::string& sql);
     
+    // Internal lock-free helpers
+    void save_job_internal(const std::string& job_id, const nlohmann::json& job);
+    nlohmann::json get_job_internal(const std::string& job_id);
+    bool job_exists_internal(const std::string& job_id);
+
 public:
     explicit SqliteJobRepository(const std::string& db_path);
     ~SqliteJobRepository();
@@ -99,13 +106,18 @@ public:
 class SqliteEngineRepository : public IEngineRepository {
 private:
     std::string db_path_;
-    sqlite3* db_;
+    sqlite3* db_ = nullptr;
     mutable std::mutex mutex_;
     
     void initialize_database();
     void execute_sql(const std::string& sql);
     nlohmann::json execute_query(const std::string& sql);
-    
+
+    // Internal lock-free helpers
+    void save_engine_internal(const std::string& engine_id, const nlohmann::json& engine);
+    nlohmann::json get_engine_internal(const std::string& engine_id);
+    bool engine_exists_internal(const std::string& engine_id);
+
 public:
     explicit SqliteEngineRepository(const std::string& db_path);
     ~SqliteEngineRepository();
