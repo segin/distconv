@@ -5,6 +5,9 @@
 #include <map>
 #include <queue>
 
+using distconv::TranscodingEngine::ISubprocessRunner;
+using distconv::TranscodingEngine::SubprocessResult;
+
 namespace transcoding_engine {
 
 class MockSubprocess : public distconv::TranscodingEngine::ISubprocessRunner {

@@ -64,6 +64,7 @@ public:
     double get_cpu_temperature();
     double run_benchmark();
     bool send_benchmark_result(double benchmark_time);
+    bool send_heartbeat();
     
     // Job queue management
     bool add_job_to_queue(const std::string& job_id);
@@ -94,8 +95,12 @@ private:
     void heartbeat_loop();
     void benchmark_loop();
     void main_job_loop();
-    bool send_heartbeat();
     
+    // Cache
+    std::string cached_encoders_;
+    std::string cached_decoders_;
+    std::string cached_hwaccels_;
+
     // Job processing
     bool download_source_file(const std::string& source_url, const std::string& output_path);
     bool transcode_file(const std::string& input_path, const std::string& output_path, 
