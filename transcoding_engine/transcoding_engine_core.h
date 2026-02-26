@@ -3,6 +3,8 @@
 
 #include <string>
 #include <vector>
+#include <functional>
+#include "cjson/cJSON.h"
 #include <sqlite3.h>
 
 namespace distconv {
@@ -27,6 +29,9 @@ void reportJobStatus(const std::string& dispatchServerUrl, const std::string& jo
 void performStreamingTranscoding(const std::string& dispatchServerUrl, const std::string& job_id, const std::string& source_url, const std::string& target_codec, const std::string& caCertPath, const std::string& apiKey);
 void performTranscoding(const std::string& dispatchServerUrl, const std::string& job_id, const std::string& source_url, const std::string& target_codec, const std::string& caCertPath, const std::string& apiKey);
 
+using GetJobFunc = std::function<std::string(const std::string&, const std::string&, const std::string&, const std::string&)>;
+using PerformTranscodingFunc = std::function<void(const std::string&, const std::string&, const std::string&, const std::string&, const std::string&, const std::string&)>;
+
 // SQLite functions
 void init_sqlite();
 void add_job_to_db(const std::string& job_id);
@@ -34,7 +39,7 @@ void remove_job_from_db(const std::string& job_id);
 std::vector<std::string> get_jobs_from_db();
 
 // Main application function
-int run_transcoding_engine(int argc, char* argv[]);
+int run_transcoding_engine(int argc, char* argv[], GetJobFunc getJobImpl = getJob, PerformTranscodingFunc performTranscodingImpl = performTranscoding);
 
 } // namespace TranscodingEngine
 } // namespace distconv
