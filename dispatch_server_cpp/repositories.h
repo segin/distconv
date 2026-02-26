@@ -17,6 +17,8 @@ struct sqlite3;
 
 struct sqlite3;
 
+struct sqlite3;
+
 namespace distconv {
 namespace DispatchServer {
 
