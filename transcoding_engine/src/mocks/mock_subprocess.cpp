@@ -2,10 +2,8 @@
 #include <sstream>
 #include <fstream>
 
-namespace transcoding_engine {
-using namespace distconv::TranscodingEngine;
-
-using namespace distconv::TranscodingEngine;
+namespace distconv {
+namespace TranscodingEngine {
 
 SubprocessResult MockSubprocess::run(const std::vector<std::string>& command,
                                     const std::string& working_directory,

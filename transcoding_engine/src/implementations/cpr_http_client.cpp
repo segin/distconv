@@ -70,14 +70,13 @@ public:
     }
     
     cpr::SslOptions create_ssl_options() {
-        cpr::SslOptions opts;
-        opts.SetOption(cpr::ssl::VerifyPeer{ssl_verify_});
-        opts.SetOption(cpr::ssl::VerifyHost{ssl_verify_});
-
+        cpr::SslOptions options;
+        options.SetOption(cpr::ssl::VerifyPeer{ssl_verify_});
+        options.SetOption(cpr::ssl::VerifyHost{ssl_verify_});
         if (!ca_cert_path_.empty()) {
-            opts.SetOption(cpr::ssl::CaInfo{ca_cert_path_});
+            options.SetOption(cpr::ssl::CaInfo{ca_cert_path_});
         }
-        return opts;
+        return options;
     }
     
     HttpResponse convert_response(const cpr::Response& response) {
