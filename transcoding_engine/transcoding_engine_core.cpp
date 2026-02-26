@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 #include <thread>
-#include <mutex>
+#include <memory>
 #include <chrono>
 #include <cstdlib> // For system()
 #include <random> // For random engine ID
@@ -122,44 +122,55 @@ private:
 
 // Generic function to make HTTP requests using libcurl
 std::string makeHttpRequest(const std::string& url, const std::string& method, const std::string& payload, const std::string& caCertPath, const std::string& apiKey) {
-    thread_local CurlHandle curlSession; // Thread-local instance for connection reuse
-    CURL *curl = curlSession.get();
+    // Optimization: Use thread_local RAII wrapper to reuse CURL handle and ensure cleanup
+    thread_local std::unique_ptr<CURL, void(*)(CURL*)> curl(curl_easy_init(), curl_easy_cleanup);
+
+    // Retry initialization if it failed previously (unlikely but safe)
+    if (!curl) {
+        curl.reset(curl_easy_init());
+    }
+
     CURLcode res;
     std::string readBuffer;
 
     if(curl) {
-        curl_easy_reset(curl); // Reset options to reuse handle cleanly
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+        curl_easy_reset(curl.get());
+        curl_easy_setopt(curl.get(), CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl.get(), CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(curl.get(), CURLOPT_WRITEDATA, &readBuffer);
 
         // Set CA certificate for HTTPS
         if (!caCertPath.empty()) {
-            curl_easy_setopt(curl, CURLOPT_CAINFO, caCertPath.c_str());
-            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
-            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
+            curl_easy_setopt(curl.get(), CURLOPT_CAINFO, caCertPath.c_str());
+            curl_easy_setopt(curl.get(), CURLOPT_SSL_VERIFYPEER, 1L);
+            curl_easy_setopt(curl.get(), CURLOPT_SSL_VERIFYHOST, 2L);
         } else {
             // Allow non-secure connections if no CA path is provided
-            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+            curl_easy_setopt(curl.get(), CURLOPT_SSL_VERIFYPEER, 0L);
+            curl_easy_setopt(curl.get(), CURLOPT_SSL_VERIFYHOST, 0L);
         }
 
+        struct curl_slist *headers = NULL;
         if (method == "POST") {
-            curl_easy_setopt(curl, CURLOPT_POST, 1L);
-            curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload.c_str());
-            curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, payload.length());
-            struct curl_slist *headers = NULL;
+            curl_easy_setopt(curl.get(), CURLOPT_POST, 1L);
+            curl_easy_setopt(curl.get(), CURLOPT_POSTFIELDS, payload.c_str());
+            curl_easy_setopt(curl.get(), CURLOPT_POSTFIELDSIZE, payload.length());
+
             headers = curl_slist_append(headers, "Content-Type: application/json");
             if (!apiKey.empty()) {
                 std::string api_key_header = "X-API-Key: " + apiKey;
                 headers = curl_slist_append(headers, api_key_header.c_str());
             }
-            curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+            curl_easy_setopt(curl.get(), CURLOPT_HTTPHEADER, headers);
         }
 
-        res = curl_easy_perform(curl);
+        res = curl_easy_perform(curl.get());
         if(res != CURLE_OK) {
             std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
+        }
+
+        if (headers) {
+            curl_slist_free_all(headers);
         }
     }
     return readBuffer;
