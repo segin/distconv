@@ -19,7 +19,7 @@ void EngineListHandler::handle(const httplib::Request& req, httplib::Response& r
     // 2. Retrieve All Engines
     nlohmann::json all_engines = nlohmann::json::array();
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::lock_guard<std::mutex> lock(engines_mutex);
         if (!engines_db.empty()) {
             for (auto const& [key, val] : engines_db.items()) {
                 all_engines.push_back(val);
@@ -91,9 +91,11 @@ void EngineHeartbeatHandler::handle(const httplib::Request& req, httplib::Respon
     // 4. Update Engine Database
     std::string engine_id = request_json["engine_id"];
     try {
-        std::lock_guard<std::mutex> lock(state_mutex);
-        engines_db[engine_id] = request_json;
-        save_state_unlocked();
+        {
+            std::lock_guard<std::mutex> lock(engines_mutex);
+            engines_db[engine_id] = request_json;
+        }
+        async_save_state();
     } catch (const std::exception& e) {
         set_json_error_response(res, "Internal server error", "server_error", 500, e.what());
         return;
@@ -144,7 +146,7 @@ void EngineBenchmarkHandler::handle(const httplib::Request& req, httplib::Respon
 
     // 5. Update Engine Benchmark Data
     try {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::lock_guard<std::mutex> lock(engines_mutex);
         if (engines_db.contains(engine_id)) {
             engines_db[engine_id]["benchmark_time"] = request_json["benchmark_time"];
         } else {

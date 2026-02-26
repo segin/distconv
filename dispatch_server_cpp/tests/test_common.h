@@ -14,8 +14,12 @@
 
 using namespace distconv::DispatchServer;
 
-// Forward declaration
-inline void clear_db();
+// Helper function to clear the database before each test
+inline void clear_db() {
+    std::scoped_lock lock(jobs_mutex, engines_mutex);
+    jobs_db = nlohmann::json::object();
+    engines_db = nlohmann::json::object();
+}
 
 // Helper function to find an available port
 inline int find_available_port() {
@@ -39,6 +43,7 @@ protected:
     static bool use_legacy_mode;
 
     static void SetUpTestSuite() {
+        use_async_save = false; // Disable async persistence for tests
         persistent_storage_file = "dispatch_server_state_" + std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count()) + ".json";
         PERSISTENT_STORAGE_FILE = persistent_storage_file;
 

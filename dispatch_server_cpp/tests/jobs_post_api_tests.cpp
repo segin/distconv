@@ -33,7 +33,7 @@ TEST_F(ApiTest, SubmitValidJob) {
 
     // Verify job is in the database
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::lock_guard<std::mutex> lock(jobs_mutex);
         ASSERT_TRUE(jobs_db.contains(response_json["job_id"]));
     }
 }
@@ -124,7 +124,7 @@ TEST_F(ApiTest, SubmitJobWithExtraFields) {
     ASSERT_FALSE(response_json.contains("extra_field"));
     ASSERT_FALSE(response_json.contains("another_extra"));
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::lock_guard<std::mutex> lock(jobs_mutex);
         ASSERT_FALSE(jobs_db[response_json["job_id"]].contains("extra_field"));
         ASSERT_FALSE(jobs_db[response_json["job_id"]].contains("another_extra"));
     }

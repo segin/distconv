@@ -23,12 +23,15 @@ namespace DispatchServer {
 extern nlohmann::json jobs_db;
 extern nlohmann::json engines_db;
 extern std::mutex state_mutex;
+extern std::mutex jobs_mutex;
+extern std::mutex engines_mutex;
 
 // Persistent storage file
 extern std::string PERSISTENT_STORAGE_FILE;
 
 // Global flag and counter for mocking save_state
-extern std::atomic<bool> mock_save_state_enabled;
+extern bool mock_save_state_enabled;
+extern std::atomic<bool> use_async_save;
 extern std::atomic<int> save_state_call_count;
 
 // Global flag and data for mocking load_state
@@ -116,6 +119,7 @@ private:
     std::mutex shutdown_mutex_;
     std::thread background_worker_;
     std::future<void> state_save_future_;
+    std::mutex save_mutex_;
     
     // Injected dependencies
     // Injected dependencies

@@ -420,7 +420,7 @@ TEST_F(ApiTest, ServerHandlesHeartbeatForEngineAssignedJobThatNoLongerExists) {
     
     // Manually remove the job from the database to simulate it no longer existing
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::lock_guard<std::mutex> lock(jobs_mutex);
         jobs_db.erase(job_id);
     }
     

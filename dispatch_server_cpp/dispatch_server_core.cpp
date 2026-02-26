@@ -39,7 +39,8 @@ std::mutex engines_mutex; // Dedicated mutex for engines
 // Persistent storage for jobs and engines
 std::string PERSISTENT_STORAGE_FILE = "dispatch_server_state.json";
 
-std::atomic<bool> mock_save_state_enabled{false};
+bool mock_save_state_enabled = false;
+std::atomic<bool> use_async_save{true};
 std::atomic<int> save_state_call_count{0};
 
 // Forward declaration for save_state_unlocked
@@ -210,7 +211,7 @@ std::string generate_uuid() {
 }
 
 void load_state() {
-    std::lock_guard<std::mutex> lock(state_mutex);
+    std::scoped_lock lock(jobs_mutex, engines_mutex);
     std::cout << "[load_state] Attempting to load state." << std::endl;
     jobs_db.clear();
     engines_db.clear();
@@ -261,32 +262,28 @@ void load_state() {
 }
 
 // This version of save_state assumes the caller already holds the lock
-void save_state_unlocked(bool async) {
-    if (mock_save_state_enabled) {
+void save_state_unlocked() {
+    // Check mock state here as well, because some handlers call this directly
+    const char* mock_env = std::getenv("MOCK_SAVE_STATE");
+    if (mock_save_state_enabled || mock_env) {
         save_state_call_count++;
         return;
     }
 
-    if (async && persistence_running.load()) {
-        {
-            std::lock_guard<std::mutex> lock(persistence_mutex);
-            persistence_dirty.store(true);
-        }
-        persistence_cv.notify_one();
-    } else {
-        // Synchronous save
-        perform_save_state_to_disk(jobs_db, engines_db);
-        std::cout << "Saved state." << std::endl;
+    std::ofstream ofs(PERSISTENT_STORAGE_FILE);
+    if (ofs.is_open()) {
+        nlohmann::json state_to_save;
+        state_to_save["jobs"] = jobs_db;
+        state_to_save["engines"] = engines_db;
+        ofs << state_to_save.dump(4) << std::endl;
+        ofs.close();
+        // std::cout << "Saved state." << std::endl; // Commented out to reduce I/O during benchmarks
     }
 }
 
 void save_state() {
-    if (mock_save_state_enabled) {
-        save_state_call_count++;
-        return;
-    }
-    std::lock_guard<std::mutex> lock(state_mutex);
-    save_state_unlocked(false);
+    std::scoped_lock lock(jobs_mutex, engines_mutex);
+    save_state_unlocked();
 }
 
 // Asynchronous save state function
@@ -295,11 +292,16 @@ void async_save_state() {
         save_state_call_count++;
         return;
     }
+
+    if (!use_async_save) {
+        save_state(); // Synchronous save for tests
+        return;
+    }
     
     // Create a copy of the state under lock, then save asynchronously
     nlohmann::json state_copy;
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         state_copy["jobs"] = jobs_db;
         state_copy["engines"] = engines_db;
     }
@@ -388,7 +390,7 @@ void DispatchServer::cleanup_stale_engines() {
     }
 
     if (use_legacy_storage_) {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         auto now = std::chrono::system_clock::now();
         
         for (auto it = engines_db.begin(); it != engines_db.end();) {
@@ -480,7 +482,7 @@ void DispatchServer::handle_job_timeouts() {
     }
 
     if (use_legacy_storage_) {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         auto now = std::chrono::system_clock::now();
         
         for (auto& [job_id, job_data] : jobs_db.items()) {
@@ -551,6 +553,12 @@ void DispatchServer::expire_pending_jobs() {
 }
 
 void DispatchServer::async_save_state() {
+    if (mock_save_state_enabled) {
+        save_state_call_count++;
+        return;
+    }
+
+    std::lock_guard<std::mutex> lock(save_mutex_);
     // Launch async save if previous one is complete
     if (state_save_future_.valid() && state_save_future_.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
         state_save_future_.get(); // Clear the future

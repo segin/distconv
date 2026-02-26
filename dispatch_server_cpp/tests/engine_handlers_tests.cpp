@@ -11,7 +11,7 @@ using namespace distconv::DispatchServer;
 TEST(EngineHandlersTest, EngineListHandlerEmpty) {
     // Ensure DB is empty
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::lock_guard<std::mutex> lock(engines_mutex);
         engines_db.clear();
     }
     auto auth = std::make_shared<AuthMiddleware>("");
@@ -28,7 +28,7 @@ TEST(EngineHandlersTest, EngineListHandlerEmpty) {
 TEST(EngineHandlersTest, EngineListHandlerWithEngines) {
     // Populate DB
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::lock_guard<std::mutex> lock(engines_mutex);
         engines_db.clear();
         nlohmann::json engine;
         engine["engine_id"] = "engine-1";
@@ -64,7 +64,7 @@ TEST(EngineHandlersTest, EngineHeartbeatValid) {
     
     // Verify DB update
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::lock_guard<std::mutex> lock(engines_mutex);
         EXPECT_TRUE(engines_db.contains("engine-new"));
         EXPECT_EQ(engines_db["engine-new"]["storage_capacity_gb"], 100.0);
     }
@@ -90,7 +90,7 @@ TEST(EngineHandlersTest, EngineHeartbeatInvalidStorage) {
 TEST(EngineHandlersTest, EngineBenchmarkValid) {
     // Setup engine first
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::lock_guard<std::mutex> lock(engines_mutex);
         engines_db["engine-bench"] = {{"engine_id", "engine-bench"}};
     }
     
@@ -109,7 +109,7 @@ TEST(EngineHandlersTest, EngineBenchmarkValid) {
     
     // Verify DB update
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::lock_guard<std::mutex> lock(engines_mutex);
         EXPECT_EQ(engines_db["engine-bench"]["benchmark_time"], 12.5);
     }
 }

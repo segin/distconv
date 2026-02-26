@@ -28,7 +28,7 @@ TEST_F(ApiTest, RegisterEngineValid) {
 
     // Verify the engine is in the database
     {
-        std::lock_guard<std::recursive_mutex> lock(reinterpret_cast<std::recursive_mutex&>(state_mutex));
+        std::lock_guard<std::mutex> lock(engines_mutex);
         ASSERT_TRUE(engines_db.contains("test_engine"));
     }
 }
@@ -197,6 +197,22 @@ TEST_F(ApiTest, EngineStatusIsBusyAfterJobAssign) {
         {"engine_id", "engine-123"}
     };
     auto res_assign = client->Post("/assign_job/", admin_headers, assign_payload.dump(), "application/json");
+    // Could be 200 if assigned, or 204 if logic changed (but legacy endpoint returns 200 with job, or 204 if no job)
+    // Here we just created a job, so it should be pending.
+    // However, if the job was somehow already assigned or invalid, it might fail.
+    // The test failure said "Expected 200, got 204".
+    // 204 means "No Content", i.e. no pending job found.
+    // But we just submitted one.
+    // Wait, `ApiTest` setup clears DB.
+    // Is `POST /jobs/` synchronous? Yes.
+    // Is `POST /assign_job/` logic using the same DB? Yes.
+
+    // Debug: Check job status before assignment
+    auto res_check = client->Get(("/jobs/" + job_id).c_str(), admin_headers);
+    if (res_check->status == 200) {
+        // std::cout << "Job status before assign: " << res_check->body << std::endl;
+    }
+
     ASSERT_EQ(res_assign->status, 200);
 
     // 4. Get the engine status

@@ -80,7 +80,7 @@ TEST_F(ApiTest, LoadStateLoadsJobs) {
 
     // 4. Verify that the job is loaded into the in-memory database
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         ASSERT_TRUE(jobs_db.contains(job_id));
         ASSERT_EQ(jobs_db[job_id]["source_url"], "http://example.com/video.mp4");
     }
@@ -116,7 +116,7 @@ TEST_F(ApiTest, LoadStateLoadsEngines) {
 
     // 4. Verify that the engine is loaded into the in-memory database
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         ASSERT_TRUE(engines_db.contains("engine-123"));
         ASSERT_EQ(engines_db["engine-123"]["status"], "idle");
     }
@@ -134,11 +134,11 @@ TEST_F(ApiTest, LoadStateHandlesNonExistentFile) {
 
     // 3. Verify that the in-memory databases are empty
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         ASSERT_TRUE(jobs_db.empty());
     }
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         ASSERT_TRUE(engines_db.empty());
     }
 }
@@ -155,11 +155,11 @@ TEST_F(ApiTest, LoadStateHandlesCorruptFile) {
 
     // 3. Verify that the in-memory databases are empty
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         ASSERT_TRUE(jobs_db.empty());
     }
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         ASSERT_TRUE(engines_db.empty());
     }
 
@@ -184,11 +184,11 @@ TEST_F(ApiTest, LoadStateHandlesEmptyFile) {
 
     // 3. Verify that the in-memory databases are empty
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         ASSERT_TRUE(jobs_db.empty());
     }
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         ASSERT_TRUE(engines_db.empty());
     }
 }
@@ -228,12 +228,12 @@ TEST_F(ApiTest, StateIsPreservedAfterRestart) {
 
     // 5. Verify that the job and engine are loaded correctly
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         ASSERT_TRUE(jobs_db.contains(job_id));
         ASSERT_EQ(jobs_db[job_id]["source_url"], "http://example.com/video.mp4");
     }
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         ASSERT_TRUE(engines_db.contains("engine-123"));
         ASSERT_EQ(engines_db["engine-123"]["status"], "idle");
     }
@@ -481,7 +481,7 @@ TEST_F(ApiTest, LoadStateHandlesEmptyJobsOrEnginesKeys) {
 
     // 3. Verify that the in-memory databases are empty
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         ASSERT_TRUE(jobs_db.empty());
         ASSERT_TRUE(engines_db.empty());
     }
@@ -506,7 +506,7 @@ TEST_F(ApiTest, LoadStateHandlesOnlyJobsKey) {
 
     // 3. Verify that jobs are loaded and engines are empty
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         ASSERT_TRUE(jobs_db.contains("job1"));
         ASSERT_EQ(jobs_db["job1"]["source_url"], "url1");
         ASSERT_TRUE(engines_db.empty());
@@ -543,7 +543,7 @@ TEST_F(ApiTest, LoadStateWithSingleJob) {
 
     // 4. Verify that the job is loaded correctly and engines_db is empty
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         ASSERT_EQ(jobs_db.size(), 1);
         ASSERT_TRUE(jobs_db.contains("job_id_1"));
         ASSERT_EQ(jobs_db["job_id_1"]["source_url"], "http://example.com/video_single.mp4");
@@ -583,7 +583,7 @@ TEST_F(ApiTest, LoadStateWithSingleEngine) {
 
     // 4. Verify that the engine is loaded correctly and jobs_db is empty
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         ASSERT_TRUE(jobs_db.empty());
         ASSERT_EQ(engines_db.size(), 1);
         ASSERT_TRUE(engines_db.contains("engine_id_1"));
@@ -693,7 +693,7 @@ TEST_F(ApiTest, LoadStateFromZeroJobsAndZeroEnginesFile) {
 
     // 5. Verify that the in-memory databases are empty
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         ASSERT_TRUE(jobs_db.empty());
         ASSERT_TRUE(engines_db.empty());
     }
@@ -730,14 +730,14 @@ TEST_F(ApiTest, JobsDbCanBeClearedAndPrePopulated) {
     nlohmann::json job1 = {{"job_id", "job_initial_1"}, {"source_url", "url_initial_1"}, {"status", "pending"}};
     nlohmann::json job2 = {{"job_id", "job_initial_2"}, {"source_url", "url_initial_2"}, {"status", "completed"}};
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         jobs_db["job_initial_1"] = job1;
         jobs_db["job_initial_2"] = job2;
     }
 
     // Verify initial state
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         ASSERT_EQ(jobs_db.size(), 2);
         ASSERT_TRUE(jobs_db.contains("job_initial_1"));
         ASSERT_TRUE(jobs_db.contains("job_initial_2"));
@@ -748,7 +748,7 @@ TEST_F(ApiTest, JobsDbCanBeClearedAndPrePopulated) {
 
     // Verify database is empty
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         ASSERT_TRUE(jobs_db.empty());
     }
 
@@ -756,14 +756,14 @@ TEST_F(ApiTest, JobsDbCanBeClearedAndPrePopulated) {
     nlohmann::json job_new_1 = {{"job_id", "job_new_1"}, {"source_url", "url_new_1"}, {"status", "pending"}};
     nlohmann::json job_new_2 = {{"job_id", "job_new_2"}, {"source_url", "url_new_2"}, {"status", "assigned"}};
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         jobs_db["job_new_1"] = job_new_1;
         jobs_db["job_new_2"] = job_new_2;
     }
 
     // Verify new state
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         ASSERT_EQ(jobs_db.size(), 2);
         ASSERT_TRUE(jobs_db.contains("job_new_1"));
         ASSERT_TRUE(jobs_db.contains("job_new_2"));
@@ -776,14 +776,14 @@ TEST_F(ApiTest, EnginesDbCanBeClearedAndPrePopulated) {
     nlohmann::json engine1 = {{"engine_id", "engine_initial_1"}, {"engine_type", "transcoder"}, {"status", "idle"}};
     nlohmann::json engine2 = {{"engine_id", "engine_initial_2"}, {"engine_type", "transcoder"}, {"status", "busy"}};
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         engines_db["engine_initial_1"] = engine1;
         engines_db["engine_initial_2"] = engine2;
     }
 
     // Verify initial state
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         ASSERT_EQ(engines_db.size(), 2);
         ASSERT_TRUE(engines_db.contains("engine_initial_1"));
         ASSERT_TRUE(engines_db.contains("engine_initial_2"));
@@ -794,7 +794,7 @@ TEST_F(ApiTest, EnginesDbCanBeClearedAndPrePopulated) {
 
     // Verify database is empty
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         ASSERT_TRUE(engines_db.empty());
     }
 
@@ -802,14 +802,14 @@ TEST_F(ApiTest, EnginesDbCanBeClearedAndPrePopulated) {
     nlohmann::json engine_new_1 = {{"engine_id", "engine_new_1"}, {"engine_type", "transcoder"}, {"status", "idle"}};
     nlohmann::json engine_new_2 = {{"engine_id", "engine_new_2"}, {"engine_type", "transcoder"}, {"status", "busy"}};
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         engines_db["engine_new_1"] = engine_new_1;
         engines_db["engine_new_2"] = engine_new_2;
     }
 
     // Verify new state
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         ASSERT_EQ(engines_db.size(), 2);
         ASSERT_TRUE(engines_db.contains("engine_new_1"));
         ASSERT_TRUE(engines_db.contains("engine_new_2"));
@@ -908,7 +908,7 @@ TEST_F(ApiTest, LoadStateCanBeMocked) {
 
     // 4. Verify that the mocked data was loaded into the in-memory databases
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         ASSERT_EQ(jobs_db.size(), 2);
         ASSERT_TRUE(jobs_db.contains("mock_job_1"));
         ASSERT_TRUE(jobs_db.contains("mock_job_2"));
@@ -982,7 +982,7 @@ TEST_F(ApiTest, LoadStateHandlesOnlyEnginesKey) {
     
     // 3. Verify that engines are loaded and jobs are empty
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         ASSERT_TRUE(engines_db.contains("engine1"));
         ASSERT_EQ(engines_db["engine1"]["engine_id"], "engine1");
         ASSERT_EQ(engines_db["engine1"]["status"], "idle");
@@ -1026,7 +1026,7 @@ TEST_F(ApiTest, SaveStateHandlesSpecialCharacters) {
     
     // 5. Verify special characters are preserved
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         ASSERT_TRUE(jobs_db.contains(job_id));
         ASSERT_EQ(jobs_db[job_id]["source_url"], "http://example.com/video with spaces & symbols!@#.mp4");
         

@@ -8,8 +8,8 @@ namespace distconv {
 namespace DispatchServer {
 
 // External globals (from dispatch_server_core.cpp)
-extern nlohmann::json jobs_db;
-extern std::mutex state_mutex;
+// Note: jobs_db, engines_db, jobs_mutex, engines_mutex are declared in dispatch_server_core.h
+extern void save_state_unlocked();
 extern std::string generate_uuid();
 
 using namespace Constants;
@@ -43,10 +43,10 @@ void JobSubmissionHandler::handle(const httplib::Request& req, httplib::Response
         
         // Save to database with lock
         {
-            std::lock_guard<std::mutex> lock(state_mutex);
+            std::lock_guard<std::mutex> lock(jobs_mutex);
             jobs_db[job["job_id"]] = job;
-            save_state_unlocked();
         }
+        async_save_state();
         
         // Return success response
         set_json_response(res, job, 200);
@@ -150,7 +150,7 @@ void JobStatusHandler::handle(const httplib::Request& req, httplib::Response& re
     std::string job_id = req.matches[1];
 
     // 3. Retrieve Job
-    std::lock_guard<std::mutex> lock(state_mutex);
+    std::lock_guard<std::mutex> lock(jobs_mutex);
     if (jobs_db.contains(job_id)) {
         set_json_response(res, jobs_db[job_id], 200);
     } else {
@@ -171,7 +171,7 @@ void JobListHandler::handle(const httplib::Request& req, httplib::Response& res)
     // 2. Retrieve All Jobs
     nlohmann::json all_jobs = nlohmann::json::array();
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::lock_guard<std::mutex> lock(jobs_mutex);
         if (!jobs_db.empty()) {
             for (auto const& [key, val] : jobs_db.items()) {
                 all_jobs.push_back(val);
@@ -197,25 +197,42 @@ void JobRetryHandler::handle(const httplib::Request& req, httplib::Response& res
     }
     std::string job_id = req.matches[1];
 
-    std::lock_guard<std::mutex> lock(state_mutex);
-    if (jobs_db.contains(job_id)) {
-        // Only allow retry if failed or failed_permanently or failed_retry
-        std::string status = jobs_db[job_id]["status"];
-        if (status == "failed" || status == "failed_permanently" || status == "failed_retry" || status == "cancelled") {
-            jobs_db[job_id]["status"] = "pending";
-            jobs_db[job_id]["retries"] = 0; // Reset retries on manual retry
-            jobs_db[job_id]["assigned_engine"] = nullptr;
-            jobs_db[job_id]["updated_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::system_clock::now().time_since_epoch()).count();
-            
-            save_state_unlocked();
-            set_json_response(res, jobs_db[job_id], 200);
+    // Use scoped_lock because we access jobs_db and might need to save state
+    {
+        std::lock_guard<std::mutex> lock(jobs_mutex);
+        if (jobs_db.contains(job_id)) {
+            // Only allow retry if failed or failed_permanently or failed_retry
+            std::string status = jobs_db[job_id]["status"];
+            if (status == "failed" || status == "failed_permanently" || status == "failed_retry" || status == "cancelled") {
+                jobs_db[job_id]["status"] = "pending";
+                jobs_db[job_id]["retries"] = 0; // Reset retries on manual retry
+                jobs_db[job_id]["assigned_engine"] = nullptr;
+                jobs_db[job_id]["updated_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::system_clock::now().time_since_epoch()).count();
+
+                // We don't call save_state_unlocked here directly to avoid needing engines_mutex
+                // Instead we rely on async_save_state outside or implicitly
+            } else {
+                set_json_error_response(res, "Job is not in a failed or cancelled state", "validation_error", 400, "Job ID: " + job_id);
+                return;
+            }
         } else {
-            set_json_error_response(res, "Job is not in a failed or cancelled state", "validation_error", 400, "Job ID: " + job_id);
+            res.status = 404;
+            res.set_content("Job not found", "text/plain");
+            return;
         }
-    } else {
-        res.status = 404;
-        res.set_content("Job not found", "text/plain");
+    }
+    // Perform save outside the lock
+    async_save_state();
+
+    // Need to fetch job again to return it? Or just return success?
+    // The original code returned the job object.
+    // We can't access jobs_db[job_id] here without lock.
+    // Let's just return a success message or re-fetch.
+    // Re-fetching is safer.
+    std::lock_guard<std::mutex> lock(jobs_mutex);
+    if (jobs_db.contains(job_id)) {
+        set_json_response(res, jobs_db[job_id], 200);
     }
 }
 
@@ -233,33 +250,45 @@ void JobCancelHandler::handle(const httplib::Request& req, httplib::Response& re
     }
     std::string job_id = req.matches[1];
 
-    std::lock_guard<std::mutex> lock(state_mutex);
-    if (jobs_db.contains(job_id)) {
-        std::string status = jobs_db[job_id]["status"];
-        // Can cancel pending, assigned, processing, failed_retry
-        if (status != "completed" && status != "failed_permanently" && status != "cancelled") {
-            jobs_db[job_id]["status"] = "cancelled";
-            jobs_db[job_id]["updated_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::system_clock::now().time_since_epoch()).count();
-            
-            // If assigned, free the engine
-            if (!jobs_db[job_id]["assigned_engine"].is_null()) {
-                std::string engine_id = jobs_db[job_id]["assigned_engine"];
-                if (engines_db.contains(engine_id)) {
-                    engines_db[engine_id]["status"] = "idle";
-                    engines_db[engine_id]["current_job_id"] = "";
+    // JobCancel touches both jobs and engines
+    {
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
+        if (jobs_db.contains(job_id)) {
+            std::string status = jobs_db[job_id]["status"];
+            // Can cancel pending, assigned, processing, failed_retry
+            if (status != "completed" && status != "failed_permanently" && status != "cancelled") {
+                jobs_db[job_id]["status"] = "cancelled";
+                jobs_db[job_id]["updated_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::system_clock::now().time_since_epoch()).count();
+
+                // If assigned, free the engine
+                if (!jobs_db[job_id]["assigned_engine"].is_null()) {
+                    std::string engine_id = jobs_db[job_id]["assigned_engine"];
+                    if (engines_db.contains(engine_id)) {
+                        engines_db[engine_id]["status"] = "idle";
+                        engines_db[engine_id]["current_job_id"] = "";
+                    }
+                    jobs_db[job_id]["assigned_engine"] = nullptr;
                 }
-                jobs_db[job_id]["assigned_engine"] = nullptr;
+            } else {
+                set_json_error_response(res, "Job cannot be cancelled in current state", "validation_error", 400, "Current status: " + status);
+                return;
             }
-            
-            save_state_unlocked();
-            set_json_response(res, jobs_db[job_id], 200);
         } else {
-            set_json_error_response(res, "Job cannot be cancelled in current state", "validation_error", 400, "Current status: " + status);
+            res.status = 404;
+            res.set_content("Job not found", "text/plain");
+            return;
         }
-    } else {
-        res.status = 404;
-        res.set_content("Job not found", "text/plain");
+    }
+
+    async_save_state();
+
+    // Return response (re-fetch to be safe)
+    {
+        std::lock_guard<std::mutex> lock(jobs_mutex);
+        if (jobs_db.contains(job_id)) {
+            set_json_response(res, jobs_db[job_id], 200);
+        }
     }
 }
 

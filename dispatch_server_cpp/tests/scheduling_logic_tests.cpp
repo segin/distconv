@@ -495,7 +495,7 @@ TEST_F(ApiTest, CompletedJobNotReassigned) {
 
     // 4. Mark the job as complete
     {
-        std::lock_guard<std::mutex> lock(state_mutex);
+        std::scoped_lock lock(jobs_mutex, engines_mutex);
         jobs_db[job_id]["status"] = "completed";
     }
 
