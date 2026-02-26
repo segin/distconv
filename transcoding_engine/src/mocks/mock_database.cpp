@@ -1,7 +1,10 @@
 #include "mock_database.h"
+#include <fstream>
 #include <algorithm>
 
 namespace transcoding_engine {
+using namespace distconv::TranscodingEngine;
+
 using namespace distconv::TranscodingEngine;
 
 bool MockDatabase::initialize(const std::string& db_path) {
@@ -22,7 +25,7 @@ bool MockDatabase::add_job(const std::string& job_id) {
 bool MockDatabase::remove_job(const std::string& job_id) {
     remove_job_call_count_++;
     if (remove_job_result_) {
-        jobs_.erase(job_id);
+        return jobs_.erase(job_id) > 0;
     }
     return remove_job_result_;
 }
