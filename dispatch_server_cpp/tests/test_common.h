@@ -73,6 +73,8 @@ protected:
 
     void SetUp() override {
         clear_db();
+        // Restore persistent storage file path in case a previous test changed it
+        PERSISTENT_STORAGE_FILE = persistent_storage_file;
     }
 
     void TearDown() override {

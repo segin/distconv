@@ -254,6 +254,7 @@ TEST_F(ApiTest, SubmitJobTriggersSaveState) {
     std::string job_id = nlohmann::json::parse(res_submit->body)["job_id"];
 
     // 2. Verify that the state file was written to
+    std::this_thread::sleep_for(std::chrono::milliseconds(200)); // Wait for async save
     std::ifstream ifs(PERSISTENT_STORAGE_FILE);
     ASSERT_TRUE(ifs.is_open());
     nlohmann::json state = nlohmann::json::parse(ifs);
@@ -280,6 +281,7 @@ TEST_F(ApiTest, HeartbeatTriggersSaveState) {
     ASSERT_EQ(res_heartbeat->status, 200);
 
     // 2. Verify that the state file was written to
+    std::this_thread::sleep_for(std::chrono::milliseconds(200)); // Wait for async save
     std::ifstream ifs(PERSISTENT_STORAGE_FILE);
     ASSERT_TRUE(ifs.is_open());
     nlohmann::json state = nlohmann::json::parse(ifs);
@@ -327,6 +329,7 @@ TEST_F(ApiTest, CompleteJobTriggersSaveState) {
     ASSERT_EQ(res_complete->status, 200);
 
     // 3. Verify that the state file was written to
+    std::this_thread::sleep_for(std::chrono::milliseconds(200)); // Wait for async save
     std::ifstream ifs(PERSISTENT_STORAGE_FILE);
     ASSERT_TRUE(ifs.is_open());
     nlohmann::json state = nlohmann::json::parse(ifs);
@@ -375,6 +378,7 @@ TEST_F(ApiTest, FailJobTriggersSaveState) {
     ASSERT_EQ(res_fail->status, 200);
 
     // 3. Verify that the state file was written to
+    std::this_thread::sleep_for(std::chrono::milliseconds(200)); // Wait for async save
     std::ifstream ifs(PERSISTENT_STORAGE_FILE);
     ASSERT_TRUE(ifs.is_open());
     nlohmann::json state = nlohmann::json::parse(ifs);
@@ -418,6 +422,7 @@ TEST_F(ApiTest, AssignJobTriggersSaveState) {
     ASSERT_EQ(res_assign->status, 200);
 
     // 4. Verify that the state file was written to
+    std::this_thread::sleep_for(std::chrono::milliseconds(200)); // Wait for async save
     std::ifstream ifs(PERSISTENT_STORAGE_FILE);
     ASSERT_TRUE(ifs.is_open());
     nlohmann::json state = nlohmann::json::parse(ifs);
@@ -851,6 +856,9 @@ TEST_F(ApiTest, PersistentStorageFileCanBePointedToTemporaryFile) {
 }
 
 TEST_F(ApiTest, SaveStateCanBeMocked) {
+    // Ensure file doesn't exist
+    std::remove(PERSISTENT_STORAGE_FILE.c_str());
+
     // Enable mocking of save_state
     mock_save_state_enabled = true;
     save_state_call_count = 0; // Reset counter

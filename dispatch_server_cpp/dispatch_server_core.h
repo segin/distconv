@@ -28,8 +28,8 @@ extern std::mutex state_mutex;
 extern std::string PERSISTENT_STORAGE_FILE;
 
 // Global flag and counter for mocking save_state
-extern bool mock_save_state_enabled;
-extern int save_state_call_count;
+extern std::atomic<bool> mock_save_state_enabled;
+extern std::atomic<int> save_state_call_count;
 
 // Global flag and data for mocking load_state
 extern bool mock_load_state_enabled;
@@ -145,8 +145,10 @@ private:
 // Function declarations (for backward compatibility)
 void load_state();
 void save_state();
-void save_state_unlocked();
+void save_state_unlocked(bool async = true);
 void async_save_state();
+void start_persistence_thread();
+void stop_persistence_thread();
 std::string generate_uuid();
 void setup_endpoints(httplib::Server &svr, const std::string& api_key);
 DispatchServer* run_dispatch_server(int argc, char* argv[], DispatchServer* server_instance);
