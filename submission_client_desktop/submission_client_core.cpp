@@ -4,6 +4,7 @@
 #include <wx/button.h>
 #include <wx/stattext.h>
 #include <wx/sizer.h>
+#include <thread>
 #include <string>
 #include <vector>
 #include <fstream>
@@ -282,13 +283,20 @@ void MyFrame::OnGetStatus(wxCommandEvent& event)
 
 void MyFrame::OnListJobs(wxCommandEvent& event)
 {
-    try {
-        nlohmann::json response = apiClient_.listAllJobs();
-        m_outputLog->AppendText("All Jobs:\n");
-        m_outputLog->AppendText(response.dump(4) + "\n");
-    } catch (const std::exception& e) {
-        m_outputLog->AppendText(wxString::Format("An error occurred: %s\n", e.what()));
-    }
+    std::thread([this]() {
+        try {
+            nlohmann::json response = apiClient_.listAllJobs();
+            this->CallAfter([this, response]() {
+                m_outputLog->AppendText("All Jobs:\n");
+                m_outputLog->AppendText(response.dump(4) + "\n");
+            });
+        } catch (const std::exception& e) {
+            std::string errorMsg = e.what();
+            this->CallAfter([this, errorMsg]() {
+                m_outputLog->AppendText(wxString::Format("An error occurred: %s\n", errorMsg.c_str()));
+            });
+        }
+    }).detach();
 }
 
 void MyFrame::OnListEngines(wxCommandEvent& event)
