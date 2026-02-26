@@ -11,14 +11,16 @@ namespace distconv {
 
 struct TopicQueue {
     std::deque<Message> messages;
-    uint64_t base_offset = 0;
+    size_t base_offset = 0;
 };
+
+using StorageMap = std::unordered_map<std::string, TopicQueue>;
 
 // A simple in-memory message queue for testing and development.
 // Not for production use across multiple processes.
 class MemoryMessageQueueProducer : public MessageQueueProducer {
 public:
-    MemoryMessageQueueProducer(std::shared_ptr<std::unordered_map<std::string, TopicQueue>> storage, std::shared_ptr<std::mutex> mutex)
+    MemoryMessageQueueProducer(std::shared_ptr<StorageMap> storage, std::shared_ptr<std::mutex> mutex)
         : storage_(storage), mutex_(mutex) {}
 
     bool publish(const std::string& topic, const std::string& payload) override {
@@ -27,9 +29,8 @@ public:
         queue.messages.push_back({topic, payload, std::to_string(message_id_counter_++)});
 
         // Limit queue size to prevent unbounded memory growth
-        // 1000 messages * ~1KB = ~1MB per topic
         const size_t MAX_QUEUE_SIZE = 1000;
-        while (queue.messages.size() > MAX_QUEUE_SIZE) {
+        if (queue.messages.size() > MAX_QUEUE_SIZE) {
             queue.messages.pop_front();
             queue.base_offset++;
         }
@@ -37,14 +38,14 @@ public:
     }
 
 private:
-    std::shared_ptr<std::unordered_map<std::string, TopicQueue>> storage_;
+    std::shared_ptr<StorageMap> storage_;
     std::shared_ptr<std::mutex> mutex_;
     int message_id_counter_ = 0;
 };
 
 class MemoryMessageQueueConsumer : public MessageQueueConsumer {
 public:
-    MemoryMessageQueueConsumer(std::shared_ptr<std::unordered_map<std::string, TopicQueue>> storage, std::shared_ptr<std::mutex> mutex)
+    MemoryMessageQueueConsumer(std::shared_ptr<StorageMap> storage, std::shared_ptr<std::mutex> mutex)
         : storage_(storage), mutex_(mutex) {}
 
     void subscribe(const std::string& topic, std::function<void(const Message&)> callback) override {
@@ -69,25 +70,22 @@ public:
              auto& queue = (*storage_)[topic];
 
              // Track offset per topic to avoid replay
-             uint64_t current_offset = offsets_[topic];
+             size_t current_offset = offsets_[topic];
 
-             // If consumer is behind the window (messages lost due to cleanup), skip to the beginning
+             // If consumer is behind the sliding window, skip to the start
              if (current_offset < queue.base_offset) {
                  current_offset = queue.base_offset;
              }
 
-             // Calculate index in the deque
              size_t start_index = current_offset - queue.base_offset;
 
-             if (start_index < queue.messages.size()) {
-                 for(auto& cb : callbacks_[topic]) {
-                     for (size_t i = start_index; i < queue.messages.size(); ++i) {
-                         cb(queue.messages[i]);
-                     }
+             for(auto& cb : callbacks_[topic]) {
+                 for (size_t i = start_index; i < queue.messages.size(); ++i) {
+                     cb(queue.messages[i]);
                  }
-                 // Update offset to the end
-                 offsets_[topic] = queue.base_offset + queue.messages.size();
              }
+
+             offsets_[topic] = queue.base_offset + queue.messages.size();
         }
     }
 
@@ -100,7 +98,7 @@ public:
     }
 
 private:
-    std::shared_ptr<std::unordered_map<std::string, TopicQueue>> storage_;
+    std::shared_ptr<StorageMap> storage_;
     std::shared_ptr<std::mutex> mutex_;
     std::unordered_map<std::string, std::vector<std::function<void(const Message&)>>> callbacks_;
     std::unordered_map<std::string, uint64_t> offsets_;
@@ -109,7 +107,7 @@ private:
 class MemoryMessageQueueFactory : public MessageQueueFactory {
 public:
     MemoryMessageQueueFactory()
-        : storage_(std::make_shared<std::unordered_map<std::string, TopicQueue>>()),
+        : storage_(std::make_shared<StorageMap>()),
           mutex_(std::make_shared<std::mutex>()) {}
 
     std::unique_ptr<MessageQueueProducer> createProducer() override {
@@ -121,7 +119,7 @@ public:
     }
 
 private:
-    std::shared_ptr<std::unordered_map<std::string, TopicQueue>> storage_;
+    std::shared_ptr<StorageMap> storage_;
     std::shared_ptr<std::mutex> mutex_;
 };
 
