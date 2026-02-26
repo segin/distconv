@@ -10,10 +10,7 @@ add_compile_options(-Wall -Wextra -Wpedantic)
 find_package(PkgConfig REQUIRED)
 find_package(Threads REQUIRED)
 
-# Include FetchContent for dependencies
-include(FetchContent)
-
-# Find cpr (try package first, fallback to manual)
+# Find cpr (try package first, fallback to third_party)
 find_package(cpr QUIET)
 if(NOT cpr_FOUND)
     # Check if we have it in third_party
@@ -36,24 +33,14 @@ if(NOT cpr_FOUND)
             target_include_directories(cpr::cpr INTERFACE "${CMAKE_SOURCE_DIR}/../third_party/cpr/include")
         endif()
         set(CPR_AVAILABLE TRUE)
-    elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpr/CMakeLists.txt")
-        message(STATUS "Using local cpr from third_party")
-        set(CPR_USE_SYSTEM_CURL OFF CACHE BOOL "Disable system curl" FORCE)
-        # Trick cpr to skip building libpsl by claiming we use system one
-        set(CPR_USE_SYSTEM_LIB_PSL ON CACHE BOOL "Skip building libpsl" FORCE)
-        # Tell curl explicitly not to use libpsl
-        set(CURL_USE_LIBPSL OFF CACHE BOOL "Disable libpsl in curl" FORCE)
-        add_subdirectory("../third_party/cpr" "${CMAKE_CURRENT_BINARY_DIR}/cpr")
-        if(TARGET cpr::cpr)
-             set(CPR_AVAILABLE TRUE)
-        else()
-             set(CPR_AVAILABLE TRUE)
-             # CPR submodule typically creates a target named 'cpr' but we link against 'cpr::cpr'
-             # Alias it if needed, or if cpr creates 'cpr::cpr' (newer versions do)
-             if(NOT TARGET cpr::cpr)
-                 add_library(cpr::cpr ALIAS cpr)
-             endif()
-        endif()
+    elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpr")
+        message(STATUS "Using bundled cpr from third_party")
+        set(CPR_USE_SYSTEM_CURL OFF CACHE BOOL "" FORCE)
+        set(CPR_USE_SYSTEM_LIB_PSL ON CACHE BOOL "" FORCE)
+        set(CURL_USE_LIBPSL OFF CACHE BOOL "" FORCE)
+        add_subdirectory(../third_party/cpr ${CMAKE_BINARY_DIR}/cpr EXCLUDE_FROM_ALL)
+        add_library(cpr::cpr ALIAS cpr)
+        set(CPR_AVAILABLE TRUE)
     else()
         message(STATUS "cpr system library not found. Checking local third_party...")
         if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpr/CMakeLists.txt")
@@ -76,12 +63,13 @@ endif()
 # Find nlohmann_json
 find_package(nlohmann_json QUIET)
 if(NOT nlohmann_json_FOUND)
-    find_package(PkgConfig REQUIRED)
     pkg_check_modules(NLOHMANN_JSON QUIET nlohmann_json)
     if(NLOHMANN_JSON_FOUND)
         add_library(nlohmann_json::nlohmann_json INTERFACE IMPORTED)
-        target_include_directories(nlohmann_json::nlohmann_json INTERFACE "${CMAKE_SOURCE_DIR}/../third_party/json/include")
-        set(NLOHMANN_JSON_FOUND TRUE)
+        target_include_directories(nlohmann_json::nlohmann_json INTERFACE ${NLOHMANN_JSON_INCLUDE_DIRS})
+    elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json")
+        message(STATUS "Using bundled nlohmann_json from third_party")
+        add_subdirectory(../third_party/json ${CMAKE_BINARY_DIR}/json EXCLUDE_FROM_ALL)
     else()
         message(STATUS "nlohmann_json system library not found. Checking local third_party...")
         if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/CMakeLists.txt")
@@ -139,6 +127,14 @@ target_link_libraries(transcoding_engine_lib
     SQLite::SQLite3
     Threads::Threads
 )
+
+# If we are using the bundled cpr, we might need to add its generated includes
+if(TARGET cpr)
+    target_include_directories(transcoding_engine_lib PRIVATE
+        ${CMAKE_BINARY_DIR}/cpr/cpr_generated_includes
+        ${CMAKE_BINARY_DIR}/cpr/_deps/curl-src/include
+    )
+endif()
 
 target_include_directories(transcoding_engine_lib PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
