@@ -23,8 +23,19 @@ std::string g_caCertPath = "server.crt";
 // Local storage for job IDs
 std::string JOB_IDS_FILE = "submitted_job_ids.txt";
 
-ApiClient::ApiClient(const std::string& server_url, const std::string& api_key, const std::string& ca_cert_path, std::unique_ptr<CprApi> cpr_api)
-    : server_url_(server_url), api_key_(api_key), ca_cert_path_(ca_cert_path), cpr_api_(std::move(cpr_api)) {}
+ApiClient::ApiClient(const std::string& server_url, const std::string& api_key, const std::string& ca_cert_path, bool ssl_verify, std::unique_ptr<CprApi> cpr_api)
+    : server_url_(server_url), api_key_(api_key), ca_cert_path_(ca_cert_path), ssl_verify_(ssl_verify), cpr_api_(std::move(cpr_api)) {}
+
+cpr::SslOptions ApiClient::create_ssl_options() {
+    cpr::SslOptions ssl_opts;
+    if (!ssl_verify_) {
+        ssl_opts.verify_peer = false;
+        ssl_opts.verify_host = false;
+    } else if (!ca_cert_path_.empty()) {
+        ssl_opts.ca_info = ca_cert_path_;
+    }
+    return ssl_opts;
+}
 
 nlohmann::json ApiClient::submitJob(const std::string& source_url, const std::string& target_codec, double job_size, int max_retries) {
     nlohmann::json payload;
@@ -33,13 +44,7 @@ nlohmann::json ApiClient::submitJob(const std::string& source_url, const std::st
     payload["job_size"] = job_size;
     payload["max_retries"] = max_retries;
 
-    cpr::SslOptions ssl_opts;
-    if (!ca_cert_path_.empty()) {
-        ssl_opts.ca_info = ca_cert_path_;
-    } else {
-        ssl_opts.verify_peer = false;
-        ssl_opts.verify_host = false;
-    }
+    cpr::SslOptions ssl_opts = create_ssl_options();
 
     cpr::Response r = cpr_api_->Post(cpr::Url{server_url_ + "/jobs/"},
                                  cpr::Header{{"X-API-Key", api_key_}, {"Content-Type", "application/json"}},
@@ -54,17 +59,11 @@ nlohmann::json ApiClient::submitJob(const std::string& source_url, const std::st
 }
 
 nlohmann::json ApiClient::getJobStatus(const std::string& job_id) {
-    cpr::SslOptions ssl_opts;
-    if (!ca_cert_path_.empty()) {
-        ssl_opts.ca_info = ca_cert_path_;
-    } else {
-        ssl_opts.verify_peer = false;
-        ssl_opts.verify_host = false;
-    }
+    cpr::SslOptions ssl_opts = create_ssl_options();
 
-    cpr::Response r = cpr::Get(cpr::Url{server_url_ + "/jobs/" + job_id},
-                               cpr::Header{{"X-API-Key", api_key_}},
-                               ssl_opts);
+    cpr::Response r = cpr_api_->Get(cpr::Url{server_url_ + "/jobs/" + job_id},
+                                 cpr::Header{{"X-API-Key", api_key_}},
+                                 ssl_opts);
 
     if (r.status_code == 200) {
         return nlohmann::json::parse(r.text);
@@ -74,17 +73,11 @@ nlohmann::json ApiClient::getJobStatus(const std::string& job_id) {
 }
 
 nlohmann::json ApiClient::listAllJobs() {
-    cpr::SslOptions ssl_opts;
-    if (!ca_cert_path_.empty()) {
-        ssl_opts.ca_info = ca_cert_path_;
-    } else {
-        ssl_opts.verify_peer = false;
-        ssl_opts.verify_host = false;
-    }
+    cpr::SslOptions ssl_opts = create_ssl_options();
 
-    cpr::Response r = cpr::Get(cpr::Url{server_url_ + "/jobs/"},
-                               cpr::Header{{"X-API-Key", api_key_}},
-                               ssl_opts);
+    cpr::Response r = cpr_api_->Get(cpr::Url{server_url_ + "/jobs/"},
+                                 cpr::Header{{"X-API-Key", api_key_}},
+                                 ssl_opts);
 
     if (r.status_code == 200) {
         return nlohmann::json::parse(r.text);
@@ -94,17 +87,11 @@ nlohmann::json ApiClient::listAllJobs() {
 }
 
 nlohmann::json ApiClient::listAllEngines() {
-    cpr::SslOptions ssl_opts;
-    if (!ca_cert_path_.empty()) {
-        ssl_opts.ca_info = ca_cert_path_;
-    } else {
-        ssl_opts.verify_peer = false;
-        ssl_opts.verify_host = false;
-    }
+    cpr::SslOptions ssl_opts = create_ssl_options();
 
-    cpr::Response r = cpr::Get(cpr::Url{server_url_ + "/engines/"},
-                               cpr::Header{{"X-API-Key", api_key_}},
-                               ssl_opts);
+    cpr::Response r = cpr_api_->Get(cpr::Url{server_url_ + "/engines/"},
+                                 cpr::Header{{"X-API-Key", api_key_}},
+                                 ssl_opts);
 
     if (r.status_code == 200) {
         return nlohmann::json::parse(r.text);
@@ -182,7 +169,7 @@ bool MyApp::OnInit()
 // Implement MyFrame methods
 MyFrame::MyFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
     : wxFrame(NULL, wxID_ANY, title, pos, size),
-      apiClient_(g_dispatchServerUrl, g_apiKey, g_caCertPath)
+      apiClient_(g_dispatchServerUrl, g_apiKey, g_caCertPath, true)
 {
     wxPanel *panel = new wxPanel(this, wxID_ANY);
     wxBoxSizer *mainSizer = new wxBoxSizer(wxVERTICAL);
