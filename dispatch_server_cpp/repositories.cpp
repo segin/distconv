@@ -7,26 +7,65 @@
 namespace distconv {
 namespace DispatchServer {
 
+namespace {
+    struct StatementGuard {
+        sqlite3_stmt* stmt;
+        StatementGuard(sqlite3_stmt* s) : stmt(s) {}
+        ~StatementGuard() {
+            if (stmt) {
+                sqlite3_reset(stmt);
+                sqlite3_clear_bindings(stmt);
+            }
+        }
+    };
+}
+
 // SqliteJobRepository implementation
-SqliteJobRepository::SqliteJobRepository(const std::string& db_path) : db_path_(db_path), db_(nullptr) {
+SqliteJobRepository::SqliteJobRepository(const std::string& db_path) : db_path_(db_path) {
     int rc = sqlite3_open(db_path_.c_str(), &db_);
     if (rc) {
-        std::string err_msg = sqlite3_errmsg(db_);
-        sqlite3_close(db_); // Close handles resources even on error
-        throw std::runtime_error("Cannot open database: " + err_msg);
+        std::string err = sqlite3_errmsg(db_);
+        if (db_) sqlite3_close(db_);
+        throw std::runtime_error("Cannot open database: " + err);
     }
-    try {
-        initialize_database();
-    } catch (...) {
-        sqlite3_close(db_);
-        throw;
+
+    // Enable WAL mode for performance
+    char* err_msg = nullptr;
+    rc = sqlite3_exec(db_, "PRAGMA journal_mode=WAL;", nullptr, nullptr, &err_msg);
+    if (rc != SQLITE_OK) {
+        if (err_msg) sqlite3_free(err_msg);
     }
+
+    initialize_database();
 }
 
 SqliteJobRepository::~SqliteJobRepository() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    for (auto& [sql, stmt] : statements_) {
+        sqlite3_finalize(stmt);
+    }
+    statements_.clear();
+
     if (db_) {
         sqlite3_close(db_);
+        db_ = nullptr;
     }
+}
+
+sqlite3_stmt* SqliteJobRepository::get_prepared_statement(const std::string& sql) {
+    auto it = statements_.find(sql);
+    if (it != statements_.end()) {
+        return it->second;
+    }
+    
+    sqlite3_stmt* stmt;
+    int rc = sqlite3_prepare_v2(db_, sql.c_str(), -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        throw std::runtime_error("Cannot prepare statement: " + std::string(sqlite3_errmsg(db_)) + " SQL: " + sql);
+    }
+
+    statements_[sql] = stmt;
+    return stmt;
 }
 
 void SqliteJobRepository::initialize_database() {
@@ -51,7 +90,6 @@ void SqliteJobRepository::initialize_database() {
 }
 
 void SqliteJobRepository::execute_sql(const std::string& sql) {
-    // Assumption: Caller MUST hold mutex_
     char* err_msg = nullptr;
     int rc = sqlite3_exec(db_, sql.c_str(), nullptr, nullptr, &err_msg);
     if (rc != SQLITE_OK) {
@@ -62,7 +100,6 @@ void SqliteJobRepository::execute_sql(const std::string& sql) {
 }
 
 nlohmann::json SqliteJobRepository::execute_query(const std::string& sql) {
-    // Assumption: Caller MUST hold mutex_
     sqlite3_stmt* stmt;
     int rc = sqlite3_prepare_v2(db_, sql.c_str(), -1, &stmt, nullptr);
     if (rc != SQLITE_OK) {
@@ -89,70 +126,59 @@ nlohmann::json SqliteJobRepository::execute_query(const std::string& sql) {
 void SqliteJobRepository::save_job(const std::string& job_id, const nlohmann::json& job) {
     std::lock_guard<std::mutex> lock(mutex_);
     
-    const char* sql = R"(
+    const std::string sql = R"(
         INSERT OR REPLACE INTO jobs (job_id, job_data, updated_at) 
         VALUES (?, ?, datetime('now'))
     )";
     
-    sqlite3_stmt* stmt;
-    int rc = sqlite3_prepare_v2(db_, sql, -1, &stmt, nullptr);
-    if (rc != SQLITE_OK) {
-        throw std::runtime_error("Cannot prepare statement: " + std::string(sqlite3_errmsg(db_)));
-    }
-    
+    sqlite3_stmt* stmt = get_prepared_statement(sql);
+    StatementGuard guard(stmt);
+
     std::string job_data = job.dump();
     sqlite3_bind_text(stmt, 1, job_id.c_str(), -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, 2, job_data.c_str(), -1, SQLITE_STATIC);
     
-    rc = sqlite3_step(stmt);
+    int rc = sqlite3_step(stmt);
     if (rc != SQLITE_DONE) {
-        sqlite3_finalize(stmt);
         throw std::runtime_error("Cannot save job: " + std::string(sqlite3_errmsg(db_)));
     }
-    
-    sqlite3_finalize(stmt);
 }
 
 nlohmann::json SqliteJobRepository::get_job(const std::string& job_id) {
     std::lock_guard<std::mutex> lock(mutex_);
     
-    const char* sql = "SELECT job_data FROM jobs WHERE job_id = ?";
+    const std::string sql = "SELECT job_data FROM jobs WHERE job_id = ?";
     
-    sqlite3_stmt* stmt;
-    int rc = sqlite3_prepare_v2(db_, sql, -1, &stmt, nullptr);
-    if (rc != SQLITE_OK) {
-        throw std::runtime_error("Cannot prepare statement: " + std::string(sqlite3_errmsg(db_)));
-    }
-    
+    sqlite3_stmt* stmt = get_prepared_statement(sql);
+    StatementGuard guard(stmt);
+
     sqlite3_bind_text(stmt, 1, job_id.c_str(), -1, SQLITE_STATIC);
     
-    nlohmann::json result;
-    rc = sqlite3_step(stmt);
+    int rc = sqlite3_step(stmt);
     if (rc == SQLITE_ROW) {
         const char* job_data = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
         if (job_data) {
-            result = nlohmann::json::parse(job_data);
+            return nlohmann::json::parse(job_data);
         }
     }
     
-    sqlite3_finalize(stmt);
-    
-    return result;
+    return nlohmann::json();
 }
 
 std::vector<nlohmann::json> SqliteJobRepository::get_all_jobs() {
     std::lock_guard<std::mutex> lock(mutex_);
     
-    nlohmann::json query_result = execute_query("SELECT job_data FROM jobs ORDER BY created_at DESC");
     std::vector<nlohmann::json> jobs;
+    const std::string sql = "SELECT job_data FROM jobs ORDER BY created_at DESC";
+    sqlite3_stmt* stmt = get_prepared_statement(sql);
+    StatementGuard guard(stmt);
     
-    for (const auto& row : query_result) {
-        if (row.contains("job_data")) {
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        const char* job_data = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        if (job_data) {
             try {
-                jobs.push_back(nlohmann::json::parse(row["job_data"].get<std::string>()));
-            } catch (const std::exception&) {
-                // Skip invalid JSON
-            }
+                jobs.push_back(nlohmann::json::parse(job_data));
+            } catch (...) {}
         }
     }
     
@@ -162,21 +188,28 @@ std::vector<nlohmann::json> SqliteJobRepository::get_all_jobs() {
 bool SqliteJobRepository::job_exists(const std::string& job_id) {
     std::lock_guard<std::mutex> lock(mutex_);
     
-    nlohmann::json result = execute_query("SELECT COUNT(*) as count FROM jobs WHERE job_id = '" + job_id + "'");
-    if (!result.empty() && result[0].contains("count")) {
-        try {
-            return std::stoi(result[0]["count"].get<std::string>()) > 0;
-        } catch (const std::exception& e) {
-            std::cerr << "Error parsing job count: " << e.what() << std::endl;
-            return false;
-        }
+    const std::string sql = "SELECT COUNT(*) FROM jobs WHERE job_id = ?";
+    sqlite3_stmt* stmt = get_prepared_statement(sql);
+    StatementGuard guard(stmt);
+
+    sqlite3_bind_text(stmt, 1, job_id.c_str(), -1, SQLITE_STATIC);
+
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        return sqlite3_column_int(stmt, 0) > 0;
     }
+
     return false;
 }
 
 void SqliteJobRepository::remove_job(const std::string& job_id) {
     std::lock_guard<std::mutex> lock(mutex_);
-    execute_sql("DELETE FROM jobs WHERE job_id = '" + job_id + "'");
+
+    const std::string sql = "DELETE FROM jobs WHERE job_id = ?";
+    sqlite3_stmt* stmt = get_prepared_statement(sql);
+    StatementGuard guard(stmt);
+
+    sqlite3_bind_text(stmt, 1, job_id.c_str(), -1, SQLITE_STATIC);
+    sqlite3_step(stmt);
 }
 
 void SqliteJobRepository::clear_all_jobs() {
