@@ -2,6 +2,21 @@ dispatch_server_state.json
 temp_state_single_engine.json
 temp_state_single_job.json
 
+# Local scratch directory (not committed)
+local/
+
+# SQLite databases
+*.db
+*.db-shm
+*.db-wal
+
+# Repro artifacts
+repro_issue
+repro_issue.cpp
+
+# Corrupt state files
+temp_state*.corrupt.*
+
 # Build directories
 build/
 */build/
