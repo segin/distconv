@@ -106,10 +106,10 @@ gtest_discover_tests(dispatch_server_tests
     TIMEOUT 10
 )
 
-# Benchmark Tool
-add_executable(dispatch_server_benchmark perf_benchmark.cpp)
-target_link_libraries(dispatch_server_benchmark dispatch_server_core)
-target_include_directories(dispatch_server_benchmark PRIVATE
+# Benchmark for job assignment optimization
+add_executable(assignment_benchmark tests/assignment_benchmark.cpp)
+target_link_libraries(assignment_benchmark dispatch_server_core)
+target_include_directories(assignment_benchmark PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/../third_party/json/single_include
 )
