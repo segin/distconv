@@ -366,8 +366,36 @@ bool SqliteJobRepository::update_job_progress(const std::string& job_id, int pro
     return true;
 }
 
-std::vector<nlohmann::json> SqliteJobRepository::get_jobs_paginated(int limit, int offset) {
+std::vector<nlohmann::json> SqliteJobRepository::get_timed_out_jobs(int64_t older_than_timestamp) {
     std::lock_guard<std::mutex> lock(mutex_);
+
+    // Select jobs that are active (assigned/processing) and haven't been updated recently
+    std::string sql = "SELECT job_data FROM jobs WHERE "
+                      "json_extract(job_data, '$.status') IN ('assigned', 'processing') AND "
+                      "json_extract(job_data, '$.updated_at') < " + std::to_string(older_than_timestamp);
+
+    nlohmann::json result = execute_query(sql);
+    std::vector<nlohmann::json> jobs;
+
+    for (const auto& row : result) {
+        if (row.contains("job_data")) {
+            try {
+                jobs.push_back(nlohmann::json::parse(row["job_data"].get<std::string>()));
+            } catch (const std::exception&) {
+                // Skip invalid JSON
+            }
+        }
+    }
+
+    return jobs;
+}
+
+
+
+
+
+
+
 
 // SqliteEngineRepository implementation
 SqliteEngineRepository::SqliteEngineRepository(const std::string& db_path) : db_path_(db_path) {
@@ -734,36 +762,21 @@ bool InMemoryJobRepository::update_job_progress(const std::string& job_id, int p
     return true;
 }
 
-std::vector<nlohmann::json> InMemoryJobRepository::get_jobs_paginated(int limit, int offset) {
+std::vector<nlohmann::json> InMemoryJobRepository::get_timed_out_jobs(int64_t older_than_timestamp) {
     std::lock_guard<std::mutex> lock(mutex_);
     std::vector<nlohmann::json> result;
 
-    std::vector<nlohmann::json> all_jobs;
-    all_jobs.reserve(jobs_.size());
     for (const auto& [id, job] : jobs_.items()) {
-        all_jobs.push_back(job);
-    }
+        std::string status = job.value("status", "");
+        if (status == "assigned" || status == "processing") {
+            int64_t updated_at = 0;
+            if (job.contains("updated_at")) {
+                updated_at = job["updated_at"];
+            }
 
-    std::sort(all_jobs.begin(), all_jobs.end(), [](const nlohmann::json& a, const nlohmann::json& b) {
-        return a.value("created_at", 0LL) > b.value("created_at", 0LL);
-    });
-
-    if (static_cast<size_t>(offset) < all_jobs.size()) {
-        int count = 0;
-        for (size_t i = offset; i < all_jobs.size() && count < limit; ++i, ++count) {
-            result.push_back(all_jobs[i]);
-        }
-    }
-
-    return result;
-}
-
-std::vector<nlohmann::json> InMemoryJobRepository::get_jobs_by_status(const std::string& status) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    std::vector<nlohmann::json> result;
-    for (const auto& [id, job] : jobs_.items()) {
-        if (job.value("status", "") == status) {
-            result.push_back(job);
+            if (updated_at < older_than_timestamp) {
+                result.push_back(job);
+            }
         }
     }
     return result;
