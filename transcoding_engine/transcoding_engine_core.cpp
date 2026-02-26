@@ -7,8 +7,13 @@
 #include <random> // For random engine ID
 #include <fstream> // For file operations (e.g., reading thermal sensor data)
 #include <algorithm> // For std::remove
+#include <list>
+#include <future>
+#include <mutex>
 #include "cjson/cJSON.h" // Include cJSON header
 #include <curl/curl.h> // Include libcurl header
+#include <cpr/cpr.h> // Include CPR header
+#include <nlohmann/json.hpp> // Include nlohmann/json header
 #include <sqlite3.h> // Include SQLite3 header
 #include "transcoding_engine_core.h"
 #include "backoff_timer.h"
@@ -218,10 +223,76 @@ std::string getHostname() {
 
 // Function to send heartbeat to dispatch server
 void sendHeartbeat(const std::string& dispatchServerUrl, const std::string& engineId, double storageCapacityGb, bool streamingSupport, const std::string& encoders, const std::string& decoders, const std::string& hwaccels, double cpuTemperature, const std::string& localJobQueue, const std::string& caCertPath, const std::string& apiKey, const std::string& hostname) {
+    // cpr::PostAsync returns cpr::AsyncWrapper<cpr::Response>
+    static std::list<cpr::AsyncWrapper<cpr::Response>> pending_heartbeats;
+    static std::mutex heartbeats_mutex;
+
+    {
+        std::lock_guard<std::mutex> lock(heartbeats_mutex);
+        // Clean up finished futures
+        pending_heartbeats.remove_if([](cpr::AsyncWrapper<cpr::Response>& f) {
+            return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+        });
+    }
+
     std::string url = dispatchServerUrl + "/engines/heartbeat";
-    std::string payload = "{\"engine_id\": \"" + engineId + "\", \"status\": \"idle\", \"storage_capacity_gb\": " + std::to_string(storageCapacityGb) + ", \"streaming_support\": " + (streamingSupport ? "true" : "false") + ", \"encoders\": \"" + encoders + "\", \"decoders\": \"" + decoders + "\", \"hwaccels\": \"" + hwaccels + "\", \"cpu_temperature\": " + std::to_string(cpuTemperature) + ", \"local_job_queue\": \"" + localJobQueue + "\", \"hostname\": \"" + hostname + "\"}";
-    std::cout << "Sending heartbeat to: " << url << " with payload: " << payload << std::endl;
-    makeHttpRequest(url, "POST", payload, caCertPath, apiKey);
+
+    // Construct payload using nlohmann::json for safety and convenience
+    nlohmann::json payload_json = {
+        {"engine_id", engineId},
+        {"status", "idle"},
+        {"storage_capacity_gb", storageCapacityGb},
+        {"streaming_support", streamingSupport},
+        {"encoders", encoders},
+        {"decoders", decoders},
+        {"hwaccels", hwaccels},
+        {"cpu_temperature", cpuTemperature},
+        // localJobQueue is already a JSON string, so we need to parse it or keep it as string?
+        // The original code treated it as string in JSON: "local_job_queue": "..."
+        // Wait, original: "local_job_queue": \"" + localJobQueue + "\""
+        // If localJobQueue is `["job1", "job2"]`, then original payload has: "local_job_queue": "[\"job1\", \"job2\"]" (escaped string)
+        // Or did it mean to include it as a JSON array?
+        // Original: "local_job_queue": \"" + localJobQueue + "\""
+        // If localJobQueue was produced by cJSON_PrintUnformatted, it is a string like "[\"id1\",\"id2\"]".
+        // So it was embedding a JSON string inside a JSON string.
+        // Let's preserve this behavior.
+        {"local_job_queue", localJobQueue},
+        {"hostname", hostname}
+    };
+    std::string payload = payload_json.dump();
+
+    std::cout << "Sending heartbeat (async) to: " << url << " with payload: " << payload << std::endl;
+
+    // Configure SSL options
+    cpr::SslOptions sslOpts;
+    if (!caCertPath.empty()) {
+        sslOpts.SetOption(cpr::ssl::CaInfo{caCertPath});
+        sslOpts.SetOption(cpr::ssl::VerifyPeer{true});
+        sslOpts.SetOption(cpr::ssl::VerifyHost{true});
+    } else {
+        sslOpts.SetOption(cpr::ssl::VerifyPeer{false});
+        sslOpts.SetOption(cpr::ssl::VerifyHost{false});
+    }
+
+    // Configure Headers
+    cpr::Header headers{{"Content-Type", "application/json"}};
+    if (!apiKey.empty()) {
+        headers.insert({"X-API-Key", apiKey});
+    }
+
+    // Send async request
+    auto future = cpr::PostAsync(
+        cpr::Url{url},
+        cpr::Body{payload},
+        headers,
+        sslOpts,
+        cpr::Timeout{30000} // 30s timeout
+    );
+
+    {
+        std::lock_guard<std::mutex> lock(heartbeats_mutex);
+        pending_heartbeats.push_back(std::move(future));
+    }
 }
 
 // Function to get CPU temperature

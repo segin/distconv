@@ -71,6 +71,22 @@ if(NOT SQLite3_FOUND)
     endif()
 endif()
 
+# Find cjson
+find_package(cjson QUIET)
+if(NOT cjson_FOUND)
+    pkg_check_modules(CJSON QUIET libcjson)
+    if(CJSON_FOUND)
+        add_library(cjson::cjson INTERFACE IMPORTED)
+        target_link_libraries(cjson::cjson INTERFACE ${CJSON_LIBRARIES})
+        target_include_directories(cjson::cjson INTERFACE ${CJSON_INCLUDE_DIRS})
+    else()
+        message(STATUS "libcjson not found. Legacy engine target will be skipped.")
+    endif()
+endif()
+
+# Find CURL (used by legacy core)
+find_package(CURL QUIET)
+
 # Find GTest for testing
 find_package(GTest QUIET)
 if(NOT GTest_FOUND)
@@ -116,6 +132,24 @@ add_executable(transcoding_engine_modern
 target_link_libraries(transcoding_engine_modern
     transcoding_engine_lib
 )
+
+# Create the legacy application target for performance testing
+if(CJSON_FOUND OR cjson_FOUND)
+    add_executable(transcoding_engine_legacy
+        app_main.cpp
+        transcoding_engine_core.cpp
+    )
+
+    target_link_libraries(transcoding_engine_legacy
+        cpr::cpr
+        nlohmann_json::nlohmann_json
+        cjson::cjson
+        SQLite::SQLite3
+        CURL::libcurl
+        Threads::Threads
+    )
+    target_include_directories(transcoding_engine_legacy PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+endif()
 
 # Create mock library for testing
 add_library(transcoding_engine_mocks
