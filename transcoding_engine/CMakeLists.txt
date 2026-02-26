@@ -91,11 +91,10 @@ if(NOT nlohmann_json_FOUND)
         add_library(nlohmann_json::nlohmann_json INTERFACE IMPORTED)
         target_include_directories(nlohmann_json::nlohmann_json INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/include")
     else()
-        message(STATUS "nlohmann_json system library not found. Checking local third_party...")
-        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/CMakeLists.txt")
+        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/single_include")
             message(STATUS "Using local nlohmann_json from third_party")
-            set(JSON_BuildTests OFF CACHE BOOL "" FORCE)
-            add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json" "${CMAKE_CURRENT_BINARY_DIR}/json")
+            add_library(nlohmann_json::nlohmann_json INTERFACE IMPORTED)
+            target_include_directories(nlohmann_json::nlohmann_json INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/single_include")
         else()
             message(FATAL_ERROR "nlohmann_json not found. Please install nlohmann-json3-dev.")
         endif()
@@ -282,3 +281,12 @@ configure_file(
 target_include_directories(transcoding_engine_lib PUBLIC
     ${CMAKE_CURRENT_BINARY_DIR}/src
 )
+
+# Benchmark
+add_executable(secure_subprocess_benchmark
+    tests/secure_subprocess_benchmark.cpp
+    src/implementations/secure_subprocess.cpp
+)
+
+target_include_directories(secure_subprocess_benchmark PRIVATE src)
+target_link_libraries(secure_subprocess_benchmark Threads::Threads)
