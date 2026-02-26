@@ -7,7 +7,7 @@
 #include <random> // For random engine ID
 #include <fstream> // For file operations (e.g., reading thermal sensor data)
 #include <algorithm> // For std::remove
-#include <mutex> // For std::mutex and std::lock_guard
+#include <mutex> // For std::mutex
 #include "cjson/cJSON.h" // Include cJSON header
 #include <curl/curl.h> // Include libcurl header
 #include <cpr/cpr.h> // Include CPR header
@@ -522,8 +522,8 @@ int run_transcoding_engine(int argc, char* argv[]) {
     std::mutex queue_mutex;
     std::vector<std::string> localJobQueue = get_jobs_from_db();
     std::mutex jobQueueMutex;
-    std::string cachedJobQueueJson = "[]";
     bool jobQueueDirty = true;
+    std::string cachedJobQueueJson = "[]";
 
     // Get ffmpeg capabilities
     std::string encoders = getFFmpegCapabilities("encoders");
@@ -534,8 +534,8 @@ int run_transcoding_engine(int argc, char* argv[]) {
     std::thread heartbeatThread([&]() {
         while (true) {
             double cpuTemperature = getCpuTemperature();
+            std::string currentJobQueueJson;
 
-            std::string localJobQueueJson;
             {
                 std::lock_guard<std::mutex> lock(jobQueueMutex);
                 if (jobQueueDirty) {
@@ -550,10 +550,10 @@ int run_transcoding_engine(int argc, char* argv[]) {
                     if (queue_str) free(queue_str);
                     jobQueueDirty = false;
                 }
-                localJobQueueJson = cachedJobQueueJson;
+                currentJobQueueJson = cachedJobQueueJson;
             }
 
-            sendHeartbeat(dispatchServerUrl, engineId, storageCapacityGb, streamingSupport, encoders, decoders, hwaccels, cpuTemperature, localJobQueueJson, caCertPath, apiKey, hostname);
+            sendHeartbeat(dispatchServerUrl, engineId, storageCapacityGb, streamingSupport, encoders, decoders, hwaccels, cpuTemperature, currentJobQueueJson, caCertPath, apiKey, hostname);
             std::this_thread::sleep_for(std::chrono::seconds(5)); // Send heartbeat every 5 seconds
         }
     });
