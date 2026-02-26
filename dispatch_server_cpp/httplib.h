@@ -4152,31 +4152,147 @@ inline bool can_compress_content_type(const std::string &content_type) {
   }
 }
 
+inline bool parse_accept_encoding(
+    const std::string &s,
+    std::vector<std::pair<std::string, double>> &encodings) {
+  encodings.clear();
+  if (s.empty()) { return true; }
+
+  if (s.front() == ',' || s.back() == ',' ||
+      s.find(",,") != std::string::npos) {
+    return false;
+  }
+
+  struct AcceptEntry {
+    std::string encoding;
+    double quality;
+    int order;
+  };
+
+  std::vector<AcceptEntry> entries;
+  int order = 0;
+  bool has_invalid_entry = false;
+
+  split(s.data(), s.data() + s.size(), ',', [&](const char *b, const char *e) {
+    std::string entry(b, e);
+    entry = trim_copy(entry);
+
+    if (entry.empty()) {
+      has_invalid_entry = true;
+      return;
+    }
+
+    AcceptEntry accept_entry;
+    accept_entry.quality = 1.0;
+    accept_entry.order = order++;
+
+    auto q_pos = entry.find(";q=");
+    if (q_pos == std::string::npos) { q_pos = entry.find("; q="); }
+
+    if (q_pos != std::string::npos) {
+      accept_entry.encoding = trim_copy(entry.substr(0, q_pos));
+
+      auto q_start = entry.find('=', q_pos) + 1;
+      auto q_end = entry.find(';', q_start);
+      if (q_end == std::string::npos) { q_end = entry.length(); }
+
+      std::string quality_str =
+          trim_copy(entry.substr(q_start, q_end - q_start));
+      if (quality_str.empty()) {
+        has_invalid_entry = true;
+        return;
+      }
+
+      try {
+        accept_entry.quality = std::stod(quality_str);
+        if (accept_entry.quality < 0.0 || accept_entry.quality > 1.0) {
+          has_invalid_entry = true;
+          return;
+        }
+      } catch (...) {
+        has_invalid_entry = true;
+        return;
+      }
+    } else {
+      accept_entry.encoding = entry;
+    }
+
+    if (accept_entry.encoding.empty()) {
+      has_invalid_entry = true;
+      return;
+    }
+
+    entries.push_back(accept_entry);
+  });
+
+  if (has_invalid_entry) { return false; }
+
+  std::sort(entries.begin(), entries.end(),
+            [](const AcceptEntry &a, const AcceptEntry &b) {
+              if (a.quality > b.quality) { return true; }
+              if (a.quality < b.quality) { return false; }
+              return a.order < b.order;
+            });
+
+  for (const auto &entry : entries) {
+    encodings.emplace_back(entry.encoding, entry.quality);
+  }
+
+  return true;
+}
+
 inline EncodingType encoding_type(const Request &req, const Response &res) {
   auto ret =
       detail::can_compress_content_type(res.get_header_value("Content-Type"));
   if (!ret) { return EncodingType::None; }
 
   const auto &s = req.get_header_value("Accept-Encoding");
-  (void)(s);
+  if (s.empty()) { return EncodingType::None; }
+
+  std::vector<std::pair<std::string, double>> encodings;
+  if (!detail::parse_accept_encoding(s, encodings)) {
+    return EncodingType::None;
+  }
+
+  for (const auto &kv : encodings) {
+    const auto &encoding = kv.first;
+    const auto quality = kv.second;
+
+    if (quality == 0.0) { continue; }
+
+    if (encoding == "br") {
+#ifdef CPPHTTPLIB_BROTLI_SUPPORT
+      return EncodingType::Brotli;
+#endif
+    } else if (encoding == "gzip") {
+#ifdef CPPHTTPLIB_ZLIB_SUPPORT
+      return EncodingType::Gzip;
+#endif
+    } else if (encoding == "zstd") {
+#ifdef CPPHTTPLIB_ZSTD_SUPPORT
+      return EncodingType::Zstd;
+#endif
+    } else if (encoding == "*") {
+      bool br_listed = false;
+      bool gzip_listed = false;
+      bool zstd_listed = false;
+      for (const auto &e : encodings) {
+        if (e.first == "br") { br_listed = true; }
+        if (e.first == "gzip") { gzip_listed = true; }
+        if (e.first == "zstd") { zstd_listed = true; }
+      }
 
 #ifdef CPPHTTPLIB_BROTLI_SUPPORT
-  // TODO: 'Accept-Encoding' has br, not br;q=0
-  ret = s.find("br") != std::string::npos;
-  if (ret) { return EncodingType::Brotli; }
+      if (!br_listed) { return EncodingType::Brotli; }
 #endif
-
-#ifdef CPPHTTPLIB_ZLIB_SUPPORT
-  // TODO: 'Accept-Encoding' has gzip, not gzip;q=0
-  ret = s.find("gzip") != std::string::npos;
-  if (ret) { return EncodingType::Gzip; }
-#endif
-
 #ifdef CPPHTTPLIB_ZSTD_SUPPORT
-  // TODO: 'Accept-Encoding' has zstd, not zstd;q=0
-  ret = s.find("zstd") != std::string::npos;
-  if (ret) { return EncodingType::Zstd; }
+      if (!zstd_listed) { return EncodingType::Zstd; }
 #endif
+#ifdef CPPHTTPLIB_ZLIB_SUPPORT
+      if (!gzip_listed) { return EncodingType::Gzip; }
+#endif
+    }
+  }
 
   return EncodingType::None;
 }
