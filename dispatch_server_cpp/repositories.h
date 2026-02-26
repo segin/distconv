@@ -15,6 +15,8 @@ struct sqlite3;
 
 struct sqlite3;
 
+struct sqlite3;
+
 namespace distconv {
 namespace DispatchServer {
 
@@ -63,6 +65,7 @@ private:
     std::string db_path_;
     sqlite3* db_ = nullptr;
     mutable std::mutex mutex_;
+    sqlite3* db_ = nullptr;
     
     sqlite3* db_ = nullptr;
     std::map<std::string, sqlite3_stmt*> statements_;
@@ -108,6 +111,7 @@ private:
     std::string db_path_;
     sqlite3* db_ = nullptr;
     mutable std::mutex mutex_;
+    sqlite3* db_ = nullptr;
     
     void initialize_database();
     void execute_sql(const std::string& sql);
