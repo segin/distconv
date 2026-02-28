@@ -24,6 +24,12 @@ distconv/
 │   ├── httplib.h                     # Embedded cpp-httplib (multi-threaded HTTP)
 │   └── tests/                        # 150+ GTest unit & integration tests
 │
+├── common/                           # Shared library code
+│   ├── include/
+│   │   └── modern_getopt.hpp         # Modern C++23 CLI parser
+│   └── examples/
+│       └── modern_getopt_example.cpp
+│
 ├── transcoding_engine/           # Worker transcoding engine (C++17)
 │   ├── src/
 │   │   ├── core/
@@ -143,6 +149,11 @@ distconv/
 **Name:** Redis Streams  
 **Type:** Redis (Consumer Groups)  
 **Purpose:** Durable, at-least-once delivery of job assignments from the Dispatch Server to Transcoding Engines. Consumer Groups guarantee exactly-one assignment semantics across multiple engine replicas. An in-memory implementation (`MemoryMessageQueue`) is available for single-node and test deployments.
+### 4.4. CLI Parsing Utility
+
+**Name:** modern_getopt  
+**Description:** A header-only C++23 library providing type-safe, declarative command-line option parsing. Used for modern entry points like `app_main_modern.cpp`.  
+**Documentation:** [docs/modern_getopt.md](file:///home/segin/distconv/docs/modern_getopt.md)
 
 ## 5. External Integrations / APIs
 
