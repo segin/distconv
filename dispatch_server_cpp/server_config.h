@@ -11,6 +11,8 @@ struct ServerConfig {
     std::string api_key = "";
     std::string database_path = "dispatch_server.db";
     int port = 8080;
+    std::string tdarr_url = "http://localhost:8265";
+    std::string tdarr_api_key = "";
     bool show_help = false;
     bool parse_error = false;
     std::string error_message = "";

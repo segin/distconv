@@ -15,6 +15,7 @@
 #include "message_queue.h"
 #include "job_publisher.h"
 #include "status_subscriber.h"
+#include "tdarr_client.h"
 
 namespace distconv {
 namespace DispatchServer {
@@ -110,11 +111,15 @@ private:
     std::unique_ptr<MessageQueueFactory> mq_factory_;
     std::shared_ptr<JobPublisher> job_publisher_;
     std::shared_ptr<StatusSubscriber> status_subscriber_;
+    
+    // Tdarr Integration
+    std::unique_ptr<Tdarr::TdarrClient> tdarr_client_;
 
     void setup_endpoints();
     void setup_job_endpoints();
     void setup_engine_endpoints();
     void setup_storage_endpoints();
+    void setup_tdarr_endpoints();
     void setup_system_endpoints();
     
     // Background processing

@@ -124,6 +124,11 @@ DispatchServer::DispatchServer(const std::string& api_key)
     : job_repo_(std::make_shared<SqliteJobRepository>("dispatch_jobs.db")),
       engine_repo_(std::make_shared<SqliteEngineRepository>("dispatch_engines.db")),
       api_key_(api_key) {
+    
+    // Initialize Tdarr client with default URL or from environment
+    const char* tdarr_url_env = std::getenv("TDARR_URL");
+    std::string tdarr_url = tdarr_url_env ? tdarr_url_env : "http://localhost:8265";
+    tdarr_client_ = std::make_unique<Tdarr::TdarrClient>(tdarr_url);
 
     if (!api_key_.empty()) {
         setup_endpoints();
@@ -136,6 +141,12 @@ DispatchServer::DispatchServer(std::shared_ptr<IJobRepository> job_repo,
     : job_repo_(job_repo), 
       engine_repo_(engine_repo),
       api_key_(api_key) {
+    
+    // Initialize Tdarr client with default URL or from environment
+    const char* tdarr_url_env = std::getenv("TDARR_URL");
+    std::string tdarr_url = tdarr_url_env ? tdarr_url_env : "http://localhost:8265";
+    tdarr_client_ = std::make_unique<Tdarr::TdarrClient>(tdarr_url);
+
     if (!api_key_.empty()) {
         setup_endpoints();
     }
@@ -179,7 +190,13 @@ DispatchServer::DispatchServer(std::shared_ptr<IJobRepository> job_repo,
 
 DispatchServer::DispatchServer() 
     : job_repo_(std::make_shared<SqliteJobRepository>("dispatch_jobs.db")),
-      engine_repo_(std::make_shared<SqliteEngineRepository>("dispatch_engines.db")) {}
+      engine_repo_(std::make_shared<SqliteEngineRepository>("dispatch_engines.db")) {
+    
+    // Initialize Tdarr client with default URL or from environment
+    const char* tdarr_url_env = std::getenv("TDARR_URL");
+    std::string tdarr_url = tdarr_url_env ? tdarr_url_env : "http://localhost:8265";
+    tdarr_client_ = std::make_unique<Tdarr::TdarrClient>(tdarr_url);
+}
 
 DispatchServer::~DispatchServer() {
     stop();
@@ -358,6 +375,7 @@ void DispatchServer::setup_endpoints() {
     setup_job_endpoints();
     setup_engine_endpoints();
     setup_storage_endpoints();
+    setup_tdarr_endpoints();
     
     // Wire up enhanced endpoints
     setup_enhanced_job_endpoints(svr, api_key_, job_repo_, engine_repo_);
@@ -461,6 +479,44 @@ void DispatchServer::setup_storage_endpoints() {
     auto list_handler = std::make_shared<StoragePoolListHandler>(auth, storage_repo);
     svr.Get("/storage_pools/", [list_handler](const httplib::Request& req, httplib::Response& res) {
         list_handler->handle(req, res);
+    });
+}
+
+void DispatchServer::setup_tdarr_endpoints() {
+    std::cout << "Registering Tdarr integration endpoints..." << std::endl;
+    auto auth = std::make_shared<AuthMiddleware>(api_key_);
+
+    svr.Get("/tdarr/status", [this, auth](const httplib::Request& req, httplib::Response& res) {
+        if (!auth->authenticate(req, res)) return;
+        
+        nlohmann::json status;
+        if (tdarr_client_ && tdarr_client_->check_health()) {
+            status["tdarr_server"] = "online";
+        } else {
+            status["tdarr_server"] = "offline";
+        }
+        res.set_content(status.dump(), "application/json");
+    });
+
+    svr.Post("/tdarr/submit", [this, auth](const httplib::Request& req, httplib::Response& res) {
+        if (!auth->authenticate(req, res)) return;
+
+        try {
+            auto input = nlohmann::json::parse(req.body);
+            std::string tdarr_job_id;
+            if (tdarr_client_ && tdarr_client_->submit_job(input, tdarr_job_id)) {
+                nlohmann::json response;
+                response["status"] = "submitted_to_tdarr";
+                response["tdarr_job_id"] = tdarr_job_id;
+                res.set_content(response.dump(), "application/json");
+            } else {
+                res.status = 502; // Bad Gateway
+                res.set_content("{\"error\": \"Failed to submit job to Tdarr\"}", "application/json");
+            }
+        } catch (const std::exception& e) {
+            res.status = 400;
+            res.set_content("{\"error\": \"Invalid JSON\"}", "application/json");
+        }
     });
 }
 

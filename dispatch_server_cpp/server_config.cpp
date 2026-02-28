@@ -22,6 +22,10 @@ ServerConfig parse_arguments(int argc, char* argv[]) {
                 config.error_message = "Invalid port number: " + std::string(argv[i]);
                 return config;
             }
+        } else if (arg == "--tdarr-url" && i + 1 < argc) {
+            config.tdarr_url = argv[++i];
+        } else if (arg == "--tdarr-api-key" && i + 1 < argc) {
+            config.tdarr_api_key = argv[++i];
         } else if (arg == "--help") {
             config.show_help = true;
             return config;
