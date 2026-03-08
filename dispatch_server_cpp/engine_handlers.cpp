@@ -13,10 +13,7 @@ EngineListHandler::EngineListHandler(std::shared_ptr<AuthMiddleware> auth, std::
 void EngineListHandler::handle(const httplib::Request& req, httplib::Response& res) {
     if (!auth_->authenticate(req, res)) return;
     auto all_engines_vec = engine_repo_->get_all_engines();
-    nlohmann::json all_engines = nlohmann::json::array();
-    for (const auto& engine : all_engines_vec) {
-        all_engines.push_back(engine);
-    }
+    nlohmann::json all_engines = all_engines_vec;
     set_json_response(res, all_engines, 200);
 }
 
