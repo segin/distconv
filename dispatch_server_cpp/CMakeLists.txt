@@ -135,6 +135,26 @@ target_include_directories(assignment_benchmark PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tests
 )
 
+# Optimized Requeue Benchmark
+add_executable(requeue_benchmark_optimized tests/requeue_benchmark_optimized.cpp)
+target_link_libraries(requeue_benchmark_optimized dispatch_server_core sqlite3)
+target_include_directories(requeue_benchmark_optimized PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/../third_party/json/single_include
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests
+)
+
+# Bulk Update Tests
+add_executable(bulk_update_tests tests/bulk_update_tests.cpp)
+target_link_libraries(bulk_update_tests dispatch_server_core sqlite3 gtest gmock)
+target_include_directories(bulk_update_tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/../third_party/json/single_include
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests
+    ${CMAKE_SOURCE_DIR}/../third_party/googletest-1.14.0/googletest/include
+    ${CMAKE_SOURCE_DIR}/../third_party/googletest-1.14.0/googlemock/include
+)
+
 # Modern Assignment Verification Test
 add_executable(modern_assignment_verification tests/modern_assignment_verification.cpp)
 target_link_libraries(modern_assignment_verification dispatch_server_core gtest gmock sqlite3)
@@ -154,3 +174,12 @@ target_include_directories(sqlite_repository_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/tests
 )
 gtest_discover_tests(sqlite_repository_tests)
+
+# Requeue Benchmark
+add_executable(requeue_benchmark tests/requeue_benchmark.cpp)
+target_link_libraries(requeue_benchmark dispatch_server_core sqlite3)
+target_include_directories(requeue_benchmark PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/../third_party/json/single_include
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests
+)
