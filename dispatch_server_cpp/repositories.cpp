@@ -417,6 +417,60 @@ std::vector<nlohmann::json> SqliteJobRepository::get_timed_out_jobs(int64_t olde
     return jobs;
 }
 
+int SqliteJobRepository::requeue_ready_jobs(int64_t now_ms) {
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    // We need to update both the 'status' column and the 'status' field inside 'job_data' JSON.
+    // SQLite's json_set can be used if available.
+
+    // First, find which jobs need updating to update their JSON data
+    const char* select_sql = "SELECT job_id, job_data FROM jobs WHERE status = 'failed_retry' AND CAST(json_extract(job_data, '$.retry_after') AS INTEGER) <= ?";
+    sqlite3_stmt* select_stmt = get_prepared_statement(select_sql);
+    sqlite3_bind_int64(select_stmt, 1, now_ms);
+
+    std::vector<std::pair<std::string, std::string>> to_update;
+    while (sqlite3_step(select_stmt) == SQLITE_ROW) {
+        const char* job_id = reinterpret_cast<const char*>(sqlite3_column_text(select_stmt, 0));
+        const char* job_data_str = reinterpret_cast<const char*>(sqlite3_column_text(select_stmt, 1));
+
+        if (job_id && job_data_str) {
+            try {
+                nlohmann::json job = nlohmann::json::parse(job_data_str);
+                job["status"] = "pending";
+                job["updated_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::system_clock::now().time_since_epoch()).count();
+                to_update.push_back({job_id, job.dump()});
+            } catch (...) {}
+        }
+    }
+    sqlite3_reset(select_stmt);
+
+    if (to_update.empty()) return 0;
+
+    // Use a transaction for bulk update
+    execute_sql("BEGIN TRANSACTION");
+    try {
+        const char* update_sql = "UPDATE jobs SET status = 'pending', job_data = ?, updated_at = datetime('now') WHERE job_id = ?";
+        sqlite3_stmt* update_stmt = get_prepared_statement(update_sql);
+
+        for (const auto& [job_id, job_data] : to_update) {
+            sqlite3_reset(update_stmt);
+            sqlite3_bind_text(update_stmt, 1, job_data.c_str(), -1, SQLITE_STATIC);
+            sqlite3_bind_text(update_stmt, 2, job_id.c_str(), -1, SQLITE_STATIC);
+
+            if (sqlite3_step(update_stmt) != SQLITE_DONE) {
+                throw std::runtime_error("Failed to update job in bulk: " + std::string(sqlite3_errmsg(db_)));
+            }
+        }
+        execute_sql("COMMIT");
+    } catch (...) {
+        execute_sql("ROLLBACK");
+        throw;
+    }
+
+    return static_cast<int>(to_update.size());
+}
+
 // SqliteEngineRepository implementation
 SqliteEngineRepository::SqliteEngineRepository(const std::string& db_path) : db_path_(db_path), db_(nullptr) {
     initialize_database();
@@ -725,6 +779,23 @@ std::vector<nlohmann::json> InMemoryJobRepository::get_timed_out_jobs(int64_t ol
         }
     }
     return result;
+}
+
+int InMemoryJobRepository::requeue_ready_jobs(int64_t now_ms) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    int count = 0;
+    for (auto it = jobs_.begin(); it != jobs_.end(); ++it) {
+        auto& job = it.value();
+        if (job.value("status", "") == "failed_retry") {
+            int64_t retry_after = job.value("retry_after", 0LL);
+            if (now_ms >= retry_after) {
+                job["status"] = "pending";
+                job["updated_at"] = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+                count++;
+            }
+        }
+    }
+    return count;
 }
 
 // InMemoryEngineRepository implementation
