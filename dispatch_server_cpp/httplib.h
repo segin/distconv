@@ -8547,8 +8547,12 @@ inline bool ClientImpl::write_content_with_provider(Stream &strm,
   auto is_shutting_down = []() { return false; };
 
   if (req.is_chunked_content_provider_) {
-    // TODO: Brotli support
     std::unique_ptr<detail::compressor> compressor;
+#ifdef CPPHTTPLIB_BROTLI_SUPPORT
+    if (compress_) {
+      compressor = detail::make_unique<detail::brotli_compressor>();
+    } else
+#endif
 #ifdef CPPHTTPLIB_ZLIB_SUPPORT
     if (compress_) {
       compressor = detail::make_unique<detail::gzip_compressor>();
@@ -8736,58 +8740,70 @@ inline std::unique_ptr<Response> ClientImpl::send_with_content_provider(
     const std::string &content_type, Error &error) {
   if (!content_type.empty()) { req.set_header("Content-Type", content_type); }
 
+#ifdef CPPHTTPLIB_BROTLI_SUPPORT
+  if (compress_) { req.set_header("Content-Encoding", "br"); }
+#else
 #ifdef CPPHTTPLIB_ZLIB_SUPPORT
   if (compress_) { req.set_header("Content-Encoding", "gzip"); }
 #endif
+#endif
 
-#ifdef CPPHTTPLIB_ZLIB_SUPPORT
   if (compress_ && !content_provider_without_length) {
-    // TODO: Brotli support
-    detail::gzip_compressor compressor;
+    std::unique_ptr<detail::compressor> compressor;
+#ifdef CPPHTTPLIB_BROTLI_SUPPORT
+    compressor = detail::make_unique<detail::brotli_compressor>();
+#else
+#ifdef CPPHTTPLIB_ZLIB_SUPPORT
+    compressor = detail::make_unique<detail::gzip_compressor>();
+#endif
+#endif
 
-    if (content_provider) {
-      auto ok = true;
-      size_t offset = 0;
-      DataSink data_sink;
+    if (compressor) {
+      if (content_provider) {
+        auto ok = true;
+        size_t offset = 0;
+        DataSink data_sink;
 
-      data_sink.write = [&](const char *data, size_t data_len) -> bool {
-        if (ok) {
-          auto last = offset + data_len == content_length;
+        data_sink.write = [&](const char *data, size_t data_len) -> bool {
+          if (ok) {
+            auto last = offset + data_len == content_length;
 
-          auto ret = compressor.compress(
-              data, data_len, last,
-              [&](const char *compressed_data, size_t compressed_data_len) {
-                req.body.append(compressed_data, compressed_data_len);
-                return true;
-              });
+            auto ret = compressor->compress(
+                data, data_len, last,
+                [&](const char *compressed_data, size_t compressed_data_len) {
+                  req.body.append(compressed_data, compressed_data_len);
+                  return true;
+                });
 
-          if (ret) {
-            offset += data_len;
-          } else {
-            ok = false;
+            if (ret) {
+              offset += data_len;
+            } else {
+              ok = false;
+            }
+          }
+          return ok;
+        };
+
+        while (ok && offset < content_length) {
+          if (!content_provider(offset, content_length - offset, data_sink)) {
+            error = Error::Canceled;
+            return nullptr;
           }
         }
-        return ok;
-      };
-
-      while (ok && offset < content_length) {
-        if (!content_provider(offset, content_length - offset, data_sink)) {
-          error = Error::Canceled;
+      } else {
+        if (!compressor->compress(body, content_length, true,
+                                 [&](const char *data, size_t data_len) {
+                                   req.body.append(data, data_len);
+                                   return true;
+                                 })) {
+          error = Error::Compression;
           return nullptr;
         }
       }
-    } else {
-      if (!compressor.compress(body, content_length, true,
-                               [&](const char *data, size_t data_len) {
-                                 req.body.append(data, data_len);
-                                 return true;
-                               })) {
-        error = Error::Compression;
-        return nullptr;
-      }
     }
-  } else
-#endif
+  }
+
+  if (req.body.empty() && (content_provider || content_provider_without_length || body))
   {
     if (content_provider) {
       req.content_length_ = content_length;
