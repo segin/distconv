@@ -40,6 +40,9 @@ public:
 
     // Optimization for timeout check
     virtual std::vector<nlohmann::json> get_timed_out_jobs(int64_t older_than_timestamp) = 0;
+
+    // Bulk requeue optimization
+    virtual void requeue_ready_jobs(int64_t now_ms) = 0;
 };
 
 // Abstract interface for engine repository
@@ -96,6 +99,8 @@ public:
     std::vector<nlohmann::json> get_jobs_by_status(const std::string& status) override;
 
     std::vector<nlohmann::json> get_timed_out_jobs(int64_t older_than_timestamp) override;
+
+    void requeue_ready_jobs(int64_t now_ms) override;
 };
 
 // SQLite-based engine repository implementation
@@ -152,6 +157,8 @@ public:
     std::vector<nlohmann::json> get_jobs_by_status(const std::string& status) override;
 
     std::vector<nlohmann::json> get_timed_out_jobs(int64_t older_than_timestamp) override;
+
+    void requeue_ready_jobs(int64_t now_ms) override;
 };
 
 class InMemoryEngineRepository : public IEngineRepository {
