@@ -343,17 +343,9 @@ void DispatchServer::handle_job_timeouts() {
 }
 
 void DispatchServer::requeue_failed_jobs() {
-    auto jobs = job_repo_->get_jobs_by_status("failed_retry");
     auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::system_clock::now().time_since_epoch()).count();
-    
-    for (auto& job : jobs) {
-        int64_t retry_after = job.value("retry_after", 0LL);
-        if (now_ms >= retry_after) {
-            job["status"] = "pending";
-            job_repo_->save_job(job["job_id"], job);
-        }
-    }
+    job_repo_->requeue_ready_jobs(now_ms);
 }
 
 void DispatchServer::expire_pending_jobs() {
