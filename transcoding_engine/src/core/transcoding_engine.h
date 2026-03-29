@@ -10,6 +10,8 @@
 #include <vector>
 #include <atomic>
 #include <thread>
+#include <mutex>
+#include <condition_variable>
 #include <optional>
 #include <fstream>
 
@@ -91,6 +93,9 @@ private:
     std::thread heartbeat_thread_;
     std::thread benchmark_thread_;
     std::thread main_loop_thread_;
+
+    mutable std::mutex shutdown_mutex_;
+    std::condition_variable shutdown_cv_;
     
     // Internal methods
     void heartbeat_loop();
@@ -98,6 +103,9 @@ private:
     void main_job_loop();
     
     std::ifstream thermal_file_;
+    std::string cached_encoders_;
+    std::string cached_decoders_;
+    std::string cached_hwaccels_;
 
     // Job processing
     bool download_source_file(const std::string& source_url, const std::string& output_path);

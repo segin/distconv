@@ -91,6 +91,10 @@ void TranscodingEngine::stop() {
     }
     
     running_.store(false);
+    {
+        std::lock_guard<std::mutex> lock(shutdown_mutex_);
+        shutdown_cv_.notify_all();
+    }
     
     // Wait for threads to finish
     if (heartbeat_thread_.joinable()) {
@@ -459,9 +463,9 @@ void TranscodingEngine::heartbeat_loop() {
     while (running_.load()) {
         send_heartbeat();
         
-        for (int i = 0; i < config_.heartbeat_interval_seconds && running_.load(); ++i) {
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-        }
+        std::unique_lock<std::mutex> lock(shutdown_mutex_);
+        shutdown_cv_.wait_for(lock, std::chrono::seconds(config_.heartbeat_interval_seconds),
+                             [this] { return !running_.load(); });
     }
 }
 
@@ -470,9 +474,9 @@ void TranscodingEngine::benchmark_loop() {
         double benchmark_time = run_benchmark();
         send_benchmark_result(benchmark_time);
         
-        for (int i = 0; i < config_.benchmark_interval_minutes * 60 && running_.load(); ++i) {
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-        }
+        std::unique_lock<std::mutex> lock(shutdown_mutex_);
+        shutdown_cv_.wait_for(lock, std::chrono::minutes(config_.benchmark_interval_minutes),
+                             [this] { return !running_.load(); });
     }
 }
 
@@ -483,9 +487,9 @@ void TranscodingEngine::main_job_loop() {
             process_job(job.value());
         }
         
-        for (int i = 0; i < config_.job_poll_interval_seconds && running_.load(); ++i) {
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-        }
+        std::unique_lock<std::mutex> lock(shutdown_mutex_);
+        shutdown_cv_.wait_for(lock, std::chrono::seconds(config_.job_poll_interval_seconds),
+                             [this] { return !running_.load(); });
     }
 }
 
