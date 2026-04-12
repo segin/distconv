@@ -417,6 +417,29 @@ std::vector<nlohmann::json> SqliteJobRepository::get_timed_out_jobs(int64_t olde
     return jobs;
 }
 
+void SqliteJobRepository::expire_stale_jobs(int64_t timeout_seconds) {
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    // We update:
+    // 1. the status column to 'expired'
+    // 2. the updated_at column to NOW
+    // 3. the job_data JSON blob to set status='expired' and add error_message
+
+    auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
+
+    std::string sql = "UPDATE jobs SET "
+                      "status = 'expired', "
+                      "updated_at = CURRENT_TIMESTAMP, "
+                      "job_data = json_set(json_set(job_data, '$.status', 'expired', "
+                      "'$.error_message', 'Job expired after being pending for too long'), "
+                      "'$.updated_at', " + std::to_string(now_ms) + ") "
+                      "WHERE status = 'pending' AND "
+                      "strftime('%s', 'now') - strftime('%s', created_at) > " + std::to_string(timeout_seconds);
+
+    execute_sql(sql);
+}
+
 // SqliteEngineRepository implementation
 SqliteEngineRepository::SqliteEngineRepository(const std::string& db_path) : db_path_(db_path), db_(nullptr) {
     initialize_database();
@@ -725,6 +748,24 @@ std::vector<nlohmann::json> InMemoryJobRepository::get_timed_out_jobs(int64_t ol
         }
     }
     return result;
+}
+
+void InMemoryJobRepository::expire_stale_jobs(int64_t timeout_seconds) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
+
+    for (auto it = jobs_.begin(); it != jobs_.end(); ++it) {
+        auto& job = it.value();
+        if (job.value("status", "") == "pending") {
+            int64_t created_at = job.value("created_at", 0LL);
+            if ((now_ms - created_at) / 1000 > timeout_seconds) {
+                job["status"] = "expired";
+                job["error_message"] = "Job expired after being pending for too long";
+                job["updated_at"] = now_ms;
+            }
+        }
+    }
 }
 
 // InMemoryEngineRepository implementation

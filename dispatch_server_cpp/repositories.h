@@ -40,6 +40,9 @@ public:
 
     // Optimization for timeout check
     virtual std::vector<nlohmann::json> get_timed_out_jobs(int64_t older_than_timestamp) = 0;
+
+    // Optimization for pending job expiration
+    virtual void expire_stale_jobs(int64_t timeout_seconds) = 0;
 };
 
 // Abstract interface for engine repository
@@ -65,8 +68,10 @@ private:
     sqlite3_stmt* get_prepared_statement(const std::string& sql);
 
     void initialize_database();
+public:
     void execute_sql(const std::string& sql);
     nlohmann::json execute_query(const std::string& sql);
+private:
     
     // Internal lock-free helpers
     void save_job_internal(const std::string& job_id, const nlohmann::json& job);
@@ -96,6 +101,8 @@ public:
     std::vector<nlohmann::json> get_jobs_by_status(const std::string& status) override;
 
     std::vector<nlohmann::json> get_timed_out_jobs(int64_t older_than_timestamp) override;
+
+    void expire_stale_jobs(int64_t timeout_seconds) override;
 };
 
 // SQLite-based engine repository implementation
@@ -152,6 +159,8 @@ public:
     std::vector<nlohmann::json> get_jobs_by_status(const std::string& status) override;
 
     std::vector<nlohmann::json> get_timed_out_jobs(int64_t older_than_timestamp) override;
+
+    void expire_stale_jobs(int64_t timeout_seconds) override;
 };
 
 class InMemoryEngineRepository : public IEngineRepository {
