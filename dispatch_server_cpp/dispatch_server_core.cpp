@@ -358,14 +358,7 @@ void DispatchServer::requeue_failed_jobs() {
 
 void DispatchServer::expire_pending_jobs() {
     int64_t timeout_seconds = 24 * 3600; 
-    auto stale_job_ids = job_repo_->get_stale_pending_jobs(timeout_seconds);
-    
-    for (const auto& job_id : stale_job_ids) {
-        nlohmann::json job = job_repo_->get_job(job_id);
-        job["status"] = "expired";
-        job["error_message"] = "Job expired after being pending for too long";
-        job_repo_->save_job(job_id, job);
-    }
+    job_repo_->expire_stale_jobs(timeout_seconds);
 }
 
 // Endpoint Setup
