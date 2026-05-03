@@ -10,6 +10,8 @@
 #include <vector>
 #include <atomic>
 #include <thread>
+#include <mutex>
+#include <condition_variable>
 #include <optional>
 #include <fstream>
 
@@ -91,7 +93,15 @@ private:
     std::thread heartbeat_thread_;
     std::thread benchmark_thread_;
     std::thread main_loop_thread_;
+
+    std::condition_variable shutdown_cv_;
+    mutable std::mutex shutdown_mutex_;
     
+    // Capabilities cache
+    std::string cached_encoders_;
+    std::string cached_decoders_;
+    std::string cached_hwaccels_;
+
     // Internal methods
     void heartbeat_loop();
     void benchmark_loop();
