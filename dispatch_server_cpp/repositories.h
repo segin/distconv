@@ -67,6 +67,7 @@ private:
     void initialize_database();
     void execute_sql(const std::string& sql);
     nlohmann::json execute_query(const std::string& sql);
+    nlohmann::json execute_query_internal(const std::string& sql);
     
     // Internal lock-free helpers
     void save_job_internal(const std::string& job_id, const nlohmann::json& job);
@@ -104,10 +105,14 @@ private:
     std::string db_path_;
     sqlite3* db_ = nullptr;
     mutable std::mutex mutex_;
-    
+    std::map<std::string, sqlite3_stmt*> statements_;
+
+    sqlite3_stmt* get_prepared_statement(const std::string& sql);
+
     void initialize_database();
     void execute_sql(const std::string& sql);
     nlohmann::json execute_query(const std::string& sql);
+    nlohmann::json execute_query_internal(const std::string& sql);
 
     // Internal lock-free helpers
     void save_engine_internal(const std::string& engine_id, const nlohmann::json& engine);

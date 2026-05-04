@@ -85,10 +85,11 @@ void SqliteJobRepository::initialize_database() {
 }
 
 sqlite3_stmt* SqliteJobRepository::get_prepared_statement(const std::string& sql) {
-    if (statements_.find(sql) != statements_.end()) {
-        sqlite3_reset(statements_[sql]);
-        sqlite3_clear_bindings(statements_[sql]);
-        return statements_[sql];
+    auto it = statements_.find(sql);
+    if (it != statements_.end()) {
+        sqlite3_reset(it->second);
+        sqlite3_clear_bindings(it->second);
+        return it->second;
     }
     
     sqlite3_stmt* stmt;
@@ -110,15 +111,11 @@ void SqliteJobRepository::execute_sql(const std::string& sql) {
     }
 }
 
-nlohmann::json SqliteJobRepository::execute_query(const std::string& sql) {
-    sqlite3_stmt* stmt;
-    int rc = sqlite3_prepare_v2(db_, sql.c_str(), -1, &stmt, nullptr);
-    if (rc != SQLITE_OK) {
-        throw std::runtime_error("Cannot prepare statement: " + std::string(sqlite3_errmsg(db_)));
-    }
-    StatementFinalizer guard(stmt);
+nlohmann::json SqliteJobRepository::execute_query_internal(const std::string& sql) {
+    sqlite3_stmt* stmt = get_prepared_statement(sql);
     
     nlohmann::json result = nlohmann::json::array();
+    int rc;
     while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
         nlohmann::json row;
         int cols = sqlite3_column_count(stmt);
@@ -141,6 +138,11 @@ nlohmann::json SqliteJobRepository::execute_query(const std::string& sql) {
     }
     
     return result;
+}
+
+nlohmann::json SqliteJobRepository::execute_query(const std::string& sql) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return execute_query_internal(sql);
 }
 
 void SqliteJobRepository::save_job_internal(const std::string& job_id, const nlohmann::json& job) {
@@ -289,13 +291,16 @@ std::vector<std::string> SqliteJobRepository::get_stale_pending_jobs(int64_t tim
     std::lock_guard<std::mutex> lock(mutex_);
     std::vector<std::string> stale_jobs;
     
-    std::string sql = "SELECT job_id FROM jobs WHERE status = 'pending' AND "
-                      "strftime('%s', 'now') - strftime('%s', created_at) > " + std::to_string(timeout_seconds);
+    const char* sql = "SELECT job_id FROM jobs WHERE status = 'pending' AND "
+                      "strftime('%s', 'now') - strftime('%s', created_at) > ?";
                       
-    nlohmann::json result = execute_query(sql);
-    for (const auto& row : result) {
-        if (row.contains("job_id")) {
-            stale_jobs.push_back(row["job_id"].get<std::string>());
+    sqlite3_stmt* stmt = get_prepared_statement(sql);
+    sqlite3_bind_int64(stmt, 1, timeout_seconds);
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        const char* job_id = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        if (job_id) {
+            stale_jobs.push_back(job_id);
         }
     }
     return stale_jobs;
@@ -304,15 +309,18 @@ std::vector<std::string> SqliteJobRepository::get_stale_pending_jobs(int64_t tim
 std::vector<nlohmann::json> SqliteJobRepository::get_jobs_to_timeout(int timeout_minutes) {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    std::string sql = "SELECT job_data FROM jobs WHERE (status = 'assigned' OR status = 'processing') AND "
-                      "updated_at < datetime('now', '-" + std::to_string(timeout_minutes) + " minutes')";
+    const char* sql = "SELECT job_data FROM jobs WHERE (status = 'assigned' OR status = 'processing') AND "
+                      "updated_at < datetime('now', '-' || ? || ' minutes')";
 
-    nlohmann::json result = execute_query(sql);
+    sqlite3_stmt* stmt = get_prepared_statement(sql);
+    sqlite3_bind_int(stmt, 1, timeout_minutes);
+
     std::vector<nlohmann::json> jobs;
-    for (const auto& row : result) {
-        if (row.contains("job_data")) {
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        const char* job_data = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        if (job_data) {
             try {
-                jobs.push_back(nlohmann::json::parse(row["job_data"].get<std::string>()));
+                jobs.push_back(nlohmann::json::parse(job_data));
             } catch (...) {}
         }
     }
@@ -423,6 +431,11 @@ SqliteEngineRepository::SqliteEngineRepository(const std::string& db_path) : db_
 }
 
 SqliteEngineRepository::~SqliteEngineRepository() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    for (auto const& [sql, stmt] : statements_) {
+        sqlite3_finalize(stmt);
+    }
+    statements_.clear();
     if (db_) {
         sqlite3_close(db_);
         db_ = nullptr;
@@ -463,6 +476,23 @@ void SqliteEngineRepository::initialize_database() {
     }
 }
 
+sqlite3_stmt* SqliteEngineRepository::get_prepared_statement(const std::string& sql) {
+    auto it = statements_.find(sql);
+    if (it != statements_.end()) {
+        sqlite3_reset(it->second);
+        sqlite3_clear_bindings(it->second);
+        return it->second;
+    }
+
+    sqlite3_stmt* stmt;
+    int rc = sqlite3_prepare_v2(db_, sql.c_str(), -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        throw std::runtime_error("Cannot prepare statement: " + std::string(sqlite3_errmsg(db_)));
+    }
+    statements_[sql] = stmt;
+    return stmt;
+}
+
 void SqliteEngineRepository::execute_sql(const std::string& sql) {
     char* err_msg = nullptr;
     int rc = sqlite3_exec(db_, sql.c_str(), nullptr, nullptr, &err_msg);
@@ -473,15 +503,11 @@ void SqliteEngineRepository::execute_sql(const std::string& sql) {
     }
 }
 
-nlohmann::json SqliteEngineRepository::execute_query(const std::string& sql) {
-    sqlite3_stmt* stmt;
-    int rc = sqlite3_prepare_v2(db_, sql.c_str(), -1, &stmt, nullptr);
-    if (rc != SQLITE_OK) {
-        throw std::runtime_error("Cannot prepare statement: " + std::string(sqlite3_errmsg(db_)));
-    }
-    StatementFinalizer guard(stmt);
+nlohmann::json SqliteEngineRepository::execute_query_internal(const std::string& sql) {
+    sqlite3_stmt* stmt = get_prepared_statement(sql);
     
     nlohmann::json result = nlohmann::json::array();
+    int rc;
     while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
         nlohmann::json row;
         int cols = sqlite3_column_count(stmt);
@@ -495,11 +521,14 @@ nlohmann::json SqliteEngineRepository::execute_query(const std::string& sql) {
     return result;
 }
 
+nlohmann::json SqliteEngineRepository::execute_query(const std::string& sql) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return execute_query_internal(sql);
+}
+
 void SqliteEngineRepository::save_engine_internal(const std::string& engine_id, const nlohmann::json& engine) {
     const char* sql = "INSERT OR REPLACE INTO engines (engine_id, engine_data, updated_at) VALUES (?, ?, datetime('now'))";
-    sqlite3_stmt* stmt;
-    sqlite3_prepare_v2(db_, sql, -1, &stmt, nullptr);
-    StatementFinalizer guard(stmt);
+    sqlite3_stmt* stmt = get_prepared_statement(sql);
     
     std::string engine_data = engine.dump();
     sqlite3_bind_text(stmt, 1, engine_id.c_str(), -1, SQLITE_STATIC);
@@ -517,9 +546,7 @@ void SqliteEngineRepository::save_engine(const std::string& engine_id, const nlo
 
 nlohmann::json SqliteEngineRepository::get_engine_internal(const std::string& engine_id) {
     const char* sql = "SELECT engine_data FROM engines WHERE engine_id = ?";
-    sqlite3_stmt* stmt;
-    sqlite3_prepare_v2(db_, sql, -1, &stmt, nullptr);
-    StatementFinalizer guard(stmt);
+    sqlite3_stmt* stmt = get_prepared_statement(sql);
     
     sqlite3_bind_text(stmt, 1, engine_id.c_str(), -1, SQLITE_STATIC);
     
@@ -536,8 +563,11 @@ nlohmann::json SqliteEngineRepository::get_engine(const std::string& engine_id) 
 }
 
 std::vector<nlohmann::json> SqliteEngineRepository::get_all_engines() {
-    std::lock_guard<std::mutex> lock(mutex_);
-    nlohmann::json query_result = execute_query("SELECT engine_data FROM engines ORDER BY updated_at DESC");
+    nlohmann::json query_result;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        query_result = execute_query_internal("SELECT engine_data FROM engines ORDER BY updated_at DESC");
+    }
     std::vector<nlohmann::json> engines;
     for (const auto& row : query_result) {
         try {
@@ -550,9 +580,7 @@ std::vector<nlohmann::json> SqliteEngineRepository::get_all_engines() {
 bool SqliteEngineRepository::engine_exists(const std::string& engine_id) {
     std::lock_guard<std::mutex> lock(mutex_);
     const char* sql = "SELECT 1 FROM engines WHERE engine_id = ?";
-    sqlite3_stmt* stmt;
-    sqlite3_prepare_v2(db_, sql, -1, &stmt, nullptr);
-    StatementFinalizer guard(stmt);
+    sqlite3_stmt* stmt = get_prepared_statement(sql);
     sqlite3_bind_text(stmt, 1, engine_id.c_str(), -1, SQLITE_STATIC);
     return (sqlite3_step(stmt) == SQLITE_ROW);
 }
@@ -560,9 +588,7 @@ bool SqliteEngineRepository::engine_exists(const std::string& engine_id) {
 void SqliteEngineRepository::remove_engine(const std::string& engine_id) {
     std::lock_guard<std::mutex> lock(mutex_);
     const char* sql = "DELETE FROM engines WHERE engine_id = ?";
-    sqlite3_stmt* stmt;
-    sqlite3_prepare_v2(db_, sql, -1, &stmt, nullptr);
-    StatementFinalizer guard(stmt);
+    sqlite3_stmt* stmt = get_prepared_statement(sql);
     sqlite3_bind_text(stmt, 1, engine_id.c_str(), -1, SQLITE_STATIC);
     sqlite3_step(stmt);
 }
