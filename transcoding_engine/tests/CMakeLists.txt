@@ -24,10 +24,10 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(cjson)
 
-# Fix cjson include path to match "cjson/cJSON.h"
+# Fix cjson include path to match "cjson/cJSON.h" without copying files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/cjson)
-file(COPY ${cjson_SOURCE_DIR}/cJSON.h DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/include/cjson)
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/include/cjson/cJSON.h "#include \"${cjson_SOURCE_DIR}/cJSON.h\"\n")
+target_include_directories(cjson INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/include)
 
 # Setup CPR (includes curl)
 set(CPR_USE_SYSTEM_CURL OFF CACHE BOOL "" FORCE)
@@ -44,7 +44,6 @@ find_package(SQLite3 REQUIRED)
 
 # Include directories
 include_directories(${gtest_SOURCE_DIR}/googletest/include)
-include_directories(${cjson_SOURCE_DIR})
 include_directories(..)
 
 # Create the test executable
