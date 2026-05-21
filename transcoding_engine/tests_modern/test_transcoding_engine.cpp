@@ -13,15 +13,15 @@
 #include <cstdint>
 
 using namespace distconv::TranscodingEngine;
-using namespace transcoding_engine;
+
 
 class TranscodingEngineTest : public ::testing::Test {
 protected:
     void SetUp() override {
         // Create mocks
-        auto mock_http_client = std::make_unique<transcoding_engine::MockHttpClient>();
-        auto mock_database = std::make_unique<transcoding_engine::MockDatabase>();
-        auto mock_subprocess = std::make_unique<transcoding_engine::MockSubprocess>();
+        auto mock_http_client = std::make_unique<distconv::TranscodingEngine::MockHttpClient>();
+        auto mock_database = std::make_unique<distconv::TranscodingEngine::MockDatabase>();
+        auto mock_subprocess = std::make_unique<distconv::TranscodingEngine::MockSubprocess>();
         
         // Get raw pointers for test access (before moving to engine)
         http_client_ptr = mock_http_client.get();
@@ -117,9 +117,9 @@ protected:
     
     
     std::unique_ptr<TranscodingEngine> engine;
-    transcoding_engine::MockHttpClient* http_client_ptr;
-    transcoding_engine::MockDatabase* database_ptr;
-    transcoding_engine::MockSubprocess* subprocess_ptr;
+    distconv::TranscodingEngine::MockHttpClient* http_client_ptr;
+    distconv::TranscodingEngine::MockDatabase* database_ptr;
+    distconv::TranscodingEngine::MockSubprocess* subprocess_ptr;
     EngineConfig config;
     std::vector<std::string> dummy_files_;
 };
