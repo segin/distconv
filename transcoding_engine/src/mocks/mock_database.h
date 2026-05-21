@@ -7,10 +7,6 @@
 namespace distconv {
 namespace TranscodingEngine {
 
-using distconv::TranscodingEngine::IDatabase;
-
-using distconv::TranscodingEngine::IDatabase;
-
 class MockDatabase : public IDatabase {
 public:
     MockDatabase() = default;

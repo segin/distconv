@@ -158,15 +158,6 @@ add_library(transcoding_engine_mocks
     src/mocks/mock_subprocess.cpp
 )
 
-# Fix namespace issue in mock_http_client.cpp/h by checking files content or including correct headers.
-# It seems mocks use  namespace instead of  or something.
-# Let's inspect src/mocks/mock_http_client.h and src/mocks/mock_http_client.cpp first
-# But for now we try to fix compilation by adding proper namespace using compiler definition if possible,
-# or simpler: fix namespace usage in the files? No, we shouldn't modify other files if possible.
-# Wait, the error
-# Suggests that  is in  but the mock is likely in a different namespace or missing .
-# Let's check the mock file content.
-
 target_link_libraries(transcoding_engine_mocks
     transcoding_engine_lib
 )
