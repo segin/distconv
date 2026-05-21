@@ -364,6 +364,11 @@ std::string TranscodingEngine::get_ffmpeg_hw_accels() {
 
 double TranscodingEngine::get_cpu_temperature() {
 #ifdef __linux__
+    auto now = std::chrono::steady_clock::now();
+    if (now - last_cpu_temp_read_time_ < std::chrono::seconds(1) && cached_cpu_temp_ != -1.0) {
+        return cached_cpu_temp_;
+    }
+
     if (!thermal_file_.is_open()) {
         thermal_file_.open("/sys/class/thermal/thermal_zone0/temp");
     }
@@ -375,8 +380,11 @@ double TranscodingEngine::get_cpu_temperature() {
         std::string line;
         if (std::getline(thermal_file_, line)) {
             try {
-                return std::stod(line) / 1000.0; // Convert millidegrees to Celsius
+                cached_cpu_temp_ = std::stod(line) / 1000.0; // Convert millidegrees to Celsius
+                last_cpu_temp_read_time_ = now;
+                return cached_cpu_temp_;
             } catch (const std::exception&) {
+                cached_cpu_temp_ = -1.0;
                 return -1.0;
             }
         }

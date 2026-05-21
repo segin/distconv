@@ -98,6 +98,11 @@ private:
     void main_job_loop();
     
     std::ifstream thermal_file_;
+    double cached_cpu_temp_ = -1.0;
+    std::chrono::steady_clock::time_point last_cpu_temp_read_time_;
+    std::string cached_encoders_;
+    std::string cached_decoders_;
+    std::string cached_hwaccels_;
 
     // Job processing
     bool download_source_file(const std::string& source_url, const std::string& output_path);
